@@ -1,0 +1,44 @@
+
+services:
+  # Наша база данных
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: todo_postgres_compose
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: todo_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+
+  db_migrations:
+      image: migrate/migrate
+      # Монтируем папку с миграциями внутрь этого контейнера
+      volumes:
+        - ./migrations:/migrations
+      # Команда, которая выполнится внутри контейнера при старте
+      command: -path=/migrations -database="postgres://postgres:secret@postgres_db:5432/todo_db?sslmode=disable" up
+      depends_on:
+        - postgres_db
+  # Наше Go-приложение
+  todo_app:
+    build: .
+    env_file:
+      - .env  # <-- КРИТИЧЕСКИ ВАЖНО
+    container_name: todo_app_compose
+    ports:
+      - "8080:8080"
+    # Важный момент! Наше приложение должно запускаться ТОЛЬКО после того, как поднимется база
+    depends_on:
+      db_migrations:
+        condition: service_completed_successfully
+    environment:
+      # Внутри сети Docker контейнеры видят друг друга по их ИМЕНАМ служб.
+      # Поэтому вместо localhost:5432 мы пишем имя сервиса базы данных: postgres_db:5432
+      DATABASE_URL: "postgres://postgres:secret@postgres_db:5432/todo_db?sslmode=disable"
+
+volumes:
+  pgdata:
