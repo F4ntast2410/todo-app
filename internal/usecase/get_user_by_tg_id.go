@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"proj/internal/usecase/entity"
+	"proj/internal/entity"
 )
 
 func (uc *UsecaseImpl) GetUserByTgID(ctx context.Context, userID int64, username string) (*entity.UserTg, error) {

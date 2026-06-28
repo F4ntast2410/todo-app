@@ -2,10 +2,10 @@ package usecase
 
 import (
 	"context"
-	"proj/internal/repository"
+	"proj/internal/entity"
 )
 
-type Task = repository.Task
+type Task = entity.Task
 
 type TaskRepository interface {
 	Save(ctx context.Context, title string, userID int, done bool) (int, error)

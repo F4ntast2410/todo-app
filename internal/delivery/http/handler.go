@@ -3,7 +3,7 @@ package handler
 import (
 	"context"
 	"log/slog"
-	"proj/internal/usecase/entity"
+	"proj/internal/entity"
 )
 
 type TaskUsecase interface {

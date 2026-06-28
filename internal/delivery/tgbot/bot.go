@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 
-	"proj/internal/usecase/entity"
+	"proj/internal/entity"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )

@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
-	"proj/internal/usecase/entity"
+	"proj/internal/entity"
 )
 
 func (uc *UsecaseImpl) CreateTask(ctx context.Context, title string, userID int) (*entity.Task, error) {
