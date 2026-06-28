@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"os"
 	"proj/internal/config"
-	"proj/internal/handler"
+	handler "proj/internal/delivery/http"
+	"proj/internal/delivery/tgbot"
 	"proj/internal/middleware"
 	"proj/internal/repository"
-	"proj/internal/tgbot"
 	"proj/internal/usecase"
 	"sync"
 
@@ -31,8 +31,8 @@ func main() {
 
 	// Инициализируем слои
 	storage := &repository.PostgresStorage{DB: db}
-	taskUsecase := &usecase.TaskUsecaseImpl{Repo: storage}
-	userUsecase := &usecase.UserUsecaseImpl{Repo: storage} // Создай пустую структуру в usecase, если еще нет
+	taskUsecase := &usecase.UsecaseImpl{TaskRepo: storage}
+	userUsecase := &usecase.UsecaseImpl{UserRepo: storage} // Создай пустую структуру в usecase, если еще нет
 	handler := &handler.TaskHandler{UC: taskUsecase, Logger: logger}
 	mux := http.NewServeMux()
 

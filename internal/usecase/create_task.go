@@ -3,19 +3,22 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"proj/internal/usecase/entity"
 )
 
-func (uc *TaskUsecaseImpl) CreateTask(ctx context.Context, title string, userID int) (*Task, error) {
+func (uc *UsecaseImpl) CreateTask(ctx context.Context, title string, userID int) (*entity.Task, error) {
 	if title == "" {
 		return nil, fmt.Errorf("название не может быть пустым")
 	}
-	t := &Task{
+	t := &entity.Task{
 		Title:  title,
 		Done:   false,
 		UserID: userID,
 	}
-	if err := uc.Repo.Save(ctx, t); err != nil {
+	id, err := uc.TaskRepo.Save(ctx, t.Title, t.UserID, t.Done)
+	if err != nil {
 		return nil, err
 	}
+	t.ID = id
 	return t, nil
 }

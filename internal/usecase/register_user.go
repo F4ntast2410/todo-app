@@ -3,30 +3,37 @@ package usecase
 import (
 	"context"
 	"errors"
-	"proj/internal/entity"
 )
 
-var ErrUserAlreadyExists = errors.New("user already exists")
+var ErrUserAlreadyExists error = errors.New("user already exists")
 
-func (uc *UserUsecaseImpl) RegisterUserWeb(ctx context.Context, user *entity.UserWeb) error {
-	exists, err := uc.Repo.ExistsWeb(ctx, user)
+func (uc *UsecaseImpl) RegisterUserWeb(ctx context.Context, email string, username string, passwordHash string) error {
+	exists, err := uc.UserRepo.ExistsWeb(ctx, email)
 	if err != nil {
 		return err
 	}
 	if exists == false {
-		return uc.Repo.CreateUserWeb(ctx, user)
+		err := uc.UserRepo.CreateUserWeb(ctx, email, username, passwordHash)
+		if err != nil {
+			return err
+		}
+		return nil
 	} else {
 		return ErrUserAlreadyExists
 	}
 }
 
-func (uc *UserUsecaseImpl) RegisterUserTg(ctx context.Context, user *entity.UserTg) error {
-	exists, err := uc.Repo.ExistsTg(ctx, user)
+func (uc *UsecaseImpl) RegisterUserTg(ctx context.Context, ID int64, username string) error {
+	exists, err := uc.UserRepo.ExistsTg(ctx, ID)
 	if err != nil {
 		return err
 	}
 	if exists == false {
-		return uc.Repo.CreateUserTg(ctx, user)
+		err := uc.UserRepo.CreateUserTg(ctx, ID, username)
+		if err != nil {
+			return err
+		}
+		return nil
 	} else {
 		return ErrUserAlreadyExists
 	}

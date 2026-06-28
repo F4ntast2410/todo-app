@@ -2,14 +2,14 @@ package repository
 
 import (
 	"context"
-	"proj/internal/entity"
 )
 
-func (s *PostgresStorage) FindByIdTg(ctx context.Context, user *entity.UserTg) error {
+func (s *PostgresStorage) FindByIdTg(ctx context.Context, userID int64) (int, error) {
 	query := `SELECT user_id FROM user_telegram WHERE tg_id = $1`
-	err := s.DB.GetContext(ctx, &user.UserID, query, user.ID)
+	var id int
+	err := s.DB.GetContext(ctx, &id, query, userID)
 	if err != nil {
-		return err
+		return -1, err
 	}
-	return nil
+	return id, nil
 }

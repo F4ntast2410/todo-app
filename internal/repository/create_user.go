@@ -2,10 +2,9 @@ package repository
 
 import (
 	"context"
-	"proj/internal/entity"
 )
 
-func (s *PostgresStorage) CreateUserWeb(ctx context.Context, user *entity.UserWeb) error {
+func (s *PostgresStorage) CreateUserWeb(ctx context.Context, email string, passwordHash string, username string) error {
 	// 1. Открываем транзакцию
 	tx, err := s.DB.BeginTxx(ctx, nil)
 	if err != nil {
@@ -18,26 +17,25 @@ func (s *PostgresStorage) CreateUserWeb(ctx context.Context, user *entity.UserWe
 	var lastInsertID int
 	queryUsers := `INSERT INTO users (username) VALUES ($1) RETURNING id`
 
-	err = tx.GetContext(ctx, &lastInsertID, queryUsers, user.Username)
+	err = tx.GetContext(ctx, &lastInsertID, queryUsers, username)
 	if err != nil {
 		return err
 	}
 
 	// 3. Вставляем в таблицу user_passwords (БЕЗ username, его там нет!)
 	queryCreds := `INSERT INTO user_passwords (user_id, email, password_hash) VALUES ($1, $2, $3)`
-	_, err = tx.ExecContext(ctx, queryCreds, lastInsertID, user.Email, user.PasswordHash)
+	_, err = tx.ExecContext(ctx, queryCreds, lastInsertID, email, passwordHash)
 	if err != nil {
 		return err
 	}
 
 	// Записываем полученный ID обратно в структуру, чтобы usecase знал его
-	user.UserID = lastInsertID
 
 	// 4. Применяем изменения, если всё прошло гладко
 	return tx.Commit()
 }
 
-func (s *PostgresStorage) CreateUserTg(ctx context.Context, user *entity.UserTg) error {
+func (s *PostgresStorage) CreateUserTg(ctx context.Context, ID int64, username string) error {
 	// 1. Открываем транзакцию
 	tx, err := s.DB.BeginTxx(ctx, nil)
 	if err != nil {
@@ -49,19 +47,17 @@ func (s *PostgresStorage) CreateUserTg(ctx context.Context, user *entity.UserTg)
 	var lastInsertID int
 	queryUsers := `INSERT INTO users (username) VALUES ($1) RETURNING id`
 
-	err = tx.GetContext(ctx, &lastInsertID, queryUsers, user.Username)
+	err = tx.GetContext(ctx, &lastInsertID, queryUsers, username)
 	if err != nil {
 		return err
 	}
 
 	// 3. Создаем запись в user_telegram
 	queryTg := `INSERT INTO user_telegram (tg_id, user_id, username) VALUES ($1, $2, $3)`
-	_, err = tx.ExecContext(ctx, queryTg, user.ID, lastInsertID, user.Username)
+	_, err = tx.ExecContext(ctx, queryTg, ID, lastInsertID, username)
 	if err != nil {
 		return err
 	}
-
-	user.UserID = lastInsertID
 
 	return tx.Commit()
 }

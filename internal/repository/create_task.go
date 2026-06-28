@@ -2,7 +2,7 @@ package repository
 
 import "context"
 
-func (s *PostgresStorage) Save(ctx context.Context, task *Task) error {
+func (s *PostgresStorage) Save(ctx context.Context, title string, userID int, done bool) (int, error) {
 	query := `INSERT INTO tasks (user_id, user_task_id, title, done) 
 VALUES (
     $1, 
@@ -11,5 +11,10 @@ VALUES (
 	$3
 ) 
 RETURNING user_task_id`
-	return s.DB.GetContext(ctx, &task.ID, query, task.UserID, task.Title, task.Done)
+	var id int
+	err := s.DB.GetContext(ctx, &id, query, userID, title, done)
+	if err != nil {
+		return -1, nil
+	}
+	return id, nil
 }
