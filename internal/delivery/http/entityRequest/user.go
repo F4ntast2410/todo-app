@@ -1,4 +1,4 @@
-package entity
+package dto
 
 import "time"
 
@@ -10,7 +10,7 @@ type User struct {
 
 type UserWeb struct {
 	UserID       int    `json:"user_id"`
-	Email        string `son:"email"`
+	Email        string `json:"email"`
 	Username     string `json:"username"`
 	PasswordHash string `json:"-"`
 }

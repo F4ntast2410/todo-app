@@ -14,7 +14,7 @@ RETURNING user_task_id`
 	var id int
 	err := s.DB.GetContext(ctx, &id, query, userID, title, done)
 	if err != nil {
-		return -1, nil
+		return -1, err
 	}
 	return id, nil
 }

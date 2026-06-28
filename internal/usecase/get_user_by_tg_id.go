@@ -5,7 +5,7 @@ import (
 	"proj/internal/entity"
 )
 
-func (uc *UsecaseImpl) GetUserByTgID(ctx context.Context, userID int64, username string) (*entity.UserTg, error) {
+func (uc *UserUsecaseImpl) GetUserByTgID(ctx context.Context, userID int64, username string) (*entity.UserTg, error) {
 	id, err := uc.UserRepo.FindByIdTg(ctx, userID)
 	if err != nil {
 		return nil, err

@@ -1,16 +1,20 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
 	"proj/internal/config"
-	handler "proj/internal/delivery/http"
+	httpHandler "proj/internal/delivery/http"
 	"proj/internal/delivery/tgbot"
 	"proj/internal/middleware"
 	"proj/internal/repository"
 	"proj/internal/usecase"
 	"sync"
+	"syscall"
+	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -31,9 +35,9 @@ func main() {
 
 	// Инициализируем слои
 	storage := &repository.PostgresStorage{DB: db}
-	taskUsecase := &usecase.UsecaseImpl{TaskRepo: storage}
-	userUsecase := &usecase.UsecaseImpl{UserRepo: storage} // Создай пустую структуру в usecase, если еще нет
-	handler := &handler.TaskHandler{UC: taskUsecase, Logger: logger}
+	taskUsecase := &usecase.TaskUsecaseImpl{TaskRepo: storage}
+	userUsecase := &usecase.UserUsecaseImpl{UserRepo: storage} // Создай пустую структуру в usecase, если еще нет
+	handler := &httpHandler.TaskHandler{UC: taskUsecase, Logger: logger}
 	mux := http.NewServeMux()
 
 	// Регистрируем твои роуты на этот mux
@@ -46,40 +50,55 @@ func main() {
 	// ОБЕРТЫВАЕМ НАШ РОУТЕР В МИДЛВАРЬ ЛОГИРОВАНИЯ
 	wrappedMux := middleware.Logger(mux)
 
-	var wg sync.WaitGroup
+	server := &http.Server{
+		Addr:    ":" + cfg.ServerPort,
+		Handler: wrappedMux,
+	}
 
-	// Указываем, что у нас будет 2 параллельных воркера
-	wg.Add(2)
-
-	// 2. Запускаем HTTP-сервер
-	go func() {
-		defer wg.Done() // Уменьшаем счетчик, когда сервер завершит работу
-
-		logger.Info("starting HTTP server", slog.String("port", cfg.ServerPort))
-		err := http.ListenAndServe(":"+cfg.ServerPort, wrappedMux)
-		if err != nil && err != http.ErrServerClosed {
-			logger.Error("HTTP server failed", slog.String("err", err.Error()))
-		}
-	}()
-
-	// 3. Инициализируем и запускаем бота
 	botServer, err := tgbot.NewBotServer(cfg.BotToken, taskUsecase, userUsecase, logger)
 	if err != nil {
 		logger.Error("failed to initialize bot", slog.String("err", err.Error()))
 		os.Exit(1)
 	}
 
-	go func() {
-		defer wg.Done() // Уменьшаем счетчик, когда бот завершит работу
+	var wg sync.WaitGroup
 
-		logger.Info("starting TG bot")
-		// Предполагаем, что твой botServer.Start() блокирует поток.
-		// Если внутри него уже есть бесконечный цикл, то этот воркер будет активен, пока бот работает.
-		botServer.Start()
+	wg.Add(2)
+
+	// Запускаем HTTP-сервер
+	go func() {
+		defer wg.Done()
+		logger.Info("starting HTTP server", slog.String("port", cfg.ServerPort))
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("HTTP server failed", slog.String("err", err.Error()))
+		}
 	}()
 
-	// 4. Главная блокировка вместо botServer.Start() в основном потоке
-	// main() будет послушно ждать здесь, пока оба счетчика (wg) не станут равны 0
+	// Запускаем бота
+	go func() {
+		defer wg.Done()
+		logger.Info("starting TG bot")
+		botServer.Start() // блокируется до вызова Stop()
+	}()
+
+	// Ждём сигнала остановки (Ctrl+C или docker stop)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logger.Info("shutdown signal received, stopping services...")
+
+	// Останавливаем бота
+	botServer.Stop()
+
+	// Останавливаем HTTP-сервер — даём 5 секунд на завершение активных запросов
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Error("HTTP server forced shutdown", slog.String("err", err.Error()))
+	}
+
+	// Ждём пока оба горутина завершатся
 	wg.Wait()
 	logger.Info("all services stopped")
 }

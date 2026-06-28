@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"proj/internal/usecase"
+	customErrors "proj/internal/errors"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
@@ -18,7 +18,7 @@ func (b *BotServer) handleStartCommand(ctx context.Context, msg *tgbotapi.Messag
 			b.send(msg.Chat.ID, "⏱️ Превышено время ожидания базы данных. Попробуйте позже.")
 			return
 		}
-		if errors.Is(err, usecase.ErrUserAlreadyExists) {
+		if errors.Is(err, customErrors.ErrUserAlreadyExists) {
 			b.send(msg.Chat.ID, "Рад видеть тебя снова! Твои задачи на месте.")
 			return
 		}

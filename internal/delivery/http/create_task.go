@@ -1,16 +1,14 @@
-package handler
+package httpHandler
 
 import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	dto "proj/internal/delivery/http/entityRequest"
 )
 
 func (h *TaskHandler) CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Title string `json:"title"`
-		ID    int    `json:"id"`
-	}
+	var req dto.CreateTaskRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
 		w.WriteHeader(http.StatusBadRequest)

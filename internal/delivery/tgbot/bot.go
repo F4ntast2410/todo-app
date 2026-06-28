@@ -68,3 +68,7 @@ func (b *BotServer) send(chatID int64, text string) {
 		b.logger.Error("failed to send message", slog.String("error", err.Error()))
 	}
 }
+
+func (b *BotServer) Stop() {
+	b.bot.StopReceivingUpdates()
+}

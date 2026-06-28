@@ -6,7 +6,7 @@ import (
 	"proj/internal/entity"
 )
 
-func (uc *UsecaseImpl) CreateTask(ctx context.Context, title string, userID int) (*entity.Task, error) {
+func (uc *TaskUsecaseImpl) CreateTask(ctx context.Context, title string, userID int) (*entity.Task, error) {
 	if title == "" {
 		return nil, fmt.Errorf("название не может быть пустым")
 	}

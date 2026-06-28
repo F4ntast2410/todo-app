@@ -12,8 +12,11 @@ type TaskRepository interface {
 	// GetByUserID(ctx context.Context, userID int64) ([]Task, error)
 }
 
-type UsecaseImpl struct {
+type TaskUsecaseImpl struct {
 	TaskRepo TaskRepository
+}
+
+type UserUsecaseImpl struct {
 	UserRepo UserRepository
 }
 
