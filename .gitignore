@@ -5,6 +5,8 @@
 *.so
 *.dylib
 cmd/app/app
+repo_to_txt.py
+repo.txt
 
 # Локальные конфиги, где могут лежать пароли от базы данных
 .env

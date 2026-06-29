@@ -8,8 +8,8 @@ import (
 type Task = entity.Task
 
 type TaskRepository interface {
-	Save(ctx context.Context, title string, userID int, done bool) (int, error)
-	// GetByUserID(ctx context.Context, userID int64) ([]Task, error)
+	Save(ctx context.Context, title string, userID int, done bool, description string) (int, error)
+	GetByUserID(ctx context.Context, userID int) ([]Task, error)
 }
 
 type TaskUsecaseImpl struct {

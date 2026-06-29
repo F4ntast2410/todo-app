@@ -11,8 +11,8 @@ import (
 
 // Определяем интерфейсы бизнес-логики, которые нужны боту
 type TaskUsecase interface {
-	CreateTask(ctx context.Context, title string, userID int) (*entity.Task, error)
-	// Сюда потом допишем GetTasksByUserID, DeleteTask и т.д.
+	CreateTask(ctx context.Context, title string, description string, userID int) (*entity.Task, error)
+	GetTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
 }
 type UserUsecase interface {
 	RegisterUserTg(ctx context.Context, ID int64, username string) error
@@ -20,10 +20,11 @@ type UserUsecase interface {
 }
 
 type BotServer struct {
-	bot    *tgbotapi.BotAPI
-	taskUC TaskUsecase
-	userUC UserUsecase
-	logger *slog.Logger
+	bot          *tgbotapi.BotAPI
+	taskUC       TaskUsecase
+	userUC       UserUsecase
+	logger       *slog.Logger
+	sessionCache *SessionCache
 }
 
 func NewBotServer(token string, taskUC TaskUsecase, userUC UserUsecase, logger *slog.Logger) (*BotServer, error) {
@@ -37,6 +38,9 @@ func NewBotServer(token string, taskUC TaskUsecase, userUC UserUsecase, logger *
 		taskUC: taskUC,
 		userUC: userUC,
 		logger: logger,
+		sessionCache: &SessionCache{
+			Cache: make(map[int64]UserSession),
+		},
 	}, nil
 }
 
@@ -53,17 +57,18 @@ func (b *BotServer) Start() {
 	// Читаем сообщения из канала в бесконечном цикле
 	for update := range updates {
 		// Игнорируем любые обновления, кроме текстовых сообщений
-		if update.Message == nil {
+		if update.CallbackQuery != nil {
+			WithLoggingCallback(b.handleCallback)(update.CallbackQuery)
 			continue
 		}
-
-		// Обрабатываем сообщение
-		WithLogging(b.handleMessage)(update.Message)
+		if update.Message != nil {
+			WithLoggingMessage(b.handleMessage)(update.Message)
+			continue
+		}
 	}
 }
 
-func (b *BotServer) send(chatID int64, text string) {
-	msg := tgbotapi.NewMessage(chatID, text)
+func (b *BotServer) Send(msg tgbotapi.Chattable) {
 	if _, err := b.bot.Send(msg); err != nil {
 		b.logger.Error("failed to send message", slog.String("error", err.Error()))
 	}

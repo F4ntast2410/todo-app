@@ -65,12 +65,16 @@ func main() {
 
 	wg.Add(2)
 
+	// Канал для аварийных ошибок — буфер 2, чтобы обе горутины могли записать не блокируясь
+	fatalErr := make(chan error, 2)
+
 	// Запускаем HTTP-сервер
 	go func() {
 		defer wg.Done()
 		logger.Info("starting HTTP server", slog.String("port", cfg.ServerPort))
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("HTTP server failed", slog.String("err", err.Error()))
+			fatalErr <- err // сообщаем об аварии
 		}
 	}()
 
@@ -78,27 +82,31 @@ func main() {
 	go func() {
 		defer wg.Done()
 		logger.Info("starting TG bot")
-		botServer.Start() // блокируется до вызова Stop()
+		botServer.Start()
 	}()
 
 	// Ждём сигнала остановки (Ctrl+C или docker stop)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
 
-	logger.Info("shutdown signal received, stopping services...")
+	// Ждём: либо сигнал от ОС, либо авария одного из сервисов
+	select {
+	case sig := <-quit:
+		logger.Info("shutdown signal received", slog.String("signal", sig.String()))
+	case err := <-fatalErr:
+		logger.Error("fatal error, initiating shutdown", slog.String("err", err.Error()))
+	}
 
-	// Останавливаем бота
+	// Дальше — тот же код остановки
+	logger.Info("stopping services...")
 	botServer.Stop()
 
-	// Останавливаем HTTP-сервер — даём 5 секунд на завершение активных запросов
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := server.Shutdown(ctx); err != nil {
 		logger.Error("HTTP server forced shutdown", slog.String("err", err.Error()))
 	}
 
-	// Ждём пока оба горутина завершатся
 	wg.Wait()
 	logger.Info("all services stopped")
 }

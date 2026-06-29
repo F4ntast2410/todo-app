@@ -7,7 +7,7 @@ import (
 )
 
 type TaskUsecase interface {
-	CreateTask(ctx context.Context, title string, userID int) (*entity.Task, error)
+	CreateTask(ctx context.Context, title string, description string, userID int) (*entity.Task, error)
 }
 
 type TaskHandler struct {

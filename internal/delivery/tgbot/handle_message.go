@@ -6,11 +6,24 @@ import (
 
 func (b *BotServer) handleMessage(msg *tgbotapi.Message) {
 	// Если это команда (начинается со слэша /)
+	message := tgbotapi.NewMessage(msg.Chat.ID, "")
 	if msg.IsCommand() {
 		b.handleCommand(msg)
 		return
 	}
 
 	// Если это обычный текст (создание задачи)
-	b.handleTaskCreation(msg)
+	b.sessionCache.Mu.RLock()
+	state := b.sessionCache.Cache[msg.From.ID].State
+	b.sessionCache.Mu.RUnlock()
+
+	switch state {
+	case StateWaitingTaskTitle:
+		b.handleGetTitleMessage(msg)
+	case StateWaitingTaskDescription:
+		b.handleTaskCreation(msg)
+	default:
+		message.Text = "Неизвестная команда 🤔"
+		b.Send(message)
+	}
 }

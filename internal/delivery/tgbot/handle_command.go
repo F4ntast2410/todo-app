@@ -11,13 +11,17 @@ import (
 func (b *BotServer) handleCommand(msg *tgbotapi.Message) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-
+	message := tgbotapi.NewMessage(msg.Chat.ID, "")
 	switch msg.Command() {
 	case "start":
 		b.handleStartCommand(ctx, msg)
 	case "help":
-		b.send(msg.Chat.ID, "Доступные команды:\n/start - Регистрация\n/list - Мои задачи")
+		message.Text = "Доступные команды:\n/start - Регистрация\n/list - Мои задачи"
+		b.Send(message)
+	case "list":
+		b.handleTaskList(ctx, msg)
 	default:
-		b.send(msg.Chat.ID, "Неизвестная команда 🤔")
+		message.Text = "Неизвестная команда 🤔"
+		b.Send(message)
 	}
 }

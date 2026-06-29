@@ -15,7 +15,7 @@ func (h *TaskHandler) CreateTaskHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	t, err := h.UC.CreateTask(r.Context(), req.Title, req.ID)
+	t, err := h.UC.CreateTask(r.Context(), req.Title, req.Description, req.ID)
 	if err != nil {
 		h.Logger.Error("failed to create new task", slog.String("error", err.Error()), slog.String("attempted_title", req.Title))
 		w.WriteHeader(http.StatusBadRequest)

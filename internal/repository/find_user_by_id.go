@@ -9,7 +9,7 @@ func (s *PostgresStorage) FindByIdTg(ctx context.Context, userID int64) (int, er
 	var id int
 	err := s.DB.GetContext(ctx, &id, query, userID)
 	if err != nil {
-		return -1, err
+		return 0, err
 	}
 	return id, nil
 }
