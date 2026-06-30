@@ -8,11 +8,13 @@ const (
 	StateIdle UserState = iota
 	StateWaitingTaskTitle
 	StateWaitingTaskDescription
+	StateWaitingNewTaskDescription
 )
 
 type UserSession struct {
 	State     UserState
 	TaskTitle string
+	TaskID    int
 }
 
 type SessionCache struct {

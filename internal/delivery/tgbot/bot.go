@@ -3,6 +3,7 @@ package tgbot
 import (
 	"context"
 	"log/slog"
+	"strings"
 
 	"proj/internal/entity"
 
@@ -13,6 +14,11 @@ import (
 type TaskUsecase interface {
 	CreateTask(ctx context.Context, title string, description string, userID int) (*entity.Task, error)
 	GetTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
+	GetTask(ctx context.Context, taskID int) (*entity.Task, error)
+	DeleteTask(ctx context.Context, id int) error
+	RecoverTask(ctx context.Context, id int) error
+	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
+	MarkAsDone(ctx context.Context, id int, status bool) error
 }
 type UserUsecase interface {
 	RegisterUserTg(ctx context.Context, ID int64, username string) error
@@ -70,6 +76,9 @@ func (b *BotServer) Start() {
 
 func (b *BotServer) Send(msg tgbotapi.Chattable) {
 	if _, err := b.bot.Send(msg); err != nil {
+		if strings.Contains(err.Error(), "message is not modified") {
+			return // ничего страшного, просто пропускаем
+		}
 		b.logger.Error("failed to send message", slog.String("error", err.Error()))
 	}
 }

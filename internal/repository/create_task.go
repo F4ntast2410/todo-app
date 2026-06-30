@@ -11,7 +11,7 @@ VALUES (
 	$3,
 	$4
 ) 
-RETURNING user_task_id`
+RETURNING id`
 	var id int
 	err := s.DB.GetContext(ctx, &id, query, userID, title, done, description)
 	if err != nil {

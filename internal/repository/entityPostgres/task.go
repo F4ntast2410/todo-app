@@ -15,11 +15,13 @@ type Task struct {
 	Description string     `db:"description"`
 }
 
-func (t Task) ToTask() entity.Task {
+func (t Task) ToEntitiy() entity.Task {
 	return entity.Task{
+		ID:          t.ID,
 		Title:       t.Title,
 		UserID:      t.UserID,
 		Done:        t.Done,
 		Description: t.Description,
+		DeletedAt:   t.DeletedAt,
 	}
 }

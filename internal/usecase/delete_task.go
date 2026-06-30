@@ -1,13 +1,13 @@
 package usecase
 
-// import (
-// 	"context"
-// 	"fmt"
-// )
+import (
+	"context"
+)
 
-// func (uc *TaskUsecaseImpl) DeleteTask(ctx context.Context, id int) error {
-// 	if id <= 0 {
-// 		return fmt.Errorf("некорректный ID для удаления")
-// 	}
-// 	return uc.Repo.Delete(ctx, id)
-// }
+func (uc *TaskUsecaseImpl) DeleteTask(ctx context.Context, id int) error {
+	return uc.TaskRepo.Delete(ctx, id)
+}
+
+func (uc *TaskUsecaseImpl) RecoverTask(ctx context.Context, id int) error {
+	return uc.TaskRepo.Recover(ctx, id)
+}

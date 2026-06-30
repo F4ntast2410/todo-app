@@ -5,15 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-func (b *BotServer) handleTaskCreation(msg *tgbotapi.Message) {
-	// Создаем контекст с таймаутом на 5 секунд
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel() // Обязательно освобождаем ресурсы!
+func (b *BotServer) handleTaskCreation(ctx context.Context, msg *tgbotapi.Message) {
 	message := tgbotapi.NewMessage(msg.Chat.ID, "")
 
 	taskDescription := msg.Text
@@ -54,18 +50,28 @@ func (b *BotServer) handleTaskCreation(msg *tgbotapi.Message) {
 		b.logger.Error("failed to create task", slog.String("error", err.Error()))
 		return
 	}
-	message.Text = fmt.Sprintf("✅ Задача №%d создана!", task.ID)
-	b.Send(message)
+	b.sendTaskViewMessage(ctx, msg, task.ID)
 }
 
 func (b *BotServer) handleGetTitleMessage(msg *tgbotapi.Message) {
+	message := tgbotapi.NewMessage(msg.From.ID, "Опишите задачу: ")
+	maxLen := 40
+	if len(msg.Text) > maxLen {
+		message.Text = fmt.Sprintf("Размер названия задачи не должен превышать %d символов", maxLen)
+		b.Send(message)
+		b.sessionCache.Mu.Lock()
+		session := b.sessionCache.Cache[msg.From.ID]
+		session.State = StateIdle
+		b.sessionCache.Cache[msg.From.ID] = session
+		b.sessionCache.Mu.Unlock()
+		return
+	}
 	b.sessionCache.Mu.Lock()
 	session := b.sessionCache.Cache[msg.From.ID]
 	session.TaskTitle = msg.Text
 	session.State = StateWaitingTaskDescription
 	b.sessionCache.Cache[msg.From.ID] = session
 	b.sessionCache.Mu.Unlock()
-	message := tgbotapi.NewMessage(msg.From.ID, "Опишите задачу: ")
 	b.Send(message)
 
 }

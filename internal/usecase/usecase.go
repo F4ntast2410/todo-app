@@ -9,7 +9,12 @@ type Task = entity.Task
 
 type TaskRepository interface {
 	Save(ctx context.Context, title string, userID int, done bool, description string) (int, error)
-	GetByUserID(ctx context.Context, userID int) ([]Task, error)
+	GetAllTasksByUserID(ctx context.Context, userID int) ([]Task, error)
+	GetTask(ctx context.Context, taskID int) (*Task, error)
+	Delete(ctx context.Context, id int) error
+	Recover(ctx context.Context, id int) error
+	UpdateStatus(ctx context.Context, id int, status bool) error
+	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
 }
 
 type TaskUsecaseImpl struct {
