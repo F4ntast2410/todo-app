@@ -28,5 +28,5 @@ func (h *TaskHandler) TrashListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(tasks)
+	json.NewEncoder(w).Encode(req_tasks)
 }

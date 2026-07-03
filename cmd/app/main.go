@@ -42,10 +42,10 @@ func main() {
 
 	// Регистрируем твои роуты на этот mux
 	mux.HandleFunc("POST /tasks", handler.CreateTaskHandler)
-	// mux.HandleFunc("PUT /tasks/{id}", handler.UpdateTaskHandler)
-	// mux.HandleFunc("DELETE /tasks/{id}", handler.DeleteTaskHandler)
-	// Допустим, у тебя есть еще GET /tasks
-	// mux.HandleFunc("GET /tasks", handler.GetTasksHandler)
+	mux.HandleFunc("PUT /tasks/{id}", handler.UpdateTaskHandler)
+	mux.HandleFunc("DELETE /tasks/{id}", handler.DeleteTaskHandler)
+	mux.HandleFunc("GET /tasks/{id}", handler.TaskListHandler)
+	mux.HandleFunc("GET /tasks/trash/{id}", handler.TrashListHandler)
 
 	// ОБЕРТЫВАЕМ НАШ РОУТЕР В МИДЛВАРЬ ЛОГИРОВАНИЯ
 	wrappedMux := middleware.Logger(mux)

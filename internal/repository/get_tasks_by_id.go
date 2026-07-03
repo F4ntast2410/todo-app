@@ -9,7 +9,7 @@ func (s *PostgresStorage) GetAllTasksByUserID(ctx context.Context, userID int) (
 	var tasks []Task
 
 	// Выбираем только те задачи, которые принадлежат конкретному ТГ-чату
-	query := `SELECT id, title, done, user_id FROM tasks WHERE user_id = $1 AND deleted_at IS NULL ORDER BY user_task_id`
+	query := `SELECT id, title, done, user_id, description, user_task_id FROM tasks WHERE user_id = $1 AND deleted_at IS NULL ORDER BY user_task_id`
 
 	err := s.DB.SelectContext(ctx, &tasks, query, userID)
 	if err != nil {
@@ -39,7 +39,7 @@ func (s *PostgresStorage) GetDeleteTasksByUserID(ctx context.Context, userID int
 	var tasks []Task
 
 	// Выбираем только те задачи, которые принадлежат конкретному ТГ-чату
-	query := `SELECT id, title, done, user_id FROM tasks WHERE user_id = $1 AND deleted_at IS NOT NULL ORDER BY user_task_id`
+	query := `SELECT id, title, done, user_id, description, deleted_at, user_task_id FROM tasks WHERE user_id = $1 AND deleted_at IS NOT NULL ORDER BY user_task_id`
 
 	err := s.DB.SelectContext(ctx, &tasks, query, userID)
 	if err != nil {

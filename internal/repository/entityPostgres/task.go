@@ -23,5 +23,6 @@ func (t Task) ToEntitiy() entity.Task {
 		Done:        t.Done,
 		Description: t.Description,
 		DeletedAt:   t.DeletedAt,
+		UserTaskId:  t.UserTaskId,
 	}
 }

@@ -31,9 +31,9 @@ func (h *TaskHandler) UpdateTaskHandler(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 	if req.Done != nil {
-		err := h.UC.MarkAsDone(r.Context(), req.ID, *req.Done)
+		err := h.UC.MarkAsDone(r.Context(), id, *req.Done)
 		if err != nil {
-			h.Logger.Error("server can't update task with id", slog.Int("id", req.ID))
+			h.Logger.Error("server can't update task with id", slog.Int("id", req.UserID))
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
