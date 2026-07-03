@@ -6,12 +6,15 @@ import (
 )
 
 type CreateTaskRequest struct {
-	UserID      int        `json:"user_id"`
 	Title       *string    `json:"title"`
 	Done        *bool      `json:"done"`
 	Description *string    `json:"description"`
 	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
 	UserTaskId  int        `json:"user_task_id"`
+}
+type UpdateTaskRequest struct {
+	Description *string `json:"description"`
+	Done        *bool   `json:"done"`
 }
 
 func (r CreateTaskRequest) ToEntity(userID int) entity.Task {
@@ -22,7 +25,6 @@ func (r CreateTaskRequest) ToEntity(userID int) entity.Task {
 	}
 }
 func (r *CreateTaskRequest) ToRequest(t *entity.Task) {
-	r.UserID = t.UserID
 	r.Title = &t.Title
 	r.Done = &t.Done
 	r.Description = &t.Description

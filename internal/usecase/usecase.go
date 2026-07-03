@@ -12,6 +12,7 @@ type TaskRepository interface {
 	GetAllTasksByUserID(ctx context.Context, userID int) ([]Task, error)
 	GetDeleteTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
 	GetTask(ctx context.Context, taskID int) (*Task, error)
+	GetTaskByUserID(ctx context.Context, userID int, user_task_id int) (int, error)
 	Delete(ctx context.Context, id int) error
 	Recover(ctx context.Context, id int) error
 	UpdateStatus(ctx context.Context, id int, status bool) error
@@ -32,4 +33,7 @@ type UserRepository interface {
 	ExistsWeb(ctx context.Context, email string) (bool, error)
 	ExistsTg(ctx context.Context, ID int64) (bool, error)
 	FindByIdTg(ctx context.Context, userID int64) (int, error)
+	FindByEmail(ctx context.Context, email string) (*entity.UserWeb, error)
+	CreateSession(ctx context.Context, userID int) (string, error)
+	FindUserIDBySession(ctx context.Context, sessionID string) (int, error)
 }

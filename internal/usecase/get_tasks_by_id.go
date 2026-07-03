@@ -30,3 +30,12 @@ func (uc *TaskUsecaseImpl) GetRemovedTasksByUserID(ctx context.Context, userID i
 	return tasks, nil
 
 }
+
+func (uc *TaskUsecaseImpl) GetTaskByUserID(ctx context.Context, userID int, user_task_id int) (int, error) {
+	id, err := uc.TaskRepo.GetTaskByUserID(ctx, userID, user_task_id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+
+}

@@ -7,7 +7,7 @@ import (
 func (s *PostgresStorage) ExistsWeb(ctx context.Context, email string) (bool, error) {
 	var exists bool
 
-	query := `SELECT EXISTS(SELECT 1 FROM user_password WHERE email = $1)`
+	query := `SELECT EXISTS(SELECT 1 FROM user_passwords WHERE email = $1)`
 
 	// Используем GetContext, так как запрос ВСЕГДА возвращает ровно одну строку с true/false
 	err := s.DB.GetContext(ctx, &exists, query, email)

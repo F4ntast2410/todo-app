@@ -20,6 +20,6 @@ func (uc *TaskUsecaseImpl) CreateTask(ctx context.Context, title string, descrip
 	if err != nil {
 		return nil, err
 	}
-	t.ID = id
+	t.UserTaskId = id
 	return t, nil
 }

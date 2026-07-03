@@ -5,18 +5,16 @@ import (
 	"log/slog"
 	"net/http"
 	dto "proj/internal/delivery/http/entityRequest"
-	"strconv"
+	"proj/internal/delivery/http/middleware"
 )
 
 func (h *TaskHandler) TaskListHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := r.PathValue("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		h.Logger.Warn("incorrect id", slog.String("id", idStr))
-		w.WriteHeader(http.StatusBadRequest)
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	tasks, err := h.UC.GetTasksByUserID(r.Context(), id)
+	tasks, err := h.TaskUC.GetTasksByUserID(r.Context(), userID)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		h.Logger.Error("server can't get tasks", slog.String("error", err.Error()))
@@ -27,6 +25,6 @@ func (h *TaskHandler) TaskListHandler(w http.ResponseWriter, r *http.Request) {
 		req_tasks[i].ToRequest(&t)
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(tasks)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(req_tasks)
 }

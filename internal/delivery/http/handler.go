@@ -14,10 +14,20 @@ type TaskUsecase interface {
 	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
 	GetTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
 	GetTask(ctx context.Context, taskID int) (*entity.Task, error)
+	GetTaskByUserID(ctx context.Context, userID int, user_task_id int) (int, error)
 	GetRemovedTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
+}
+type UserUsecase interface {
+	RegisterUserWeb(ctx context.Context, email, username, password string) error
+	LoginUserWeb(ctx context.Context, email, password string) (string, error)
+	GetUserIDBySession(ctx context.Context, sessionID string) (int, error)
 }
 
 type TaskHandler struct {
-	UC     TaskUsecase
+	TaskUC TaskUsecase
+	Logger *slog.Logger
+}
+type UserHandler struct {
+	UserUC UserUsecase
 	Logger *slog.Logger
 }

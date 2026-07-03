@@ -8,11 +8,14 @@ type User struct {
 	CreatedAt time.Time `json:"-"`
 }
 
-type UserWeb struct {
-	UserID       int    `json:"user_id"`
-	Email        string `json:"email"`
-	Username     string `json:"username"`
-	PasswordHash string `json:"-"`
+type RegisterRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"` // сырой пароль, только для входа
+}
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"` // сырой пароль, только для входа
 }
 
 type UserTg struct {

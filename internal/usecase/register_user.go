@@ -3,15 +3,21 @@ package usecase
 import (
 	"context"
 	customErrors "proj/internal/errors"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
-func (uc *UserUsecaseImpl) RegisterUserWeb(ctx context.Context, email string, username string, passwordHash string) error {
+func (uc *UserUsecaseImpl) RegisterUserWeb(ctx context.Context, email, username, password string) error {
 	exists, err := uc.UserRepo.ExistsWeb(ctx, email)
 	if err != nil {
 		return err
 	}
-	if exists == false {
-		err := uc.UserRepo.CreateUserWeb(ctx, email, username, passwordHash)
+	if !exists {
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		err = uc.UserRepo.CreateUserWeb(ctx, email, string(passwordHash), username)
 		if err != nil {
 			return err
 		}
@@ -26,7 +32,7 @@ func (uc *UserUsecaseImpl) RegisterUserTg(ctx context.Context, ID int64, usernam
 	if err != nil {
 		return err
 	}
-	if exists == false {
+	if !exists {
 		err := uc.UserRepo.CreateUserTg(ctx, ID, username)
 		if err != nil {
 			return err

@@ -1,6 +1,9 @@
 package pgmodel
 
-import "time"
+import (
+	"proj/internal/entity"
+	"time"
+)
 
 type User struct {
 	ID        int       `db:"id"`
@@ -19,4 +22,13 @@ type UserTg struct {
 	ID       int64  `db:"tg_id"`
 	Username string `db:"username"`
 	UserID   int    `db:"user_id"`
+}
+
+func (u UserWeb) ToEntitiy() entity.UserWeb {
+	return entity.UserWeb{
+		UserID:       u.UserID,
+		Email:        u.Email,
+		Username:     u.Username,
+		PasswordHash: u.PasswordHash,
+	}
 }

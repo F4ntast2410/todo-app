@@ -37,19 +37,24 @@ func main() {
 	storage := &repository.PostgresStorage{DB: db}
 	taskUsecase := &usecase.TaskUsecaseImpl{TaskRepo: storage}
 	userUsecase := &usecase.UserUsecaseImpl{UserRepo: storage} // Создай пустую структуру в usecase, если еще нет
-	handler := &httpHandler.TaskHandler{UC: taskUsecase, Logger: logger}
-	mux := http.NewServeMux()
+	taskHandler := &httpHandler.TaskHandler{TaskUC: taskUsecase, Logger: logger}
+	userHandler := &httpHandler.UserHandler{UserUC: userUsecase, Logger: logger}
 
+	taskMux := http.NewServeMux()
+	authMiddleware := middleware.Auth(userUsecase)
 	// Регистрируем твои роуты на этот mux
-	mux.HandleFunc("POST /tasks", handler.CreateTaskHandler)
-	mux.HandleFunc("PUT /tasks/{id}", handler.UpdateTaskHandler)
-	mux.HandleFunc("DELETE /tasks/{id}", handler.DeleteTaskHandler)
-	mux.HandleFunc("GET /tasks/{id}", handler.TaskListHandler)
-	mux.HandleFunc("GET /tasks/trash/{id}", handler.TrashListHandler)
+	taskMux.HandleFunc("POST /tasks", taskHandler.CreateTaskHandler)
+	taskMux.HandleFunc("PUT /tasks/{id}", taskHandler.UpdateTaskHandler)
+	taskMux.HandleFunc("DELETE /tasks/{id}", taskHandler.DeleteTaskHandler)
+	taskMux.HandleFunc("GET /tasks/", taskHandler.TaskListHandler)
+	taskMux.HandleFunc("GET /tasks/trash", taskHandler.TrashListHandler)
 
-	// ОБЕРТЫВАЕМ НАШ РОУТЕР В МИДЛВАРЬ ЛОГИРОВАНИЯ
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /auth/register", userHandler.RegisterHandler)
+	mux.HandleFunc("POST /auth/login", userHandler.LoginHandler)
+	mux.Handle("/", authMiddleware(taskMux))
+
 	wrappedMux := middleware.Logger(mux)
-
 	server := &http.Server{
 		Addr:    ":" + cfg.ServerPort,
 		Handler: wrappedMux,

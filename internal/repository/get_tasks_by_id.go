@@ -51,3 +51,14 @@ func (s *PostgresStorage) GetDeleteTasksByUserID(ctx context.Context, userID int
 	}
 	return entityTasks, err
 }
+
+func (s *PostgresStorage) GetTaskByUserID(ctx context.Context, userID int, user_task_id int) (int, error) {
+
+	query := `SELECT id FROM tasks WHERE user_id = $1 AND user_task_id = $2`
+	var id int
+	err := s.DB.GetContext(ctx, &id, query, userID, user_task_id)
+	if err != nil {
+		return 0, err
+	}
+	return id, err
+}
