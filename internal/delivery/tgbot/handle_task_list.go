@@ -2,6 +2,7 @@ package tgbot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -11,6 +12,14 @@ import (
 func (b *BotServer) handleTaskList(ctx context.Context, userID int) (string, tgbotapi.InlineKeyboardMarkup) {
 	tasks, err := b.taskUC.GetTasksByUserID(ctx, userID)
 	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			return "⚠️ База данных не ответила вовремя. Попробуйте еще раз.", tgbotapi.NewInlineKeyboardMarkup(
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("Назад", "back_to_list"),
+				),
+			)
+		}
 		b.logger.Error("error getting task", slog.String("error", err.Error()))
 		return "⚠️ Задача не найдена", tgbotapi.NewInlineKeyboardMarkup(
 			tgbotapi.NewInlineKeyboardRow(
@@ -28,7 +37,8 @@ func (b *BotServer) handleTaskList(ctx context.Context, userID int) (string, tgb
 		btn := tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%s %s\n", t.Title, done), fmt.Sprintf("task_view:%d", t.ID))
 		rows = append(rows, tgbotapi.NewInlineKeyboardRow(btn))
 	}
-	rows = append(rows, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Добавить задачу", "create_task_step")))
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Добавить задачу📝", "create_task_step")))
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Корзина🗑️", "trash_list")))
 	return text, tgbotapi.NewInlineKeyboardMarkup(rows...)
 }
 
@@ -65,33 +75,33 @@ func (b *BotServer) handleTaskView(ctx context.Context, taskID int) (string, tgb
 			),
 		)
 	}
-	var done string
-	var rev_done_text string
-	var isdeleted string
-	var delQuery string
+	var status string
+	var status_text string
+	var status_delete string
+	var status_delete_query string
 	switch task.Done {
 	case true:
-		done = "✅"
-		rev_done_text = "невыполненным"
+		status = "✅"
+		status_text = "Отметить невыполненным❌️"
 	case false:
-		done = "❌️"
-		rev_done_text = "выполненным"
+		status = "❌️"
+		status_text = "Отметить выполненным✅"
 	}
 	if task.DeletedAt == nil {
-		isdeleted = "Удалить задачу"
-		delQuery = "delete_task"
+		status_delete = "Удалить задачу⛔"
+		status_delete_query = "delete_task"
 	} else {
-		isdeleted = "Восстановить задачу"
-		delQuery = "recover_task"
+		status_delete = "Восстановить задачу🔄"
+		status_delete_query = "recover_task"
 	}
-	text := fmt.Sprintf("Заголовок: %s\nСтатус выполнения: %s\nОписание: %s", task.Title, done, task.Description)
+	text := fmt.Sprintf("Заголовок: %s\nСтатус выполнения: %s\nОписание: %s", task.Title, status, task.Description)
 	keyboardMarkup := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("Отметить %s", rev_done_text), fmt.Sprintf("mark_as_done:%d", taskID)),
-			tgbotapi.NewInlineKeyboardButtonData(isdeleted, fmt.Sprintf("%s:%d", delQuery, taskID)),
+			tgbotapi.NewInlineKeyboardButtonData(status_text, fmt.Sprintf("mark_as_done:%d", taskID)),
+			tgbotapi.NewInlineKeyboardButtonData(status_delete, fmt.Sprintf("%s:%d", status_delete_query, taskID)),
 		),
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Редактировать описание", fmt.Sprintf("update_description:%d", taskID)),
+			tgbotapi.NewInlineKeyboardButtonData("Редактировать описание✏️", fmt.Sprintf("update_description:%d", taskID)),
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("Назад", "back_to_list"),

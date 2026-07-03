@@ -2,6 +2,7 @@ package tgbot
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -29,6 +30,12 @@ func (b *BotServer) handlerUpdateDecription(ctx context.Context, msg *tgbotapi.M
 	newDesc := msg.Text
 	err := b.taskUC.UpdateDescription(ctx, taskID, newDesc)
 	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			message := tgbotapi.NewMessage(msg.From.ID, "⚠️ База данных не ответила вовремя. Попробуйте еще раз.")
+			b.Send(message)
+			return
+		}
 		b.logger.Error("error updating task", slog.String("error: ", err.Error()))
 		return
 	}

@@ -55,7 +55,7 @@ func (b *BotServer) handleTaskCreation(ctx context.Context, msg *tgbotapi.Messag
 
 func (b *BotServer) handleGetTitleMessage(msg *tgbotapi.Message) {
 	message := tgbotapi.NewMessage(msg.From.ID, "Опишите задачу: ")
-	maxLen := 40
+	maxLen := 70
 	if len(msg.Text) > maxLen {
 		message.Text = fmt.Sprintf("Размер названия задачи не должен превышать %d символов", maxLen)
 		b.Send(message)

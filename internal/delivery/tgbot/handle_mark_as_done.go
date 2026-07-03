@@ -2,6 +2,7 @@ package tgbot
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -10,6 +11,12 @@ import (
 func (b *BotServer) handlerMarkAsDone(ctx context.Context, query *tgbotapi.CallbackQuery, taskID int) {
 	task, err := b.taskUC.GetTask(ctx, taskID)
 	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			message := tgbotapi.NewMessage(query.From.ID, "⚠️ База данных не ответила вовремя. Попробуйте еще раз.")
+			b.Send(message)
+			return
+		}
 		b.logger.Error("error getting task", slog.String("error: ", err.Error()))
 		return
 	}
@@ -20,6 +27,12 @@ func (b *BotServer) handlerMarkAsDone(ctx context.Context, query *tgbotapi.Callb
 		err = b.taskUC.MarkAsDone(ctx, taskID, true)
 	}
 	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			message := tgbotapi.NewMessage(query.From.ID, "⚠️ База данных не ответила вовремя. Попробуйте еще раз.")
+			b.Send(message)
+			return
+		}
 		b.logger.Error("error marking task as done", slog.String("error", err.Error()))
 		return
 	}

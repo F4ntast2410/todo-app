@@ -10,6 +10,7 @@ type Task = entity.Task
 type TaskRepository interface {
 	Save(ctx context.Context, title string, userID int, done bool, description string) (int, error)
 	GetAllTasksByUserID(ctx context.Context, userID int) ([]Task, error)
+	GetDeleteTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
 	GetTask(ctx context.Context, taskID int) (*Task, error)
 	Delete(ctx context.Context, id int) error
 	Recover(ctx context.Context, id int) error

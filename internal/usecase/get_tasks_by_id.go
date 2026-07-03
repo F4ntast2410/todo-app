@@ -21,3 +21,12 @@ func (uc *TaskUsecaseImpl) GetTask(ctx context.Context, taskID int) (*Task, erro
 	return task, nil
 
 }
+
+func (uc *TaskUsecaseImpl) GetRemovedTasksByUserID(ctx context.Context, userID int) ([]Task, error) {
+	tasks, err := uc.TaskRepo.GetDeleteTasksByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+
+}

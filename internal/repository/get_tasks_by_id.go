@@ -34,3 +34,20 @@ func (s *PostgresStorage) GetTask(ctx context.Context, taskID int) (*entity.Task
 	entityTask := task.ToEntitiy()
 	return &entityTask, err
 }
+
+func (s *PostgresStorage) GetDeleteTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error) {
+	var tasks []Task
+
+	// Выбираем только те задачи, которые принадлежат конкретному ТГ-чату
+	query := `SELECT id, title, done, user_id FROM tasks WHERE user_id = $1 AND deleted_at IS NOT NULL ORDER BY user_task_id`
+
+	err := s.DB.SelectContext(ctx, &tasks, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	var entityTasks []entity.Task
+	for _, task := range tasks {
+		entityTasks = append(entityTasks, task.ToEntitiy())
+	}
+	return entityTasks, err
+}

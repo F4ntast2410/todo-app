@@ -55,5 +55,7 @@ func (b *BotServer) handleCallback(query *tgbotapi.CallbackQuery) {
 			return
 		}
 		b.handlerUpdateDecriptionCallback(query, taskID)
+	case "trash_list":
+		b.handleTrashList(ctx, query)
 	}
 }
