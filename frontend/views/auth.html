@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App - Авторизация</title>
+    <link rel="stylesheet" href="/assets/css/auth.css">
+    <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- ID для динамической смены заголовка -->
+            <h1 id="auth-title">Войти в аккаунт</h1> 
+            
+            <form id="auth-form">
+                <!-- Группа Username, по умолчанию скрыта через класс hidden -->
+                <div class="form-group hidden" id="username-group">
+                    <label for="username">Имя пользователя</label>
+                    <input type="text" id="username" placeholder="Введите ваше имя">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="marisov96@mail.ru">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" required placeholder="••••••">
+                </div>
+
+                <!-- Контейнер для вывода ошибок -->
+                <div id="error-message" class="error-text hidden"></div>
+
+                <!-- ID для динамической смены текста кнопки -->
+                <button type="submit" id="submit-btn">Войти</button>
+            </form>
+
+            <!-- Ссылка-переключатель -->
+            <div class="auth-toggle">
+                <a href="#" id="toggle-mode-link">Нет аккаунта? Зарегистрироваться</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/views/auth.js"></script>
+</body>
+</html>

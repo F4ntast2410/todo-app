@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель задач - Todo App</title>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <!-- Шапка с профилем -->
+        <header class="dashboard-header">
+            <div class="user-info">
+                <span class="avatar">👤</span>
+                <span id="username-display">Загрузка...</span>
+            </div>
+            <button id="logout-btn" class="btn-secondary">Выйти</button>
+        </header>
+
+        <!-- Основной контент -->
+        <main class="main-content">
+            
+           <section class="task-form-section">
+                <form id="add-task-form" class="task-form">
+                    <div class="form-group">
+                        <input 
+                            type="text" 
+                            id="task-title-input" 
+                            placeholder="Что нужно сделать?" 
+                            required 
+                            autocomplete="off"
+                        >
+                        <textarea 
+                            id="task-desc-input" 
+                            placeholder="Добавить описание к задаче..." 
+                            rows="2"
+                        ></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Добавить</button>
+                </form>
+            </section>
+
+            <!-- Список задач -->
+            <section class="tasks-list-section">
+                <h2>Мои задачи</h2>
+                <div class="tabs-navigation">
+                    <button class="tab-btn active" id="btn-tab-active">Активные</button>
+                    <button class="tab-btn" id="btn-tab-trash">Корзина</button>
+                </div>
+                <div id="tasks-container" class="tasks-container">
+                    <!-- Сюда JS будет рендерить карточки тасок -->
+                    <p class="loading-text">Загрузка списка задач...</p>
+                </div>
+                <div id="trash-container" class="tasks-container hidden">
+                    <p class="loading-text">Загрузка корзины...</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module" src="/src/views/dashboard.js"></script>
+</body>
+</html>

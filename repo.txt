@@ -1,0 +1,3295 @@
+## Directory Structure
+
+└── GoProjects/
+    ├── backend
+    │   ├── cmd
+    │   │   └── app
+    │   │       └── main.go
+    │   ├── internal
+    │   │   ├── config
+    │   │   │   └── config.go
+    │   │   ├── delivery
+    │   │   │   ├── http
+    │   │   │   │   ├── entityRequest
+    │   │   │   │   │   ├── task.go
+    │   │   │   │   │   └── user.go
+    │   │   │   │   ├── middleware
+    │   │   │   │   │   ├── auth.go
+    │   │   │   │   │   └── logger.go
+    │   │   │   │   ├── handle_create_task.go
+    │   │   │   │   ├── handle_delete_task.go
+    │   │   │   │   ├── handle_get_user.go
+    │   │   │   │   ├── handle_login_user.go
+    │   │   │   │   ├── handle_register_user.go
+    │   │   │   │   ├── handle_task_list.go
+    │   │   │   │   ├── handle_trash_list.go
+    │   │   │   │   ├── handle_update_task.go
+    │   │   │   │   └── handler.go
+    │   │   │   └── tgbot
+    │   │   │       ├── bot.go
+    │   │   │       ├── handle_callback.go
+    │   │   │       ├── handle_command.go
+    │   │   │       ├── handle_create_task.go
+    │   │   │       ├── handle_delete_task.go
+    │   │   │       ├── handle_mark_as_done.go
+    │   │   │       ├── handle_message.go
+    │   │   │       ├── handle_start_command.go
+    │   │   │       ├── handle_task_list.go
+    │   │   │       ├── handle_trash_list.go
+    │   │   │       ├── hanlde_update_task.go
+    │   │   │       ├── middleware.go
+    │   │   │       └── session.go
+    │   │   ├── entity
+    │   │   │   ├── auth.go
+    │   │   │   ├── task.go
+    │   │   │   └── user.go
+    │   │   ├── errors
+    │   │   │   ├── redis_nil.go
+    │   │   │   └── user_exists.go
+    │   │   ├── repository
+    │   │   │   ├── postgres
+    │   │   │   │   ├── entityPostgres
+    │   │   │   │   │   ├── task.go
+    │   │   │   │   │   └── user.go
+    │   │   │   │   ├── check_affected.go
+    │   │   │   │   ├── create_session.go
+    │   │   │   │   ├── create_task.go
+    │   │   │   │   ├── create_user.go
+    │   │   │   │   ├── delete_task.go
+    │   │   │   │   ├── exists_user.go
+    │   │   │   │   ├── find_session.go
+    │   │   │   │   ├── find_user_by_email.go
+    │   │   │   │   ├── find_user_by_id.go
+    │   │   │   │   ├── get_tasks_by_id.go
+    │   │   │   │   ├── repository.go
+    │   │   │   │   ├── update_description.go
+    │   │   │   │   └── update_status.go
+    │   │   │   └── redis
+    │   │   │       ├── delete.go
+    │   │   │       ├── get.go
+    │   │   │       ├── redis_verification.go
+    │   │   │       └── save.go
+    │   │   └── usecase
+    │   │       ├── create_task.go
+    │   │       ├── delete_task.go
+    │   │       ├── get_tasks_by_id.go
+    │   │       ├── get_user_by_tg_id.go
+    │   │       ├── get_user_id_by_session.go
+    │   │       ├── login_user.go
+    │   │       ├── mark_as_done.go
+    │   │       ├── register_user.go
+    │   │       ├── update_task_description.go
+    │   │       ├── usecase.go
+    │   │       └── usecase_test.go
+    │   ├── migrations
+    │   │   ├── 000001_init.down.sql
+    │   │   ├── 000001_init.up.sql
+    │   │   ├── 000002_add_deleted_at.down.sql
+    │   │   ├── 000002_add_deleted_at.up.sql
+    │   │   ├── 000003_add_users.down.sql
+    │   │   ├── 000003_add_users.up.sql
+    │   │   ├── 000004_add_user_task_id.down.sql
+    │   │   ├── 000004_add_user_task_id.up.sql
+    │   │   ├── 000005_add_user_migration.down.sql
+    │   │   ├── 000005_add_user_migration.up.sql
+    │   │   ├── 000006_add_task_description.down.sql
+    │   │   ├── 000006_add_task_description.up.sql
+    │   │   ├── 000007_add_sessions.down.sql
+    │   │   └── 000007_add_sessions.up.sql
+    │   ├── Dockerfile
+    │   ├── go.mod
+    │   └── go.sum
+    ├── frontend
+    │   ├── assets
+    │   │   ├── css
+    │   │   └── images
+    │   ├── src
+    │   │   ├── api
+    │   │   ├── components
+    │   │   ├── utils
+    │   │   └── views
+    │   └── views
+    └── docker-compose.yaml
+
+---
+
+## File: docker-compose.yaml
+
+```
+services:
+
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: todo_postgres_compose
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: todo_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  db_migrations:
+    image: migrate/migrate
+    volumes:
+      - ./backend/migrations:/migrations 
+    command: -path=/migrations -database="postgres://postgres:secret@postgres_db:5432/todo_db?sslmode=disable" up
+    depends_on:
+      - postgres_db
+
+
+  redis_db:
+    image: redis:7-alpine
+    container_name: todo_redis_compose
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+ 
+  backend:
+    build: ./backend # Указываем на папку с Go-кодом
+    env_file:
+      - ./backend/.env # Путь к твоему файлу окружения
+    container_name: todo_app_compose
+    ports:
+      - "8080:8080"
+    depends_on:
+      db_migrations:
+        condition: service_completed_successfully
+      redis_db: # Ждем, пока поднимется Redis
+        condition: service_started
+    environment:
+      DATABASE_URL: "postgres://postgres:secret@postgres_db:5432/todo_db?sslmode=disable"
+      REDIS_HOST: "redis_db" # Передаем бэкенду имя контейнера Redis
+      REDIS_PORT: "6379"
+
+  # 5. Наш веб-сервер Nginx + Фронтенд
+  nginx:
+    image: nginx:alpine
+    container_name: todo_nginx_compose
+    ports:
+      - "80:80" # Слушает стандартный порт для сайтов
+    volumes:
+      # Монтируем конфигурацию, которую мы написали на прошлом шаге
+      - ./frontend/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # Монтируем всю модульную структуру фронтенда целиком
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  redisdata: 
+```
+
+---
+
+## File: backend\Dockerfile
+
+```
+# === ЭТАП 1: Сборка бинарника ===
+FROM golang:1.26-alpine AS builder
+
+# Устанавливаем рабочую папку внутри контейнера
+WORKDIR /build
+
+# Копируем файлы зависимостей и скачиваем их
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Копируем весь остальной код проекта
+COPY . .
+
+# Компилируем приложение в один бинарный файл под названием "app"
+# CGO_ENABLED=0 отключает зависимости от системных C-библиотек (сделать бинарник полностью автономным)
+# Замени финальную команду сборки на правильный путь к main.go:
+RUN CGO_ENABLED=0 GOOS=linux go build -o app ./cmd/app/main.go
+
+# === ЭТАП 2: Финальный легковесный образ ===
+FROM alpine:latest
+
+WORKDIR /root/
+
+# Копируем скомпилированный бинарник из предыдущего этапа (builder)
+COPY --from=builder /build/app .
+
+# Открываем порт 8080 наружу
+EXPOSE 8080
+
+# Команда для запуска приложения при старте контейнера
+CMD ["./app"]
+```
+
+---
+
+## File: backend\go.mod
+
+```
+module proj
+
+go 1.26.4
+
+require github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+
+require (
+	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
+	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/kr/text v0.2.0 // indirect
+	github.com/rogpeppe/go-internal v1.15.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
+	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
+)
+
+require (
+	github.com/ilyakaznacheev/cleanenv v1.5.0
+	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/redis/go-redis/v9 v9.21.0
+	golang.org/x/crypto v0.53.0
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+```
+
+---
+
+## File: backend\go.sum
+
+```
+filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
+filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
+github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak=
+github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
+github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
+github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
+github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
+github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/go-sql-driver/mysql v1.8.1 h1:LedoTUt/eveggdHS9qUFC1EFSa8bU2+1pZjSRpvNJ1Y=
+github.com/go-sql-driver/mysql v1.8.1/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqwuVSjsCm7DZg=
+github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 h1:wG8n/XJQ07TmjbITcGiUaOtXxdrINDz1b0J1w0SzqDc=
+github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1/go.mod h1:A2S0CWkNylc2phvKXWBBdD3K0iGnDBGbzRpISP2zBl8=
+github.com/ilyakaznacheev/cleanenv v1.5.0 h1:0VNZXggJE2OYdXE87bfSSwGxeiGt9moSR2lOrsHHvr4=
+github.com/ilyakaznacheev/cleanenv v1.5.0/go.mod h1:a5aDzaJrLCQZsazHol1w8InnDcOX0OColm64SlIi6gk=
+github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
+github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
+github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
+github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761/go.mod h1:5TJZWKEWniPve33vlWYSoGYefn3gLQRzjfDlhSJ9ZKM=
+github.com/jackc/pgx/v5 v5.10.0 h1:VhSvgU2jSli8o3AqIEOTJr7rZwAEUVo4E4XhR94Zfr0=
+github.com/jackc/pgx/v5 v5.10.0/go.mod h1:mal1tBGAFfLHvZzaYh77YS/eC6IX9OWbRV1QIIM0Jn4=
+github.com/jackc/puddle/v2 v2.2.2 h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo=
+github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
+github.com/jmoiron/sqlx v1.4.0 h1:1PLqN7S1UYp5t4SrVVnt4nUVNemrDAtxlulVe+Qgm3o=
+github.com/jmoiron/sqlx v1.4.0/go.mod h1:ZrZ7UsYB/weZdl2Bxg6jCRO9c3YHl8r3ahlKmRT4JLY=
+github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
+github.com/kr/pretty v0.3.0 h1:WgNl7dwNpEZ6jJ9k1snq4pZsg7DOEN8hP9Xw0Tsjwk0=
+github.com/kr/pretty v0.3.0/go.mod h1:640gp4NfQd8pI5XOwp5fnNeVWj67G7CFk/SaSQn7NBk=
+github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
+github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
+github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
+github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
+github.com/mattn/go-sqlite3 v1.14.22 h1:2gZY6PC6kBnID23Tichd1K+Z0oS6nE/XwU+Vz/5o4kU=
+github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
+github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
+github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/redis/go-redis/v9 v9.21.0 h1:FPBE4hhbAke+TLmcY3WkpbDffJEomdqPn3HYiqAtL9E=
+github.com/redis/go-redis/v9 v9.21.0/go.mod h1:v/M13XI1PVCDcm01VtPFOADfZtHf8YW3baQf57KlIkA=
+github.com/rogpeppe/go-internal v1.15.0 h1:D0RCU5rMAp+SpgkiNdrjfJ+LX4J1M32V2NeCY7EJ6hc=
+github.com/rogpeppe/go-internal v1.15.0/go.mod h1:DrUVZyrJU+txYW5/1kwtXQSMFio52ZOxX7yM1VHvnxs=
+github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
+github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
+go.uber.org/atomic v1.11.0 h1:ZvwS0R+56ePWxUNi+Atn9dWONBPp/AUETXlHW0DxSjE=
+go.uber.org/atomic v1.11.0/go.mod h1:LUxbIzbOniOlMKjJjyPfpl4v+PKK2cNJn91OQbhoJI0=
+golang.org/x/crypto v0.53.0 h1:QZ4Muo8THX6CizN2vPPd5fBGHyogrdK9fG4wLPFUsto=
+golang.org/x/crypto v0.53.0/go.mod h1:DNLU434OwVakk9PzuwV8w62mAJpRJL3vsgcfp4Qnsio=
+golang.org/x/sync v0.21.0 h1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=
+golang.org/x/sync v0.21.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
+golang.org/x/text v0.38.0 h1:sXmwo9DwP3OK9EZ7PqAdaooSGozfl/3a6/xJcbzPRhE=
+golang.org/x/text v0.38.0/go.mod h1:YXZt3QhHUKYT53r2lLKFIVi6Ao1jdzrTR/KQ09qyxF4=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
+gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=
+gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
+gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 h1:slmdOY3vp8a7KQbHkL+FLbvbkgMqmXojpFUO/jENuqQ=
+olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3/go.mod h1:oVgVk4OWVDi43qWBEyGhXgYxt7+ED4iYNpTngSLX2Iw=
+
+```
+
+---
+
+## File: backend\cmd\app\main.go
+
+```
+package main
+
+import (
+	"context"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"proj/internal/config"
+	httpHandler "proj/internal/delivery/http"
+	"proj/internal/delivery/http/middleware"
+	"proj/internal/delivery/tgbot"
+	repository "proj/internal/repository/postgres"
+	cache "proj/internal/repository/redis"
+	"proj/internal/usecase"
+	"sync"
+	"syscall"
+	"time"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
+)
+
+func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
+	cfg := config.MustLoad()
+
+	db, err := sqlx.Connect("pgx", cfg.DatabaseURL)
+	if err != nil {
+		logger.Error("database connection failed", slog.String("error", err.Error()))
+		panic(err)
+	}
+	defer db.Close()
+
+	opt, err := redis.ParseURL(cfg.ClientURL)
+	client := redis.NewClient(opt)
+	if err := client.Ping(context.Background()).Err(); err != nil {
+		logger.Error("client connection failed", slog.String("error", err.Error()))
+		panic(err)
+	}
+
+	// Инициализируем слои
+	cache := cache.NewRedisRepository(client)
+	storage := repository.NewPostgressStorage(db)
+	taskUsecase := usecase.NewTaskUsecase(storage)
+	userUsecase := usecase.NewUserUsecase(storage)
+	authUsecase := usecase.NewAuthUsecase(cache)
+	taskHandler := httpHandler.NewTaskHandler(taskUsecase, logger)
+	userHandler := httpHandler.NewUserHandler(userUsecase, logger)
+
+	authMiddleware := middleware.Auth(userUsecase)
+	mux := http.NewServeMux()
+
+	mux.Handle("POST /tasks", authMiddleware(http.HandlerFunc(taskHandler.CreateTaskHandler)))
+	mux.Handle("PUT /tasks/{id}", authMiddleware(http.HandlerFunc(taskHandler.UpdateTaskHandler)))
+	mux.Handle("DELETE /tasks/{id}", authMiddleware(http.HandlerFunc(taskHandler.DeleteTaskHandler)))
+	mux.Handle("PUT /tasks/restore/{id}", authMiddleware(http.HandlerFunc(taskHandler.RestoreTaskHandler)))
+	mux.Handle("GET /tasks/", authMiddleware(http.HandlerFunc(taskHandler.TaskListHandler)))
+	mux.Handle("GET /tasks/trash", authMiddleware(http.HandlerFunc(taskHandler.TrashListHandler)))
+
+	mux.Handle("GET /auth/me", authMiddleware(http.HandlerFunc(userHandler.GetUserHandler)))
+
+	mux.HandleFunc("POST /auth/register", userHandler.RegisterHandler)
+	mux.HandleFunc("POST /auth/login", userHandler.LoginHandler)
+	mux.HandleFunc("POST /auth/logout", userHandler.LogoutHandler)
+
+	wrappedMux := middleware.Logger(mux)
+	server := &http.Server{
+		Addr:    ":" + cfg.ServerPort,
+		Handler: wrappedMux,
+	}
+
+	botServer, err := tgbot.NewBotServer(cfg.BotToken, taskUsecase, userUsecase, logger)
+	if err != nil {
+		logger.Error("failed to initialize bot", slog.String("err", err.Error()))
+		os.Exit(1)
+	}
+
+	var wg sync.WaitGroup
+
+	wg.Add(2)
+
+	// Канал для аварийных ошибок — буфер 2, чтобы обе горутины могли записать не блокируясь
+	fatalErr := make(chan error, 2)
+
+	// Запускаем HTTP-сервер
+	go func() {
+		defer wg.Done()
+		logger.Info("starting HTTP server", slog.String("port", cfg.ServerPort))
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("HTTP server failed", slog.String("err", err.Error()))
+			fatalErr <- err // сообщаем об аварии
+		}
+	}()
+
+	// Запускаем бота
+	go func() {
+		defer wg.Done()
+		logger.Info("starting TG bot")
+		botServer.Start()
+	}()
+
+	// Ждём сигнала остановки (Ctrl+C или docker stop)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	// Ждём: либо сигнал от ОС, либо авария одного из сервисов
+	select {
+	case sig := <-quit:
+		logger.Info("shutdown signal received", slog.String("signal", sig.String()))
+	case err := <-fatalErr:
+		logger.Error("fatal error, initiating shutdown", slog.String("err", err.Error()))
+	}
+
+	// Дальше — тот же код остановки
+	logger.Info("stopping services...")
+	botServer.Stop()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Error("HTTP server forced shutdown", slog.String("err", err.Error()))
+	}
+
+	wg.Wait()
+	logger.Info("all services stopped")
+}
+
+```
+
+---
+
+## File: backend\internal\config\config.go
+
+```
+package config
+
+import (
+	"log/slog"
+	"os"
+
+	"github.com/ilyakaznacheev/cleanenv"
+)
+
+type Config struct {
+	Env         string `env:"ENV" env-default:"development"`
+	ServerPort  string `env:"SERVER_PORT" env-default:"8080"`
+	DatabaseURL string `env:"DATABASE_URL" env-required:"true"`
+	BotToken    string `env:"TELEGRAM_BOT_TOKEN"`
+	Redis       *RedisConfig
+}
+type RedisConfig struct {
+	Host     string `env:"REDIS_HOST"`
+	Port     string `env:"REDIS_PORT"`
+	Password string `env:"REDIS_PASSWORD"`
+	DB       int    `env:"REDIS_DB"`
+}
+
+// MustLoad считывает конфиг один раз при старте.
+// Префикс Must в Go означает, что если функция не сработает — приложение упадет (panic).
+func MustLoad() *Config {
+	var cfg Config
+	// Читаем файл .env, если он есть рядом
+	err := cleanenv.ReadConfig(".env", &cfg)
+	if err != nil {
+		// Если файла .env нет (например, в Docker-контейнере на проде),
+		// библиотека попытается прочитать переменные напрямую из системы
+		err = cleanenv.ReadEnv(&cfg)
+		if err != nil {
+			slog.Error("failed to load env config", slog.String("error:", err.Error()))
+			panic(err)
+		}
+	}
+	redisDBStr := os.Getenv("REDIS_DB")
+
+	return &cfg
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\handle_create_task.go
+
+```
+package httpHandler
+
+import (
+	"encoding/json"
+	"log/slog"
+	"net/http"
+	dto "proj/internal/delivery/http/entityRequest"
+	"proj/internal/delivery/http/middleware"
+)
+
+func (h *TaskHandler) CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	var req dto.CreateTaskRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	_, err := h.TaskUC.CreateTask(r.Context(), *req.Title, *req.Description, userID)
+	if err != nil {
+		h.Logger.Error("failed to create new task", slog.String("error", err.Error()), slog.String("attempted_title", *req.Title))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\handle_delete_task.go
+
+```
+package httpHandler
+
+import (
+	"log/slog"
+	"net/http"
+	"proj/internal/delivery/http/middleware"
+	"strconv"
+)
+
+func (h *TaskHandler) DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		h.Logger.Warn("incorrect id", slog.String("id", idStr))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	taskID, err := h.TaskUC.GetTaskByUserID(r.Context(), userID, id)
+	if err != nil {
+		h.Logger.Warn("task does not exist", slog.Int("user_id", userID), slog.Int("user_task_id", id))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	task, err := h.TaskUC.GetTask(r.Context(), taskID)
+	if err != nil {
+		h.Logger.Error("failed to get task", slog.Int("task_id", taskID), slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if task.DeletedAt != nil {
+		err = h.TaskUC.DeleteForeverTask(r.Context(), taskID)
+		if err != nil {
+			h.Logger.Error("server can't delete forever task with id", slog.Int("id", taskID))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	} else {
+		err = h.TaskUC.DeleteTask(r.Context(), taskID)
+		if err != nil {
+			h.Logger.Error("server can't delete task with id", slog.Int("id", id))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *TaskHandler) RestoreTaskHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		h.Logger.Warn("incorrect id", slog.String("id", idStr))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	taskID, err := h.TaskUC.GetTaskByUserID(r.Context(), userID, id)
+	if err != nil {
+		h.Logger.Warn("task does not exist", slog.Int("user_id", userID), slog.Int("user_task_id", id))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	err = h.TaskUC.RecoverTask(r.Context(), taskID)
+	if err != nil {
+		h.Logger.Error("server can't restore task with id", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\handle_get_user.go
+
+```
+package httpHandler
+
+import (
+	"encoding/json"
+	"log/slog"
+	"net/http"
+	dto "proj/internal/delivery/http/entityRequest"
+	"proj/internal/delivery/http/middleware"
+)
+
+func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	user, err := h.UserUC.GetUserByWebID(r.Context(), userID)
+	if err != nil {
+		h.Logger.Error("failed get user by user id", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	var userRequest dto.UserRequest
+	userRequest.ToRequest(user)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(userRequest)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\handle_login_user.go
+
+```
+package httpHandler
+
+import (
+	"encoding/json"
+	"log/slog"
+	"net/http"
+	dto "proj/internal/delivery/http/entityRequest"
+	"time"
+)
+
+func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	var req dto.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	sessionToken, err := h.UserUC.LoginUserWeb(r.Context(), req.Email, req.Password)
+	if err != nil {
+		h.Logger.Warn("invalid credentials or login failed", slog.String("email", req.Email))
+		w.WriteHeader(http.StatusUnauthorized) // 401 Unauthorized
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    sessionToken, // Тот самый UUID сессии из БД
+		Expires:  time.Now().Add(24 * time.Hour),
+		Path:     "/",                  // Доступно для всех роутов
+		HttpOnly: true,                 // Защита от XSS (JS не сможет прочитать куку)
+		Secure:   false,                // Поставь true, если будешь использовать HTTPS
+		SameSite: http.SameSiteLaxMode, // Защита от CSRF атак
+	})
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	// Имя куки должно быть ровно таким же, какое ты задаешь при Login/Register
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1, // Говорит браузеру немедленно удалить куку
+		HttpOnly: true,
+		Secure:   false, // Выставь false, если локально тестируешь без HTTPS
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"message": "Успешный выход"}`))
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\handle_register_user.go
+
+```
+package httpHandler
+
+import (
+	"encoding/json"
+	"errors"
+	"log/slog"
+	"net/http"
+	dto "proj/internal/delivery/http/entityRequest"
+	customErrors "proj/internal/errors"
+)
+
+func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	var req dto.RegisterRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	err := h.UserUC.RegisterUserWeb(r.Context(), req.Email, req.Username, req.Password)
+	if err != nil {
+		if errors.Is(err, customErrors.ErrUserAlreadyExists) {
+			w.WriteHeader(http.StatusConflict) // 409 — ресурс уже существует
+			return
+		}
+		h.Logger.Error("failed register user", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\handle_task_list.go
+
+```
+package httpHandler
+
+import (
+	"encoding/json"
+	"log/slog"
+	"net/http"
+	dto "proj/internal/delivery/http/entityRequest"
+	"proj/internal/delivery/http/middleware"
+)
+
+func (h *TaskHandler) TaskListHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	tasks, err := h.TaskUC.GetTasksByUserID(r.Context(), userID)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		h.Logger.Error("server can't get tasks", slog.String("error", err.Error()))
+		return
+	}
+	req_tasks := make([]dto.CreateTaskRequest, len(tasks))
+	for i, t := range tasks {
+		req_tasks[i].ToRequest(&t)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(req_tasks)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\handle_trash_list.go
+
+```
+package httpHandler
+
+import (
+	"encoding/json"
+	"log/slog"
+	"net/http"
+	dto "proj/internal/delivery/http/entityRequest"
+	"proj/internal/delivery/http/middleware"
+)
+
+func (h *TaskHandler) TrashListHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	tasks, err := h.TaskUC.GetRemovedTasksByUserID(r.Context(), userID)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		h.Logger.Error("server can't get tasks", slog.String("error", err.Error()))
+		return
+	}
+	req_tasks := make([]dto.CreateTaskRequest, len(tasks))
+	for i, t := range tasks {
+		req_tasks[i].ToRequest(&t)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(req_tasks)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\handle_update_task.go
+
+```
+package httpHandler
+
+import (
+	"encoding/json"
+	"log/slog"
+	"net/http"
+	dto "proj/internal/delivery/http/entityRequest"
+	"proj/internal/delivery/http/middleware"
+	"strconv"
+)
+
+func (h *TaskHandler) UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	idStr := r.PathValue("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		h.Logger.Warn("incorrect id", slog.String("id", idStr))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	taskID, err := h.TaskUC.GetTaskByUserID(r.Context(), userID, id)
+	if err != nil {
+		h.Logger.Warn("task does not exist", slog.Int("user_id", userID), slog.Int("user_task_id", id))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	var req dto.UpdateTaskRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if req.Description != nil {
+		err := h.TaskUC.UpdateDescription(r.Context(), taskID, *req.Description)
+		if err != nil {
+			h.Logger.Error("server can't update task with id", slog.Int("id", taskID))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+	if req.Done != nil {
+		err := h.TaskUC.MarkAsDone(r.Context(), taskID, *req.Done)
+		if err != nil {
+			h.Logger.Error("server can't update task with id", slog.Int("id", taskID))
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\handler.go
+
+```
+package httpHandler
+
+import (
+	"context"
+	"log/slog"
+	"proj/internal/entity"
+)
+
+type TaskUsecase interface {
+	CreateTask(ctx context.Context, title string, description string, userID int) (*entity.Task, error)
+	DeleteTask(ctx context.Context, id int) error
+	DeleteForeverTask(ctx context.Context, id int) error
+	RecoverTask(ctx context.Context, id int) error
+	MarkAsDone(ctx context.Context, id int, status bool) error
+	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
+	GetTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
+	GetTask(ctx context.Context, taskID int) (*entity.Task, error)
+	GetTaskByUserID(ctx context.Context, userID int, user_task_id int) (int, error)
+	GetRemovedTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
+}
+type UserUsecase interface {
+	RegisterUserWeb(ctx context.Context, email, username, password string) error
+	LoginUserWeb(ctx context.Context, email, password string) (string, error)
+	GetUserIDBySession(ctx context.Context, sessionID string) (int, error)
+	GetUserByWebID(ctx context.Context, userID int) (*entity.UserWeb, error)
+}
+
+type TaskHandler struct {
+	TaskUC TaskUsecase
+	Logger *slog.Logger
+}
+type UserHandler struct {
+	UserUC UserUsecase
+	Logger *slog.Logger
+}
+type AuthHandler struct {
+	AuthUC AuthUsecase
+}
+
+func NewTaskHandler(taskUC TaskUsecase, logger *slog.Logger) *TaskHandler {
+	return &TaskHandler{TaskUC: taskUC, Logger: logger}
+}
+func NewUserHandler(userUC UserUsecase, logger *slog.Logger) *UserHandler {
+	return &UserHandler{UserUC: userUC, Logger: logger}
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\entityRequest\task.go
+
+```
+package dto
+
+import (
+	"proj/internal/entity"
+	"time"
+)
+
+type CreateTaskRequest struct {
+	Title       *string    `json:"title"`
+	Done        *bool      `json:"done"`
+	Description *string    `json:"description"`
+	DeletedAt   *time.Time `json:"deleted_at,omitempty"`
+	UserTaskId  int        `json:"user_task_id"`
+}
+type UpdateTaskRequest struct {
+	Title       *string `json:"title"`
+	Description *string `json:"description"`
+	Done        *bool   `json:"done"`
+}
+
+func (r CreateTaskRequest) ToEntity(userID int) entity.Task {
+	return entity.Task{
+		Title:       *r.Title,
+		UserID:      userID,
+		Description: *r.Description,
+	}
+}
+func (r *CreateTaskRequest) ToRequest(t *entity.Task) {
+	r.Title = &t.Title
+	r.Done = &t.Done
+	r.Description = &t.Description
+	r.DeletedAt = t.DeletedAt
+	r.UserTaskId = t.UserTaskId
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\entityRequest\user.go
+
+```
+package dto
+
+import (
+	"proj/internal/entity"
+	"time"
+)
+
+type User struct {
+	ID        int       `json:"id"`
+	Username  string    `json:"username"`
+	CreatedAt time.Time `json:"-"`
+}
+type UserRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	UserID   int    `json:"user_id"`
+}
+type RegisterRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"` // сырой пароль, только для входа
+}
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"` // сырой пароль, только для входа
+}
+
+type UserTg struct {
+	ID       int64  `json:"tg_id"`
+	Username string `json:"username"`
+	UserID   int    `json:"user_id"`
+}
+
+func (u *UserRequest) ToRequest(e *entity.UserWeb) {
+	u.Email = e.Email
+	u.UserID = e.UserID
+	u.Username = e.Username
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\middleware\auth.go
+
+```
+package middleware
+
+import (
+	"context"
+	"net/http"
+)
+
+// Определяем кастомный тип для ключа контекста, чтобы избежать коллизий
+type contextKey string
+
+const UserIDKey contextKey = "userID"
+
+// Интерфейс для взаимодействия мидлвари со слоем бизнес-логики
+type AuthUsecase interface {
+	GetUserIDBySession(ctx context.Context, sessionID string) (int, error)
+}
+
+func Auth(userUC AuthUsecase) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// 1. Достаем куку сессии
+			cookie, err := r.Cookie("session_token")
+			if err != nil {
+				w.WriteHeader(http.StatusUnauthorized) // Куки нет -> 401
+				return
+			}
+
+			// 2. Проверяем сессию через UseCase в БД
+			userID, err := userUC.GetUserIDBySession(r.Context(), cookie.Value)
+			if err != nil {
+				w.WriteHeader(http.StatusUnauthorized) // Сессия невалидна или истекла -> 401
+				return
+			}
+
+			// 3. Кладем userID в контекст запроса и передаем запрос дальше
+			ctx := context.WithValue(r.Context(), UserIDKey, userID)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\middleware\logger.go
+
+```
+package middleware
+
+import (
+	"log/slog"
+	"net/http"
+	"time"
+)
+
+// Специальная структура-обертка, которая "шпионит" за статус-кодом
+type responseWriterWrapper struct {
+	http.ResponseWriter
+	statusCode int
+}
+
+// Переопределяем метод WriteHeader, чтобы запомнить статус-код
+func (rw *responseWriterWrapper) WriteHeader(code int) {
+	rw.statusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+// Logger возвращает мидлварь, которая логирует информацию о каждом HTTP-запросе
+func Logger(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 1. Фиксируем время начала запроса
+		start := time.Now()
+
+		// 2. Передаем управление следующему хендлеру в цепочке (нашему бизнес-коду)
+		// Оборачиваем оригинальный ResponseWriter, ставим дефолтный статус 200
+		wrappedWriter := &responseWriterWrapper{ResponseWriter: w, statusCode: http.StatusOK}
+
+		// Передаем обертку дальше
+		next.ServeHTTP(wrappedWriter, r)
+
+		// 3. После того как хендлер отработал, считаем время выполнения
+		duration := time.Since(start)
+
+		// 4. Пишем красивый структурированный лог
+		slog.Info("HTTP request",
+			slog.String("method", r.Method),
+			slog.String("path", r.URL.Path),
+			slog.Int("status", wrappedWriter.statusCode),
+			slog.Duration("duration", duration),
+		)
+	})
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\bot.go
+
+```
+package tgbot
+
+import (
+	"context"
+	"log/slog"
+	"strings"
+
+	"proj/internal/entity"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+// Определяем интерфейсы бизнес-логики, которые нужны боту
+type TaskUsecase interface {
+	CreateTask(ctx context.Context, title string, description string, userID int) (*entity.Task, error)
+	GetTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
+	GetRemovedTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
+	GetTask(ctx context.Context, taskID int) (*entity.Task, error)
+	DeleteTask(ctx context.Context, id int) error
+	RecoverTask(ctx context.Context, id int) error
+	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
+	MarkAsDone(ctx context.Context, id int, status bool) error
+}
+type UserUsecase interface {
+	RegisterUserTg(ctx context.Context, ID int64, username string) error
+	GetUserByTgID(ctx context.Context, userID int64, username string) (*entity.UserTg, error)
+}
+
+type BotServer struct {
+	bot          *tgbotapi.BotAPI
+	taskUC       TaskUsecase
+	userUC       UserUsecase
+	logger       *slog.Logger
+	sessionCache *SessionCache
+}
+
+func NewBotServer(token string, taskUC TaskUsecase, userUC UserUsecase, logger *slog.Logger) (*BotServer, error) {
+	bot, err := tgbotapi.NewBotAPI(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return &BotServer{
+		bot:    bot,
+		taskUC: taskUC,
+		userUC: userUC,
+		logger: logger,
+		sessionCache: &SessionCache{
+			Cache: make(map[int64]UserSession),
+		},
+	}, nil
+}
+
+func (b *BotServer) Start() {
+	b.logger.Info("Telegram bot started", slog.String("botname", b.bot.Self.UserName))
+
+	// Настраиваем конфигурацию получения обновлений
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
+
+	// Получаем канал с обновлениями от Telegram
+	updates := b.bot.GetUpdatesChan(u)
+
+	// Читаем сообщения из канала в бесконечном цикле
+	for update := range updates {
+		// Игнорируем любые обновления, кроме текстовых сообщений
+		if update.CallbackQuery != nil {
+			WithLoggingCallback(b.handleCallback)(update.CallbackQuery)
+			continue
+		}
+		if update.Message != nil {
+			WithLoggingMessage(b.handleMessage)(update.Message)
+			continue
+		}
+	}
+}
+
+func (b *BotServer) Send(msg tgbotapi.Chattable) {
+	if _, err := b.bot.Send(msg); err != nil {
+		if strings.Contains(err.Error(), "message is not modified") {
+			return // ничего страшного, просто пропускаем
+		}
+		b.logger.Error("failed to send message", slog.String("error", err.Error()))
+	}
+}
+
+func (b *BotServer) Stop() {
+	b.bot.StopReceivingUpdates()
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\handle_callback.go
+
+```
+package tgbot
+
+import (
+	"context"
+	"log/slog"
+	"strconv"
+	"strings"
+	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+func (b *BotServer) handleCallback(query *tgbotapi.CallbackQuery) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	data := strings.Split(query.Data, ":")
+
+	switch data[0] {
+	case "create_task_step":
+		b.handleGetTitleCallback(query)
+	case "task_view":
+		taskID, err := strconv.Atoi(data[1])
+		if err != nil {
+			b.logger.Error("error converting string to int", slog.String("error", err.Error()))
+			return
+		}
+		b.editTaskViewCallback(ctx, query, taskID)
+	case "back_to_list":
+		b.editTaskList(ctx, query)
+	case "mark_as_done":
+		taskID, err := strconv.Atoi(data[1])
+		if err != nil {
+			b.logger.Error("error converting string to int", slog.String("error", err.Error()))
+			return
+		}
+		b.handlerMarkAsDone(ctx, query, taskID)
+	case "delete_task":
+		taskID, err := strconv.Atoi(data[1])
+		if err != nil {
+			b.logger.Error("error converting string to int", slog.String("error", err.Error()))
+			return
+		}
+		b.handlerDeleteTask(ctx, query, taskID)
+	case "recover_task":
+		taskID, err := strconv.Atoi(data[1])
+		if err != nil {
+			b.logger.Error("error converting string to int", slog.String("error", err.Error()))
+			return
+		}
+		b.handlerRecoverTask(ctx, query, taskID)
+	case "update_description":
+		taskID, err := strconv.Atoi(data[1])
+		if err != nil {
+			b.logger.Error("error converting string to int", slog.String("error", err.Error()))
+			return
+		}
+		b.handlerUpdateDecriptionCallback(query, taskID)
+	case "trash_list":
+		b.handleTrashList(ctx, query)
+	}
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\handle_command.go
+
+```
+package tgbot
+
+import (
+	"context"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+func (b *BotServer) handleCommand(ctx context.Context, msg *tgbotapi.Message) {
+	message := tgbotapi.NewMessage(msg.Chat.ID, "")
+	switch msg.Command() {
+	case "start":
+		b.handleStartCommand(ctx, msg)
+	case "help":
+		message.Text = "Доступные команды:\n/start - Регистрация\n/list - Мои задачи"
+		b.Send(message)
+	case "list":
+		b.sendTaskList(ctx, msg)
+	default:
+		message.Text = "Неизвестная команда 🤔"
+		b.Send(message)
+	}
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\handle_create_task.go
+
+```
+package tgbot
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+func (b *BotServer) handleTaskCreation(ctx context.Context, msg *tgbotapi.Message) {
+	message := tgbotapi.NewMessage(msg.Chat.ID, "")
+
+	taskDescription := msg.Text
+
+	b.sessionCache.Mu.Lock()
+	taskTitle := b.sessionCache.Cache[msg.From.ID].TaskTitle
+	session := b.sessionCache.Cache[msg.From.ID]
+	session.TaskTitle = ""
+	session.State = StateIdle
+	b.sessionCache.Cache[msg.From.ID] = session
+	b.sessionCache.Mu.Unlock()
+
+	// Передаем этот контекст дальше по всем слоям до самой БД!
+	user, err := b.userUC.GetUserByTgID(ctx, msg.From.ID, msg.From.UserName)
+	if err != nil {
+		err = b.userUC.RegisterUserTg(ctx, msg.From.ID, msg.From.UserName)
+		if err != nil {
+			b.logger.Error("failed to register user", slog.String("error", err.Error()))
+			message.Text = "⚠️ Не удалось завершить регистрацию."
+			b.Send(message)
+			return
+		}
+		message.Text = "Привет! Ты успешно зарегистрирован в система, повтори свой запрос"
+		b.Send(message)
+		return
+	}
+	task, err := b.taskUC.CreateTask(ctx, taskTitle, taskDescription, user.UserID)
+	if err != nil {
+		// Если контекст завершился по таймауту
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			message.Text = "⚠️ База данных не ответила вовремя. Попробуйте еще раз."
+			b.Send(message)
+			return
+		}
+		message.Text = fmt.Sprintf("⚠️ Ошибка: %s", err.Error())
+		b.Send(message)
+		b.logger.Error("failed to create task", slog.String("error", err.Error()))
+		return
+	}
+	b.sendTaskViewMessage(ctx, msg, task.ID)
+}
+
+func (b *BotServer) handleGetTitleMessage(msg *tgbotapi.Message) {
+	message := tgbotapi.NewMessage(msg.From.ID, "Опишите задачу: ")
+	maxLen := 70
+	if len(msg.Text) > maxLen {
+		message.Text = fmt.Sprintf("Размер названия задачи не должен превышать %d символов", maxLen)
+		b.Send(message)
+		b.sessionCache.Mu.Lock()
+		session := b.sessionCache.Cache[msg.From.ID]
+		session.State = StateIdle
+		b.sessionCache.Cache[msg.From.ID] = session
+		b.sessionCache.Mu.Unlock()
+		return
+	}
+	b.sessionCache.Mu.Lock()
+	session := b.sessionCache.Cache[msg.From.ID]
+	session.TaskTitle = msg.Text
+	session.State = StateWaitingTaskDescription
+	b.sessionCache.Cache[msg.From.ID] = session
+	b.sessionCache.Mu.Unlock()
+	b.Send(message)
+
+}
+
+func (b *BotServer) handleGetTitleCallback(query *tgbotapi.CallbackQuery) {
+	b.sessionCache.Mu.Lock()
+	session := b.sessionCache.Cache[query.From.ID]
+	session.State = StateWaitingTaskTitle
+	b.sessionCache.Cache[query.From.ID] = session
+	b.sessionCache.Mu.Unlock()
+	message := tgbotapi.NewMessage(query.From.ID, "Введите название задачи: ")
+	b.Send(message)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\handle_delete_task.go
+
+```
+package tgbot
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+func (b *BotServer) handlerDeleteTask(ctx context.Context, query *tgbotapi.CallbackQuery, taskID int) {
+	err := b.taskUC.DeleteTask(ctx, taskID)
+	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			message := tgbotapi.NewMessage(query.From.ID, "⚠️ База данных не ответила вовремя. Попробуйте еще раз.")
+			b.Send(message)
+			return
+		}
+		b.logger.Error("error deleting task", slog.String("error", err.Error()))
+		return
+	}
+	b.editTaskViewCallback(ctx, query, taskID)
+}
+
+func (b *BotServer) handlerRecoverTask(ctx context.Context, query *tgbotapi.CallbackQuery, taskID int) {
+	err := b.taskUC.RecoverTask(ctx, taskID)
+	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			message := tgbotapi.NewMessage(query.From.ID, "⚠️ База данных не ответила вовремя. Попробуйте еще раз.")
+			b.Send(message)
+			return
+		}
+		b.logger.Error("error recovering task", slog.String("error", err.Error()))
+		return
+	}
+	b.editTaskViewCallback(ctx, query, taskID)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\handle_mark_as_done.go
+
+```
+package tgbot
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+func (b *BotServer) handlerMarkAsDone(ctx context.Context, query *tgbotapi.CallbackQuery, taskID int) {
+	task, err := b.taskUC.GetTask(ctx, taskID)
+	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			message := tgbotapi.NewMessage(query.From.ID, "⚠️ База данных не ответила вовремя. Попробуйте еще раз.")
+			b.Send(message)
+			return
+		}
+		b.logger.Error("error getting task", slog.String("error: ", err.Error()))
+		return
+	}
+	switch task.Done {
+	case true:
+		err = b.taskUC.MarkAsDone(ctx, taskID, false)
+	case false:
+		err = b.taskUC.MarkAsDone(ctx, taskID, true)
+	}
+	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			message := tgbotapi.NewMessage(query.From.ID, "⚠️ База данных не ответила вовремя. Попробуйте еще раз.")
+			b.Send(message)
+			return
+		}
+		b.logger.Error("error marking task as done", slog.String("error", err.Error()))
+		return
+	}
+	b.editTaskViewCallback(ctx, query, taskID)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\handle_message.go
+
+```
+package tgbot
+
+import (
+	"context"
+	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+func (b *BotServer) handleMessage(msg *tgbotapi.Message) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	message := tgbotapi.NewMessage(msg.Chat.ID, "")
+	if msg.IsCommand() {
+		b.handleCommand(ctx, msg)
+		return
+	}
+
+	// Если это обычный текст (создание задачи)
+	b.sessionCache.Mu.RLock()
+	state := b.sessionCache.Cache[msg.From.ID].State
+	b.sessionCache.Mu.RUnlock()
+
+	switch state {
+	case StateWaitingTaskTitle:
+		b.handleGetTitleMessage(msg)
+	case StateWaitingTaskDescription:
+		b.handleTaskCreation(ctx, msg)
+	case StateWaitingNewTaskDescription:
+		b.handlerUpdateDecription(ctx, msg)
+	default:
+		message.Text = "Неизвестная команда 🤔"
+		b.Send(message)
+	}
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\handle_start_command.go
+
+```
+package tgbot
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+	customErrors "proj/internal/errors"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+func (b *BotServer) handleStartCommand(ctx context.Context, msg *tgbotapi.Message) {
+	message := tgbotapi.NewMessage(msg.Chat.ID, "Привет! Теперь ты в системе. Отправь мне текст, чтобы создать задачу.")
+	err := b.userUC.RegisterUserTg(ctx, msg.From.ID, msg.From.UserName)
+	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during user registration")
+			message.Text = "⏱️ Превышено время ожидания базы данных. Попробуйте позже."
+			b.Send(message)
+			return
+		}
+		if errors.Is(err, customErrors.ErrUserAlreadyExists) {
+			message.Text = "Рад видеть тебя снова! Твои задачи на месте."
+			b.Send(message)
+			return
+		}
+		b.logger.Error("failed to register user", slog.String("error", err.Error()))
+		message.Text = "⚠️ Не удалось завершить регистрацию."
+		b.Send(message)
+		return
+	}
+
+	b.Send(message)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\handle_task_list.go
+
+```
+package tgbot
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+func (b *BotServer) handleTaskList(ctx context.Context, userID int) (string, tgbotapi.InlineKeyboardMarkup) {
+	tasks, err := b.taskUC.GetTasksByUserID(ctx, userID)
+	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			return "⚠️ База данных не ответила вовремя. Попробуйте еще раз.", tgbotapi.NewInlineKeyboardMarkup(
+				tgbotapi.NewInlineKeyboardRow(
+					tgbotapi.NewInlineKeyboardButtonData("Назад", "back_to_list"),
+				),
+			)
+		}
+		b.logger.Error("error getting task", slog.String("error", err.Error()))
+		return "⚠️ Задача не найдена", tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("Назад", "back_to_list"),
+			),
+		)
+	}
+	text := "Ваши задачи:"
+	var rows [][]tgbotapi.InlineKeyboardButton
+	for _, t := range tasks {
+		done := "❌️"
+		if t.Done {
+			done = "✅"
+		}
+		btn := tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%s %s\n", t.Title, done), fmt.Sprintf("task_view:%d", t.ID))
+		rows = append(rows, tgbotapi.NewInlineKeyboardRow(btn))
+	}
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Добавить задачу📝", "create_task_step")))
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Корзина🗑️", "trash_list")))
+	return text, tgbotapi.NewInlineKeyboardMarkup(rows...)
+}
+
+func (b *BotServer) sendTaskList(ctx context.Context, msg *tgbotapi.Message) {
+	user, err := b.userUC.GetUserByTgID(ctx, msg.From.ID, msg.From.UserName)
+	if err != nil {
+		b.logger.Error("error getting user id", slog.String("error", err.Error()))
+		return
+	}
+	text, kb := b.handleTaskList(ctx, user.UserID)
+	message := tgbotapi.NewMessage(msg.From.ID, text)
+	message.ReplyMarkup = kb
+	b.Send(message)
+}
+
+func (b *BotServer) editTaskList(ctx context.Context, query *tgbotapi.CallbackQuery) {
+	user, err := b.userUC.GetUserByTgID(ctx, query.From.ID, query.Message.From.UserName)
+	if err != nil {
+		b.logger.Error("error getting user id", slog.String("error", err.Error()))
+		return
+	}
+	text, kb := b.handleTaskList(ctx, user.UserID)
+	edit := tgbotapi.NewEditMessageTextAndMarkup(query.From.ID, query.Message.MessageID, text, kb)
+	b.Send(edit)
+}
+
+func (b *BotServer) handleTaskView(ctx context.Context, taskID int) (string, tgbotapi.InlineKeyboardMarkup) {
+	task, err := b.taskUC.GetTask(ctx, taskID)
+	if err != nil {
+		b.logger.Error("error getting task", slog.String("error", err.Error()))
+		return "⚠️ Задача не найдена", tgbotapi.NewInlineKeyboardMarkup(
+			tgbotapi.NewInlineKeyboardRow(
+				tgbotapi.NewInlineKeyboardButtonData("Назад", "back_to_list"),
+			),
+		)
+	}
+	var status string
+	var status_text string
+	var status_delete string
+	var status_delete_query string
+	switch task.Done {
+	case true:
+		status = "✅"
+		status_text = "Отметить невыполненным❌️"
+	case false:
+		status = "❌️"
+		status_text = "Отметить выполненным✅"
+	}
+	if task.DeletedAt == nil {
+		status_delete = "Удалить задачу⛔"
+		status_delete_query = "delete_task"
+	} else {
+		status_delete = "Восстановить задачу🔄"
+		status_delete_query = "recover_task"
+	}
+	text := fmt.Sprintf("Заголовок: %s\nСтатус выполнения: %s\nОписание: %s", task.Title, status, task.Description)
+	keyboardMarkup := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(status_text, fmt.Sprintf("mark_as_done:%d", taskID)),
+			tgbotapi.NewInlineKeyboardButtonData(status_delete, fmt.Sprintf("%s:%d", status_delete_query, taskID)),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Редактировать описание✏️", fmt.Sprintf("update_description:%d", taskID)),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Назад", "back_to_list"),
+		),
+	)
+	return text, keyboardMarkup
+
+}
+
+func (b *BotServer) sendTaskViewMessage(ctx context.Context, msg *tgbotapi.Message, taskID int) {
+	text, kb := b.handleTaskView(ctx, taskID)
+	message := tgbotapi.NewMessage(msg.From.ID, text)
+	message.ReplyMarkup = kb
+	b.Send(message)
+}
+
+func (b *BotServer) editTaskViewCallback(ctx context.Context, query *tgbotapi.CallbackQuery, taskID int) {
+	text, kb := b.handleTaskView(ctx, taskID)
+	edit := tgbotapi.NewEditMessageTextAndMarkup(query.From.ID, query.Message.MessageID, text, kb)
+	b.Send(edit)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\handle_trash_list.go
+
+```
+package tgbot
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+func (b *BotServer) handleTrashList(ctx context.Context, query *tgbotapi.CallbackQuery) {
+	user, err := b.userUC.GetUserByTgID(ctx, query.From.ID, query.From.UserName)
+	if err != nil {
+		b.logger.Error("error getting user id", slog.String("error", err.Error()))
+		return
+	}
+	tasks, err := b.taskUC.GetRemovedTasksByUserID(ctx, user.UserID)
+	if err != nil {
+		b.logger.Error("error getting task", slog.String("error", err.Error()))
+		return
+	}
+	text := "Ваши задачи:"
+	var rows [][]tgbotapi.InlineKeyboardButton
+	for _, t := range tasks {
+		var status string
+		switch t.Done {
+		case true:
+			status = "✅"
+		case false:
+			status = "❌️"
+		}
+		btn := tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%s %s\n", t.Title, status), fmt.Sprintf("task_view:%d", t.ID))
+		rows = append(rows, tgbotapi.NewInlineKeyboardRow(btn))
+	}
+
+	rows = append(rows, tgbotapi.NewInlineKeyboardRow(tgbotapi.NewInlineKeyboardButtonData("Назад", "back_to_list")))
+	kb := tgbotapi.NewInlineKeyboardMarkup(rows...)
+	edit := tgbotapi.NewEditMessageTextAndMarkup(query.From.ID, query.Message.MessageID, text, kb)
+	b.Send(edit)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\hanlde_update_task.go
+
+```
+package tgbot
+
+import (
+	"context"
+	"errors"
+	"log/slog"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+func (b *BotServer) handlerUpdateDecriptionCallback(query *tgbotapi.CallbackQuery, taskID int) {
+	b.sessionCache.Mu.Lock()
+	session := b.sessionCache.Cache[query.From.ID]
+	session.State = StateWaitingNewTaskDescription
+	session.TaskID = taskID
+	b.sessionCache.Cache[query.From.ID] = session
+	b.sessionCache.Mu.Unlock()
+	message := tgbotapi.NewMessage(query.From.ID, "Введите новое описание задачи: ")
+	b.Send(message)
+}
+
+func (b *BotServer) handlerUpdateDecription(ctx context.Context, msg *tgbotapi.Message) {
+	b.sessionCache.Mu.RLock()
+	taskID := b.sessionCache.Cache[msg.From.ID].TaskID
+	session := b.sessionCache.Cache[msg.From.ID]
+	session.State = StateIdle
+	session.TaskID = 0
+	b.sessionCache.Cache[msg.From.ID] = session
+	b.sessionCache.Mu.RUnlock()
+	newDesc := msg.Text
+	err := b.taskUC.UpdateDescription(ctx, taskID, newDesc)
+	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			message := tgbotapi.NewMessage(msg.From.ID, "⚠️ База данных не ответила вовремя. Попробуйте еще раз.")
+			b.Send(message)
+			return
+		}
+		b.logger.Error("error updating task", slog.String("error: ", err.Error()))
+		return
+	}
+
+	b.sendTaskViewMessage(ctx, msg, taskID)
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\middleware.go
+
+```
+package tgbot
+
+import (
+	"log/slog"
+	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
+
+type MessageHandler func(msg *tgbotapi.Message)
+type CallbackHandler func(clb *tgbotapi.CallbackQuery)
+
+func WithLoggingMessage(next MessageHandler) MessageHandler {
+	return MessageHandler(func(msg *tgbotapi.Message) {
+		start := time.Now()
+
+		next(msg)
+
+		duration := time.Since(start)
+
+		slog.Info("tg_bot message",
+			slog.String("username", msg.From.UserName),
+			slog.Int64("user_id", msg.Chat.ID),
+			slog.String("text", msg.Text),
+			slog.Duration("duration", duration),
+		)
+	})
+}
+func WithLoggingCallback(next CallbackHandler) CallbackHandler {
+	return CallbackHandler(func(clb *tgbotapi.CallbackQuery) {
+		start := time.Now()
+
+		next(clb)
+
+		duration := time.Since(start)
+
+		slog.Info("tg_bot callback query",
+			slog.String("username", clb.From.UserName),
+			slog.Int64("user_id", clb.From.ID),
+			slog.String("text", clb.Data),
+			slog.Duration("duration", duration),
+		)
+	})
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\tgbot\session.go
+
+```
+package tgbot
+
+import "sync"
+
+type UserState int
+
+const (
+	StateIdle UserState = iota
+	StateWaitingTaskTitle
+	StateWaitingTaskDescription
+	StateWaitingNewTaskDescription
+)
+
+type UserSession struct {
+	State     UserState
+	TaskTitle string
+	TaskID    int
+}
+
+type SessionCache struct {
+	Cache map[int64]UserSession
+	Mu    sync.RWMutex
+}
+
+```
+
+---
+
+## File: backend\internal\entity\auth.go
+
+```
+package entity
+
+type VerificationEmail string
+
+```
+
+---
+
+## File: backend\internal\entity\task.go
+
+```
+package entity
+
+import "time"
+
+type Task struct {
+	ID          int
+	Title       string
+	Done        bool
+	DeletedAt   *time.Time
+	UserID      int
+	UserTaskId  int
+	Description string
+}
+
+```
+
+---
+
+## File: backend\internal\entity\user.go
+
+```
+package entity
+
+import "time"
+
+type User struct {
+	ID        int
+	Username  string
+	CreatedAt time.Time
+}
+
+type UserWeb struct {
+	UserID       int
+	Email        string
+	Username     string
+	PasswordHash string
+}
+
+type UserTg struct {
+	ID       int64
+	Username string
+	UserID   int
+}
+
+```
+
+---
+
+## File: backend\internal\errors\redis_nil.go
+
+```
+package customErrors
+
+import "errors"
+
+var ErrCacheValueNotExists error = errors.New("code not found")
+
+```
+
+---
+
+## File: backend\internal\errors\user_exists.go
+
+```
+package customErrors
+
+import "errors"
+
+var ErrUserAlreadyExists error = errors.New("user already exists")
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\check_affected.go
+
+```
+package repository
+
+import (
+	"database/sql"
+	"errors"
+)
+
+func checkAffected(result sql.Result, notFoundMsg string) error {
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New(notFoundMsg)
+	}
+	return nil
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\create_session.go
+
+```
+package repository
+
+import (
+	"context"
+	"time"
+)
+
+func (s *PostgresStorage) CreateSession(ctx context.Context, userID int) (string, error) {
+	query := `INSERT INTO user_sessions (user_id, expires_at) VALUES ($1, $2) RETURNING id`
+	var id string
+	err := s.DB.GetContext(ctx, &id, query, userID, time.Now().Add(24*time.Hour))
+	if err != nil {
+		return "", err
+	}
+	return id, nil
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\create_task.go
+
+```
+package repository
+
+import "context"
+
+func (s *PostgresStorage) Save(ctx context.Context, title string, userID int, done bool, description string) (int, error) {
+	query := `INSERT INTO tasks (user_id, user_task_id, title, done, description) 
+VALUES (
+    $1, 
+    COALESCE((SELECT MAX(user_task_id) FROM tasks WHERE user_id = $1), 0) + 1, 
+    $2,
+	$3,
+	$4
+) 
+RETURNING user_task_id`
+	var id int
+	err := s.DB.GetContext(ctx, &id, query, userID, title, done, description)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\create_user.go
+
+```
+package repository
+
+import (
+	"context"
+)
+
+func (s *PostgresStorage) CreateUserWeb(ctx context.Context, email string, passwordHash string, username string) error {
+	// 1. Открываем транзакцию
+	tx, err := s.DB.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	// Если что-то пойдет не так, defer автоматически откатит изменения
+	defer tx.Rollback()
+
+	// 2. Вставляем в родительскую таблицу users и получаем сгенерированный ID
+	var lastInsertID int
+	queryUsers := `INSERT INTO users (username) VALUES ($1) RETURNING id`
+
+	err = tx.GetContext(ctx, &lastInsertID, queryUsers, username)
+	if err != nil {
+		return err
+	}
+
+	// 3. Вставляем в таблицу user_passwords (БЕЗ username, его там нет!)
+	queryCreds := `INSERT INTO user_passwords (user_id, email, password_hash) VALUES ($1, $2, $3)`
+	_, err = tx.ExecContext(ctx, queryCreds, lastInsertID, email, passwordHash)
+	if err != nil {
+		return err
+	}
+
+	// Записываем полученный ID обратно в структуру, чтобы usecase знал его
+
+	// 4. Применяем изменения, если всё прошло гладко
+	return tx.Commit()
+}
+
+func (s *PostgresStorage) CreateUserTg(ctx context.Context, ID int64, username string) error {
+	// 1. Открываем транзакцию
+	tx, err := s.DB.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// 2. Создаем запись в users
+	var lastInsertID int
+	queryUsers := `INSERT INTO users (username) VALUES ($1) RETURNING id`
+
+	err = tx.GetContext(ctx, &lastInsertID, queryUsers, username)
+	if err != nil {
+		return err
+	}
+
+	// 3. Создаем запись в user_telegram
+	queryTg := `INSERT INTO user_telegram (tg_id, user_id, username) VALUES ($1, $2, $3)`
+	_, err = tx.ExecContext(ctx, queryTg, ID, lastInsertID, username)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\delete_task.go
+
+```
+package repository
+
+import (
+	"context"
+)
+
+func (s *PostgresStorage) Delete(ctx context.Context, id int) error {
+	query := `UPDATE tasks SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL`
+	result, err := s.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	err = checkAffected(result, "task not found")
+	return err
+}
+
+func (s *PostgresStorage) DeleteForever(ctx context.Context, id int) error {
+	query := `DELETE FROM tasks WHERE id = $1 AND deleted_at IS NOT NULL`
+	result, err := s.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	err = checkAffected(result, "task not found")
+	return err
+}
+func (s *PostgresStorage) Recover(ctx context.Context, id int) error {
+	query := `UPDATE tasks SET deleted_at = NULL WHERE id = $1 AND deleted_at IS NOT NULL`
+	result, err := s.DB.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+	err = checkAffected(result, "task not found")
+	return err
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\exists_user.go
+
+```
+package repository
+
+import (
+	"context"
+)
+
+func (s *PostgresStorage) ExistsWeb(ctx context.Context, email string) (bool, error) {
+	var exists bool
+
+	query := `SELECT EXISTS(SELECT 1 FROM user_passwords WHERE email = $1)`
+
+	// Используем GetContext, так как запрос ВСЕГДА возвращает ровно одну строку с true/false
+	err := s.DB.GetContext(ctx, &exists, query, email)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}
+
+func (s *PostgresStorage) ExistsTg(ctx context.Context, ID int64) (bool, error) {
+	var exists bool
+
+	query := `SELECT EXISTS(SELECT 1 FROM user_telegram WHERE tg_id = $1)`
+
+	// Используем GetContext, так как запрос ВСЕГДА возвращает ровно одну строку с true/false
+	err := s.DB.GetContext(ctx, &exists, query, ID)
+	if err != nil {
+		return false, err
+	}
+
+	return exists, nil
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\find_session.go
+
+```
+package repository
+
+import (
+	"context"
+	"time"
+)
+
+func (s *PostgresStorage) FindUserIDBySession(ctx context.Context, sessionID string) (int, error) {
+	query := `SELECT user_id FROM user_sessions WHERE id = $1 AND expires_at > $2`
+	var userID int
+	// Проверяем, что сессия существует и время её жизни больше, чем NOW()
+	err := s.DB.GetContext(ctx, &userID, query, sessionID, time.Now())
+	if err != nil {
+		return 0, err
+	}
+	return userID, nil
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\find_user_by_email.go
+
+```
+package repository
+
+import (
+	"context"
+	"proj/internal/entity"
+	pgmodel "proj/internal/repository/postgres/entityPostgres"
+)
+
+func (s *PostgresStorage) FindByEmail(ctx context.Context, email string) (*entity.UserWeb, error) {
+	query := `SELECT password_hash, user_id, email FROM user_passwords WHERE email = $1`
+	var user pgmodel.UserWeb
+	err := s.DB.GetContext(ctx, &user, query, email)
+	if err != nil {
+		return nil, err
+	}
+	entityUser := user.ToEntitiy()
+	return &entityUser, nil
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\find_user_by_id.go
+
+```
+package repository
+
+import (
+	"context"
+	"proj/internal/entity"
+)
+
+func (s *PostgresStorage) FindByIdTg(ctx context.Context, userID int64) (int, error) {
+	query := `SELECT user_id FROM user_telegram WHERE tg_id = $1`
+	var id int
+	err := s.DB.GetContext(ctx, &id, query, userID)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
+func (s *PostgresStorage) FindByIdWeb(ctx context.Context, userID int) (*entity.UserWeb, error) {
+	query := `SELECT u.username, up.email 
+FROM users u 
+JOIN user_passwords up ON u.id = up.user_id 
+WHERE u.id = $1`
+	user := entity.UserWeb{
+		UserID: userID,
+	}
+	err := s.DB.GetContext(ctx, &user, query, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\get_tasks_by_id.go
+
+```
+package repository
+
+import (
+	"context"
+	"proj/internal/entity"
+)
+
+func (s *PostgresStorage) GetAllTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error) {
+	var tasks []Task
+
+	// Выбираем только те задачи, которые принадлежат конкретному ТГ-чату
+	query := `SELECT id, title, done, user_id, description, user_task_id FROM tasks WHERE user_id = $1 AND deleted_at IS NULL ORDER BY user_task_id`
+
+	err := s.DB.SelectContext(ctx, &tasks, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	var entityTasks []entity.Task
+	for _, task := range tasks {
+		entityTasks = append(entityTasks, task.ToEntitiy())
+	}
+	return entityTasks, err
+}
+
+func (s *PostgresStorage) GetTask(ctx context.Context, taskID int) (*entity.Task, error) {
+	var task Task
+
+	query := `SELECT id, title, description, done, deleted_at FROM tasks WHERE id = $1`
+
+	err := s.DB.GetContext(ctx, &task, query, taskID)
+	if err != nil {
+		return nil, err
+	}
+	entityTask := task.ToEntitiy()
+	return &entityTask, err
+}
+
+func (s *PostgresStorage) GetDeleteTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error) {
+	var tasks []Task
+
+	// Выбираем только те задачи, которые принадлежат конкретному ТГ-чату
+	query := `SELECT id, title, done, user_id, description, deleted_at, user_task_id FROM tasks WHERE user_id = $1 AND deleted_at IS NOT NULL ORDER BY user_task_id`
+
+	err := s.DB.SelectContext(ctx, &tasks, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	var entityTasks []entity.Task
+	for _, task := range tasks {
+		entityTasks = append(entityTasks, task.ToEntitiy())
+	}
+	return entityTasks, err
+}
+
+func (s *PostgresStorage) GetTaskByUserID(ctx context.Context, userID int, user_task_id int) (int, error) {
+
+	query := `SELECT id FROM tasks WHERE user_id = $1 AND user_task_id = $2`
+	var id int
+	err := s.DB.GetContext(ctx, &id, query, userID, user_task_id)
+	if err != nil {
+		return 0, err
+	}
+	return id, err
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\repository.go
+
+```
+package repository
+
+import (
+	pgmodel "proj/internal/repository/postgres/entityPostgres"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
+)
+
+type Task = pgmodel.Task
+
+type PostgresStorage struct {
+	DB *sqlx.DB
+}
+
+func NewPostgressStorage(db *sqlx.DB) *PostgresStorage {
+	return &PostgresStorage{DB: db}
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\update_description.go
+
+```
+package repository
+
+import "context"
+
+func (s *PostgresStorage) UpdateDescription(ctx context.Context, taskID int, newDesc string) error {
+	query := `UPDATE tasks SET description = $1 WHERE id = $2`
+
+	// Используем ExecContext, так как нам не нужно сканировать возвращаемые строки
+	result, err := s.DB.ExecContext(ctx, query, newDesc, taskID)
+	if err != nil {
+		return err
+	}
+	return checkAffected(result, "task not found")
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\update_status.go
+
+```
+package repository
+
+import "context"
+
+func (s *PostgresStorage) UpdateStatus(ctx context.Context, id int, status bool) error {
+	query := `UPDATE tasks SET done = $1 WHERE id = $2`
+
+	// Используем ExecContext, так как нам не нужно сканировать возвращаемые строки
+	result, err := s.DB.ExecContext(ctx, query, status, id)
+	if err != nil {
+		return err
+	}
+	return checkAffected(result, "task not found")
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\entityPostgres\task.go
+
+```
+package pgmodel
+
+import (
+	"proj/internal/entity"
+	"time"
+)
+
+type Task struct {
+	ID          int        `db:"id"`
+	Title       string     `db:"title"`
+	Done        bool       `db:"done"`
+	DeletedAt   *time.Time `db:"deleted_at"`
+	UserID      int        `db:"user_id"` // Связующее поле!
+	UserTaskId  int        `db:"user_task_id"`
+	Description string     `db:"description"`
+}
+
+func (t Task) ToEntitiy() entity.Task {
+	return entity.Task{
+		ID:          t.ID,
+		Title:       t.Title,
+		UserID:      t.UserID,
+		Done:        t.Done,
+		Description: t.Description,
+		DeletedAt:   t.DeletedAt,
+		UserTaskId:  t.UserTaskId,
+	}
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\entityPostgres\user.go
+
+```
+package pgmodel
+
+import (
+	"proj/internal/entity"
+	"time"
+)
+
+type User struct {
+	ID        int       `db:"id"`
+	Username  string    `db:"username"`
+	CreatedAt time.Time `db:"created_at"`
+}
+
+type UserWeb struct {
+	UserID       int    `db:"user_id"`
+	Email        string `db:"email"`
+	Username     string `db:"username"`
+	PasswordHash string `db:"password_hash"`
+}
+
+type UserTg struct {
+	ID       int64  `db:"tg_id"`
+	Username string `db:"username"`
+	UserID   int    `db:"user_id"`
+}
+
+func (u UserWeb) ToEntitiy() entity.UserWeb {
+	return entity.UserWeb{
+		UserID:       u.UserID,
+		Email:        u.Email,
+		Username:     u.Username,
+		PasswordHash: u.PasswordHash,
+	}
+}
+
+```
+
+---
+
+## File: backend\internal\repository\redis\delete.go
+
+```
+package cache
+
+import (
+	"context"
+	"strconv"
+)
+
+func (c RedisVerificationRepository) Delete(ctx context.Context, userID int) error {
+	userIDstr := strconv.Itoa(userID)
+	err := c.Client.Del(ctx, userIDstr).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+```
+
+---
+
+## File: backend\internal\repository\redis\get.go
+
+```
+package cache
+
+import (
+	"context"
+	customErrors "proj/internal/errors"
+	"strconv"
+
+	"github.com/redis/go-redis/v9"
+)
+
+func (c RedisVerificationRepository) Get(ctx context.Context, userID int) (string, error) {
+	userIDstr := strconv.Itoa(userID)
+	result, err := c.Client.Get(ctx, userIDstr).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return "", customErrors.ErrCacheValueNotExists
+		}
+		return "", err
+	}
+	return result, err
+}
+
+```
+
+---
+
+## File: backend\internal\repository\redis\redis_verification.go
+
+```
+package cache
+
+import (
+	"github.com/redis/go-redis/v9"
+)
+
+type RedisVerificationRepository struct {
+	Client *redis.Client
+}
+
+func NewRedisRepository(client *redis.Client) *RedisVerificationRepository {
+	return &RedisVerificationRepository{Client: client}
+}
+
+```
+
+---
+
+## File: backend\internal\repository\redis\save.go
+
+```
+package cache
+
+import (
+	"context"
+	"strconv"
+	"time"
+)
+
+func (c RedisVerificationRepository) Save(ctx context.Context, userID int, unique_code string, time_duration time.Duration) error {
+	userIDstr := "2fa:code:" + strconv.Itoa(userID)
+	err := c.Client.Set(ctx, userIDstr, unique_code, time_duration).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+```
+
+---
+
+## File: backend\internal\usecase\create_task.go
+
+```
+package usecase
+
+import (
+	"context"
+	"fmt"
+	"proj/internal/entity"
+)
+
+func (uc *TaskUsecaseImpl) CreateTask(ctx context.Context, title string, description string, userID int) (*entity.Task, error) {
+	if title == "" {
+		return nil, fmt.Errorf("название не может быть пустым")
+	}
+	t := &entity.Task{
+		Title:       title,
+		Done:        false,
+		UserID:      userID,
+		Description: description,
+	}
+	id, err := uc.TaskRepo.Save(ctx, t.Title, t.UserID, t.Done, t.Description)
+	if err != nil {
+		return nil, err
+	}
+	t.UserTaskId = id
+	return t, nil
+}
+
+```
+
+---
+
+## File: backend\internal\usecase\delete_task.go
+
+```
+package usecase
+
+import (
+	"context"
+)
+
+func (uc *TaskUsecaseImpl) DeleteTask(ctx context.Context, id int) error {
+	return uc.TaskRepo.Delete(ctx, id)
+}
+
+func (uc *TaskUsecaseImpl) DeleteForeverTask(ctx context.Context, id int) error {
+	return uc.TaskRepo.DeleteForever(ctx, id)
+}
+
+func (uc *TaskUsecaseImpl) RecoverTask(ctx context.Context, id int) error {
+	return uc.TaskRepo.Recover(ctx, id)
+}
+
+```
+
+---
+
+## File: backend\internal\usecase\get_tasks_by_id.go
+
+```
+package usecase
+
+import (
+	"context"
+)
+
+func (uc *TaskUsecaseImpl) GetTasksByUserID(ctx context.Context, userID int) ([]Task, error) {
+	tasks, err := uc.TaskRepo.GetAllTasksByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+
+}
+
+func (uc *TaskUsecaseImpl) GetTask(ctx context.Context, taskID int) (*Task, error) {
+	task, err := uc.TaskRepo.GetTask(ctx, taskID)
+	if err != nil {
+		return nil, err
+	}
+	return task, nil
+
+}
+
+func (uc *TaskUsecaseImpl) GetRemovedTasksByUserID(ctx context.Context, userID int) ([]Task, error) {
+	tasks, err := uc.TaskRepo.GetDeleteTasksByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
+
+}
+
+func (uc *TaskUsecaseImpl) GetTaskByUserID(ctx context.Context, userID int, user_task_id int) (int, error) {
+	id, err := uc.TaskRepo.GetTaskByUserID(ctx, userID, user_task_id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+
+}
+
+```
+
+---
+
+## File: backend\internal\usecase\get_user_by_tg_id.go
+
+```
+package usecase
+
+import (
+	"context"
+	"proj/internal/entity"
+)
+
+func (uc *UserUsecaseImpl) GetUserByTgID(ctx context.Context, userID int64, username string) (*entity.UserTg, error) {
+	id, err := uc.UserRepo.FindByIdTg(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	user := entity.UserTg{
+		ID:       userID,
+		UserID:   id,
+		Username: username}
+
+	return &user, nil
+}
+
+func (uc *UserUsecaseImpl) GetUserByWebID(ctx context.Context, userID int) (*entity.UserWeb, error) {
+	user, err := uc.UserRepo.FindByIdWeb(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+```
+
+---
+
+## File: backend\internal\usecase\get_user_id_by_session.go
+
+```
+package usecase
+
+import "context"
+
+func (uc *UserUsecaseImpl) GetUserIDBySession(ctx context.Context, sessionID string) (int, error) {
+	return uc.UserRepo.FindUserIDBySession(ctx, sessionID)
+}
+
+```
+
+---
+
+## File: backend\internal\usecase\login_user.go
+
+```
+package usecase
+
+import (
+	"context"
+
+	"golang.org/x/crypto/bcrypt"
+)
+
+func (uc *UserUsecaseImpl) LoginUserWeb(ctx context.Context, email, password string) (string, error) {
+	user, err := uc.UserRepo.FindByEmail(ctx, email)
+	if err != nil {
+		return "", err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
+	if err != nil {
+		return "", err
+	}
+	session_id, err := uc.UserRepo.CreateSession(ctx, user.UserID)
+	if err != nil {
+		return "", err
+	}
+	return session_id, nil
+}
+
+```
+
+---
+
+## File: backend\internal\usecase\mark_as_done.go
+
+```
+package usecase
+
+import (
+	"context"
+)
+
+func (uc *TaskUsecaseImpl) MarkAsDone(ctx context.Context, id int, status bool) error {
+	return uc.TaskRepo.UpdateStatus(ctx, id, status)
+}
+
+```
+
+---
+
+## File: backend\internal\usecase\register_user.go
+
+```
+package usecase
+
+import (
+	"context"
+	customErrors "proj/internal/errors"
+
+	"golang.org/x/crypto/bcrypt"
+)
+
+func (uc *UserUsecaseImpl) RegisterUserWeb(ctx context.Context, email, username, password string) error {
+	exists, err := uc.UserRepo.ExistsWeb(ctx, email)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		err = uc.UserRepo.CreateUserWeb(ctx, email, string(passwordHash), username)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else {
+		return customErrors.ErrUserAlreadyExists
+	}
+}
+
+func (uc *UserUsecaseImpl) RegisterUserTg(ctx context.Context, ID int64, username string) error {
+	exists, err := uc.UserRepo.ExistsTg(ctx, ID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		err := uc.UserRepo.CreateUserTg(ctx, ID, username)
+		if err != nil {
+			return err
+		}
+		return nil
+	} else {
+		return customErrors.ErrUserAlreadyExists
+	}
+}
+
+```
+
+---
+
+## File: backend\internal\usecase\update_task_description.go
+
+```
+package usecase
+
+import "context"
+
+func (uc TaskUsecaseImpl) UpdateDescription(ctx context.Context, taskID int, newDesc string) error {
+	return uc.TaskRepo.UpdateDescription(ctx, taskID, newDesc)
+}
+
+```
+
+---
+
+## File: backend\internal\usecase\usecase.go
+
+```
+package usecase
+
+import (
+	"context"
+	"proj/internal/entity"
+	"time"
+)
+
+type Task = entity.Task
+
+type TaskRepository interface {
+	Save(ctx context.Context, title string, userID int, done bool, description string) (int, error)
+	GetAllTasksByUserID(ctx context.Context, userID int) ([]Task, error)
+	GetDeleteTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
+	GetTask(ctx context.Context, taskID int) (*Task, error)
+	GetTaskByUserID(ctx context.Context, userID int, user_task_id int) (int, error)
+	Delete(ctx context.Context, id int) error
+	DeleteForever(ctx context.Context, id int) error
+	Recover(ctx context.Context, id int) error
+	UpdateStatus(ctx context.Context, id int, status bool) error
+	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
+}
+
+type TaskUsecaseImpl struct {
+	TaskRepo TaskRepository
+}
+
+type UserUsecaseImpl struct {
+	UserRepo UserRepository
+}
+
+type UserRepository interface {
+	CreateUserWeb(ctx context.Context, email string, passwordHash string, username string) error
+	CreateUserTg(ctx context.Context, ID int64, username string) error
+	ExistsWeb(ctx context.Context, email string) (bool, error)
+	ExistsTg(ctx context.Context, ID int64) (bool, error)
+	FindByIdTg(ctx context.Context, userID int64) (int, error)
+	FindByIdWeb(ctx context.Context, userID int) (*entity.UserWeb, error)
+	FindByEmail(ctx context.Context, email string) (*entity.UserWeb, error)
+	CreateSession(ctx context.Context, userID int) (string, error)
+	FindUserIDBySession(ctx context.Context, sessionID string) (int, error)
+}
+
+type VerificationRepository interface {
+	Save(ctx context.Context, userID int, unique_code string, time_duration time.Duration) error
+	Get(ctx context.Context, userID int) (string, error)
+	Delete(ctx context.Context, userID int) error
+}
+type AuthUsecase struct {
+	AuthRepo VerificationRepository
+}
+
+func NewAuthUsecase(authRepo VerificationRepository) *AuthUsecase {
+	return &AuthUsecase{AuthRepo: authRepo}
+}
+
+func NewUserUsecase(userRepo UserRepository) *UserUsecaseImpl {
+	return &UserUsecaseImpl{UserRepo: userRepo}
+}
+func NewTaskUsecase(taskRepo TaskRepository) *TaskUsecaseImpl {
+	return &TaskUsecaseImpl{TaskRepo: taskRepo}
+}
+
+```
+
+---
+
+## File: backend\internal\usecase\usecase_test.go
+
+```
+package usecase
+
+// import (
+// 	"context"
+// 	"testing"
+// )
+
+// type MockTaskRepository struct {
+// 	// Сюда мы можем передать кастомную ошибку для тестов на сбой БД
+// 	ErrToReturn error
+// 	// Фейковый ID, который "база" присвоит задаче
+// 	FakeID int
+// }
+
+// // Теперь метод идеально соответствует твоему интерфейсу!
+// func (m *MockTaskRepository) Save(ctx context.Context, task *Task) error {
+// 	if m.ErrToReturn != nil {
+// 		return m.ErrToReturn
+// 	}
+
+// 	// Имитируем RETURNING id: перезаписываем ID в переданном объекте
+// 	if m.FakeID != 0 {
+// 		task.ID = m.FakeID
+// 	} else {
+// 		task.ID = 1 // дефолтный ID для тестов
+// 	}
+
+// 	return nil
+// }
+
+// // Заглушки для остальных методов (чтобы интерфейс удовлетворялся)
+// func (m *MockTaskRepository) GetAll(ctx context.Context) ([]Task, error)                { return nil, nil }
+// func (m *MockTaskRepository) UpdateStatus(ctx context.Context, id int, done bool) error { return nil }
+// func (m *MockTaskRepository) Delete(ctx context.Context, id int) error                  { return nil }
+// func (m *MockTaskRepository) GetByUserID(ctx context.Context, userID int64) ([]Task, error) {
+// 	return nil, nil
+// }
+
+// func TestCreateTask_Validation(t *testing.T) {
+// 	// 1. Инициализируем окружение
+// 	mockRepo := &MockTaskRepository{FakeID: 100}
+// 	uc := &TaskUsecaseImpl{Repo: mockRepo}
+
+// 	// 2. Описываем тестовые случаи (таблицу)
+// 	tests := []struct {
+// 		name    string // Имя теста для вывода в консоль
+// 		title   string // Входные данные
+// 		wantErr bool   // Ждем ли мы ошибку?
+// 	}{
+// 		{
+// 			name:    "Успешное создание",
+// 			title:   "Купить хлеб",
+// 			wantErr: false,
+// 		},
+// 		{
+// 			name:    "Пустая строка должна выдавать ошибку",
+// 			title:   "",
+// 			wantErr: true,
+// 		},
+// 		// Сюда можно легко докидывать новые кейсы за одну секунду!
+// 	}
+
+// 	// 3. Бежим по таблице циклом
+// 	for _, tt := range tests {
+// 		// t.Run создает изолированный подтест (subtest)
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			_, err := uc.CreateTask(context.Background(), tt.title)
+
+// 			// Проверяем, совпадает ли наличие ошибки с нашими ожиданиями
+// 			if (err != nil) != tt.wantErr {
+// 				t.Errorf("CreateTask() error = %v, wantErr %v", err, tt.wantErr)
+// 			}
+// 		})
+// 	}
+// }
+
+```
+
+---
+
+## File: backend\migrations\000001_init.down.sql
+
+```
+DROP TABLE IF EXISTS tasks;
+```
+
+---
+
+## File: backend\migrations\000001_init.up.sql
+
+```
+CREATE TABLE tasks (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    done BOOLEAN DEFAULT false
+);
+```
+
+---
+
+## File: backend\migrations\000002_add_deleted_at.down.sql
+
+```
+ALTER TABLE tasks DROP COLUMN deleted_at;
+```
+
+---
+
+## File: backend\migrations\000002_add_deleted_at.up.sql
+
+```
+ALTER TABLE tasks ADD COLUMN deleted_at TIMESTAMPTZ DEFAULT NULL;
+```
+
+---
+
+## File: backend\migrations\000003_add_users.down.sql
+
+```
+DROP TABLE IF EXISTS users CASCADE;
+ALTER TABLE tasks DROP COLUMN IF EXISTS user_id;
+```
+
+---
+
+## File: backend\migrations\000003_add_users.up.sql
+
+```
+-- 1. Создаем таблицу пользователей
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT PRIMARY KEY, -- Сюда будем писать Telegram ID (он большой, поэтому BIGINT)
+    username VARCHAR(255) DEFAULT '',
+    first_name VARCHAR(255) DEFAULT '',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 2. Добавляем колонку user_id в существующую таблицу tasks
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id BIGINT;
+
+-- 3. Накатываем CONSTRAINT (внешний ключ), который связывает tasks и users
+ALTER TABLE tasks 
+ADD CONSTRAINT fk_tasks_user 
+FOREIGN KEY (user_id) 
+REFERENCES users(id) 
+ON DELETE CASCADE;
+```
+
+---
+
+## File: backend\migrations\000004_add_user_task_id.down.sql
+
+```
+ALTER TABLE tasks DROP COLUMN IF EXISTS user_task_id;
+```
+
+---
+
+## File: backend\migrations\000004_add_user_task_id.up.sql
+
+```
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_task_id INT;
+```
+
+---
+
+## File: backend\migrations\000005_add_user_migration.down.sql
+
+```
+DROP TABLE IF EXISTS user_telegram CASCADE;
+DROP TABLE IF EXISTS user_passwords CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+ALTER TABLE tasks DROP COLUMN IF EXISTS user_id;
+
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT PRIMARY KEY, -- Сюда будем писать Telegram ID (он большой, поэтому BIGINT)
+    username VARCHAR(255) DEFAULT '',
+    first_name VARCHAR(255) DEFAULT '',
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id BIGINT;
+
+-- 3. Накатываем CONSTRAINT (внешний ключ), который связывает tasks и users
+ALTER TABLE tasks 
+ADD CONSTRAINT fk_tasks_user 
+FOREIGN KEY (user_id) 
+REFERENCES users(id) 
+ON DELETE CASCADE;
+```
+
+---
+
+## File: backend\migrations\000005_add_user_migration.up.sql
+
+```
+-- 1. Удаляем старые таблицы каскадно (связи в tasks отвалятся сами)
+DROP TABLE IF EXISTS users CASCADE;
+
+-- 2. На всякий случай подчищаем колонку в tasks, если она осталась
+ALTER TABLE tasks DROP COLUMN IF EXISTS user_id;
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username TEXT,          -- Отображаемое имя в твоем приложении
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id INT;
+
+-- 3. Накатываем CONSTRAINT (внешний ключ), который связывает tasks и users
+ALTER TABLE tasks 
+ADD CONSTRAINT fk_tasks_user 
+FOREIGN KEY (user_id) 
+REFERENCES users(id) 
+ON DELETE CASCADE;
+
+CREATE TABLE user_passwords (
+    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL -- Хэш пароля (никогда не храним в чистом виде!)
+);
+
+CREATE TABLE user_telegram (
+    tg_id BIGINT PRIMARY KEY, -- ID пользователя внутри Telegram
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    username TEXT             -- TG-юзернейм для удобства
+);
+```
+
+---
+
+## File: backend\migrations\000006_add_task_description.down.sql
+
+```
+ALTER TABLE tasks DROP COLUMN IF EXISTS description ;
+```
+
+---
+
+## File: backend\migrations\000006_add_task_description.up.sql
+
+```
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
+```
+
+---
+
+## File: backend\migrations\000007_add_sessions.down.sql
+
+```
+DROP INDEX IF EXISTS idx_sessions_expires_at;
+DROP TABLE IF EXISTS user_sessions;
+
+```
+
+---
+
+## File: backend\migrations\000007_add_sessions.up.sql
+
+```
+CREATE TABLE user_sessions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Уникальный токен сессии
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- Индекс для быстрого поиска сессии при каждом запросе
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON user_sessions(expires_at);
+```

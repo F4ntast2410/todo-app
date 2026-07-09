@@ -1,0 +1,363 @@
+
+.dashboard-container {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Шапка */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+/* Контейнер для всей секции формы */
+.task-form-section {
+    max-width: 600px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+
+/* Красивая монолитная карточка формы */
+.task-form {
+    display: flex;
+    flex-direction: column;
+    background-color: #1a1a1a; /* Темный графитовый фон */
+    border: 1px solid #2d2d2d;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    gap: 16px;
+}
+
+/* Группа полей ввода */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Общие стили для инпута и textarea */
+.task-form input[type="text"], 
+.task-form textarea {
+    width: 100%;
+    background-color: #242424; /* Чуть светлее карточки для контраста */
+    border: 1px solid #333333;
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Плавное изменение высоты для описания */
+.task-form textarea {
+    resize: vertical;
+    min-height: 60px;
+    line-height: 1.5;
+}
+
+/* Фокус на полях ввода */
+.task-form input:focus, 
+.task-form textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+/* Стильная кнопка "Добавить" */
+.task-form .btn-primary {
+    align-self: flex-end; /* Сдвигаем вправо */
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 28px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.task-form .btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.task-form .btn-primary:active {
+    transform: scale(0.98);
+}
+/* Контейнер для всего блока задач */
+.tasks-list-section {
+    max-width: 600px;
+    margin: 32px auto;
+    padding: 0 16px;
+}
+
+.tasks-list-section h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #fff;
+}
+
+/* Сетка для карточек */
+.tasks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Отступ между задачами */
+}
+
+/* Стильная карточка задачи */
+.task-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1a1a1a; /* Такой же графитовый фон, как у формы */
+    border: 1px solid #2d2d2d;
+    border-radius: 10px;
+    padding: 14px 18px;
+    transition: border-color 0.2s, transform 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Эффект при наведении на карточку */
+.task-card:hover {
+    border-color: #3f3f3f;
+    transform: translateY(-1px);
+}
+
+/* Блок с текстом (заголовок + описание) */
+.task-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1; /* Занимает всё свободное место слева */
+    padding-right: 16px;
+}
+
+/* Название задачи */
+.task-title {
+    font-size: 1rem;
+    color: #ffffff;
+    font-weight: 500;
+    word-break: break-word; /* Чтобы длинный текст не ломал верстку */
+}
+
+/* Описание задачи */
+.task-desc {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #888888; /* Приглушенный серый цвет */
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+/* Блок для кнопок действий справа */
+.task-actions {
+    display: flex;
+    align-items: center;
+}
+
+/* Полный сброс уродливой стандартной кнопки-квадрата */
+.btn-delete {
+    background: none;
+    border: none;
+    outline: none;
+    padding: 6px;
+    margin: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+/* Подсветка кнопки удаления при наведении */
+.btn-delete:hover {
+    background-color: rgba(255, 69, 58, 0.15); /* Легкий красный фон */
+    transform: scale(1.05);
+}
+
+.btn-delete:active {
+    transform: scale(0.95);
+}
+
+/* Стилизация кнопки выхода */
+#logout-btn.btn-secondary {
+    background-color: transparent;
+    color: #b0b0b0; /* Приглушенный текст */
+    border: 1px solid #3a3a3a; /* Тонкая темная рамка */
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.25s ease; /* Плавный переход для всех свойств */
+}
+
+/* Эффект при наведении — деликатный намек на "выход" */
+#logout-btn.btn-secondary:hover {
+    color: #ff453a; /* Красный цвет текста */
+    border-color: rgba(255, 69, 58, 0.4); /* Красная полупрозрачная рамка */
+    background-color: rgba(255, 69, 58, 0.06); /* Едва заметный красный фон */
+    box-shadow: 0 0 12px rgba(255, 69, 58, 0.1);
+}
+
+/* Эффект при клике (нажатии) */
+#logout-btn.btn-secondary:active {
+    transform: scale(0.96);
+    background-color: rgba(255, 69, 58, 0.12);
+}
+
+/* Делаем всю карточку полупрозрачной */
+.task-card--completed {
+    opacity: 0.55;
+    border-color: #222; /* делаем рамку темнее */
+}
+
+/* Перечеркиваем заголовок выполненной задачи */
+.task-card--completed .task-title {
+    text-decoration: line-through;
+    color: #777;
+}
+.btn-status {
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background-color 0.2s;
+}
+
+/* Лёгкая подсветка при наведении */
+.btn-status:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    transform: scale(1.05);
+}
+
+.btn-status:active {
+    transform: scale(0.95);
+}
+.btn-restore{
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background-color 0.2s;
+}
+
+/* Лёгкая подсветка при наведении */
+.btn-restore:hover {
+    background-color: rgba(36, 142, 255, 0.08);
+    transform: scale(1.05);
+}
+
+.btn-restore:active {
+    transform: scale(0.95);
+}
+.btn-delete-forever {
+    background: none;
+    border: none;
+    outline: none;
+    padding: 6px;
+    margin: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+/* Подсветка кнопки удаления при наведении */
+.btn-delete-forever:hover {
+    background-color: rgba(255, 69, 58, 0.15); /* Легкий красный фон */
+    transform: scale(1.05);
+}
+
+.btn-delete-forever:active {
+    transform: scale(0.95);
+}
+
+.hidden {
+    display: none !important;
+}
+/* Контейнер для вкладок */
+.tabs-navigation {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    margin-top: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 12px;
+}
+
+/* Базовый стиль кнопок-вкладок */
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: #777777; /* Приглушенный цвет для неактивной вкладки */
+    padding: 8px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Эффект при наведении на неактивную вкладку */
+.tab-btn:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Активная вкладка (под цвет твоей кнопки "Добавить") */
+.tab-btn.active {
+    color: #ffffff;
+    background-color: #007bff; /* Твой синий акцент */
+}
+
+/* --- Служебные тексты (Загрузка, Пусто, Ошибка) --- */
+
+.loading-text, .empty-text, .error-text {
+    text-align: center;
+    padding: 30px 20px;
+    font-size: 15px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
+/* Состояние загрузки и пустоты — спокойный серый */
+.loading-text, .empty-text {
+    color: #666666;
+}
+
+/* Ошибка — аккуратный пастельно-красный */
+.error-text {
+    color: #ff6b6b;
+    border-color: rgba(255, 107, 107, 0.2);
+    background-color: rgba(255, 107, 107, 0.02);
+}
