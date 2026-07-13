@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"proj/internal/entity"
-	"time"
 )
 
 type TaskUsecase interface {
@@ -21,12 +20,10 @@ type TaskUsecase interface {
 }
 type UserUsecase interface {
 	RegisterUserWeb(ctx context.Context, email, username, password string) error
-	LoginUserWeb(ctx context.Context, email, password string) (string, error)
+	LoginUserWeb(ctx context.Context, email entity.VerificationEmail, password string) (*entity.LoginResult, error)
+	Verify2FA(ctx context.Context, email entity.VerificationEmail, inputCode string) (*entity.LoginResult, error)
 	GetUserIDBySession(ctx context.Context, sessionID string) (int, error)
 	GetUserByWebID(ctx context.Context, userID int) (*entity.UserWeb, error)
-	Save2FA(ctx context.Context, email string, unique_code string, time_duration time.Duration) error
-	Get2FA(ctx context.Context, email string) (string, error)
-	Delete2FA(ctx context.Context, email string) error
 }
 type TaskHandler struct {
 	TaskUC TaskUsecase

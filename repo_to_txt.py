@@ -14,7 +14,7 @@ import sys
 # ── Настройки ────────────────────────────────────────────────────────────────
 
 # Расширения файлов, которые включаем
-INCLUDE_EXTENSIONS = {".go", ".mod", ".sum", ".sql", ".yaml", ".yml", ".env.example", ".Dockerfile", "Dockerfile"}
+INCLUDE_EXTENSIONS = {".go", ".mod", ".sum", ".sql", ".yaml", ".yml", ".env.example", ".Dockerfile", "Dockerfile", ".html", ".js", ".css"}
 
 # Папки, которые полностью пропускаем
 SKIP_DIRS = {".git", ".idea", ".vscode", "vendor", "node_modules", "__pycache__"}

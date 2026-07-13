@@ -30,7 +30,21 @@
                     <input type="password" id="password" required placeholder="••••••">
                 </div>
 
-                <!-- Контейнер для вывода ошибок -->
+                <!-- Группа ввода кода 2FA, по умолчанию скрыта -->
+                <div class="form-group hidden" id="2fa-group">
+                    <label for="2fa-code">Код подтверждения с почты</label>
+                    <input
+                        type="text"
+                        id="2fa-code"
+                        placeholder="000000"
+                        maxlength="6"
+                        inputmode="numeric"
+                        pattern="\d{6}"
+                        autocomplete="one-time-code"
+                    >
+                </div>
+
+                <!-- Контейнер для вывода ошибок / успешных сообщений -->
                 <div id="error-message" class="error-text hidden"></div>
 
                 <!-- ID для динамической смены текста кнопки -->

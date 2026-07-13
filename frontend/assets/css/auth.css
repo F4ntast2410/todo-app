@@ -62,6 +62,14 @@
     color: #545456;
 }
 
+/* Поле ввода 2FA-кода — крупнее и с разрядкой между цифрами */
+#2fa-code {
+    letter-spacing: 8px;
+    text-align: center;
+    font-size: 22px;
+    font-weight: 600;
+}
+
 /* Главная кнопка */
 #submit-btn {
     background-color: #0084ff;
@@ -92,6 +100,11 @@
     text-align: center;
     margin-top: 15px;
     margin-bottom: 10px;
+}
+
+/* Тот же контейнер, но для успешных сообщений (например, после регистрации) */
+.error-text.success-text {
+    color: #34c759;
 }
 
 /* Переключатель режимов Вход / Регистрация */

@@ -37,15 +37,15 @@ type UserRepository interface {
 	ExistsTg(ctx context.Context, ID int64) (bool, error)
 	FindByIdTg(ctx context.Context, userID int64) (int, error)
 	FindByIdWeb(ctx context.Context, userID int) (*entity.UserWeb, error)
-	FindByEmail(ctx context.Context, email string) (*entity.UserWeb, error)
+	FindByEmail(ctx context.Context, email entity.VerificationEmail) (*entity.UserWeb, error)
 	CreateSession(ctx context.Context, userID int) (string, error)
 	FindUserIDBySession(ctx context.Context, sessionID string) (int, error)
 }
 
 type VerificationRepository interface {
-	Save2FA(ctx context.Context, email string, unique_code string, time_duration time.Duration) error
-	Get2FA(ctx context.Context, email string) (string, error)
-	Delete2FA(ctx context.Context, email string) error
+	Save2FA(ctx context.Context, email entity.VerificationEmail, unique_code string, time_duration time.Duration) error
+	Get2FA(ctx context.Context, email entity.VerificationEmail) (string, error)
+	Delete2FA(ctx context.Context, email entity.VerificationEmail) error
 }
 
 func NewUserUsecase(userRepo UserRepository, authRepo VerificationRepository) *UserUsecaseImpl {

@@ -6,6 +6,12 @@ export async function login(email, password) {
         body: JSON.stringify({ email, password })
     });
 }
+export async function verify2FA(email, inputCode) {
+    return apiRequest('/auth/verify2fa', {
+        method: 'POST',
+        body: JSON.stringify({ email: email, input_code: inputCode })
+    });
+}
 
 // Задел на будущее
 export async function register(email, password, username) {

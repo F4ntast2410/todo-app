@@ -15,20 +15,10 @@ type UserRequest struct {
 	Email    string `json:"email"`
 	UserID   int    `json:"user_id"`
 }
-type RegisterRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"` // сырой пароль, только для входа
-}
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"` // сырой пароль, только для входа
-}
-
-type UserTg struct {
-	ID       int64  `json:"tg_id"`
-	Username string `json:"username"`
+type UserWeb struct {
 	UserID   int    `json:"user_id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 }
 
 func (u *UserRequest) ToRequest(e *entity.UserWeb) {

@@ -71,6 +71,7 @@ func main() {
 
 	mux.HandleFunc("POST /auth/register", userHandler.RegisterHandler)
 	mux.HandleFunc("POST /auth/login", userHandler.LoginHandler)
+	mux.HandleFunc("POST /auth/verify2fa", userHandler.Verify2FA)
 	mux.HandleFunc("POST /auth/logout", userHandler.LogoutHandler)
 
 	wrappedMux := middleware.Logger(mux)

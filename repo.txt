@@ -11,6 +11,8 @@
     │   │   ├── delivery
     │   │   │   ├── http
     │   │   │   │   ├── entityRequest
+    │   │   │   │   │   ├── auth.go
+    │   │   │   │   │   ├── error.go
     │   │   │   │   │   ├── task.go
     │   │   │   │   │   └── user.go
     │   │   │   │   ├── middleware
@@ -51,36 +53,36 @@
     │   │   │   │   ├── entityPostgres
     │   │   │   │   │   ├── task.go
     │   │   │   │   │   └── user.go
-    │   │   │   │   ├── check_affected.go
-    │   │   │   │   ├── create_session.go
-    │   │   │   │   ├── create_task.go
-    │   │   │   │   ├── create_user.go
-    │   │   │   │   ├── delete_task.go
-    │   │   │   │   ├── exists_user.go
-    │   │   │   │   ├── find_session.go
-    │   │   │   │   ├── find_user_by_email.go
-    │   │   │   │   ├── find_user_by_id.go
-    │   │   │   │   ├── get_tasks_by_id.go
     │   │   │   │   ├── repository.go
-    │   │   │   │   ├── update_description.go
-    │   │   │   │   └── update_status.go
+    │   │   │   │   ├── repository_check_affected.go
+    │   │   │   │   ├── repository_create_session.go
+    │   │   │   │   ├── repository_create_task.go
+    │   │   │   │   ├── repository_create_user.go
+    │   │   │   │   ├── repository_delete_task.go
+    │   │   │   │   ├── repository_exists_user.go
+    │   │   │   │   ├── repository_find_session.go
+    │   │   │   │   ├── repository_find_user_by_email.go
+    │   │   │   │   ├── repository_find_user_by_id.go
+    │   │   │   │   ├── repository_get_tasks_by_id.go
+    │   │   │   │   ├── repository_update_description.go
+    │   │   │   │   └── repository_update_status.go
     │   │   │   └── redis
-    │   │   │       ├── delete.go
-    │   │   │       ├── get.go
-    │   │   │       ├── redis_verification.go
-    │   │   │       └── save.go
+    │   │   │       ├── redis_delete_2fa.go
+    │   │   │       ├── redis_get_2fa.go
+    │   │   │       ├── redis_save_2fa.go
+    │   │   │       └── redis_verification.go
     │   │   └── usecase
-    │   │       ├── create_task.go
-    │   │       ├── delete_task.go
-    │   │       ├── get_tasks_by_id.go
-    │   │       ├── get_user_by_tg_id.go
-    │   │       ├── get_user_id_by_session.go
-    │   │       ├── login_user.go
-    │   │       ├── mark_as_done.go
-    │   │       ├── register_user.go
-    │   │       ├── update_task_description.go
     │   │       ├── usecase.go
-    │   │       └── usecase_test.go
+    │   │       ├── usecase_create_task.go
+    │   │       ├── usecase_delete_task.go
+    │   │       ├── usecase_get_tasks_by_id.go
+    │   │       ├── usecase_get_user_by_tg_id.go
+    │   │       ├── usecase_get_user_id_by_session.go
+    │   │       ├── usecase_login_user.go
+    │   │       ├── usecase_mark_as_done.go
+    │   │       ├── usecase_register_user.go
+    │   │       ├── usecase_test.go
+    │   │       └── usecase_update_task_description.go
     │   ├── migrations
     │   │   ├── 000001_init.down.sql
     │   │   ├── 000001_init.up.sql
@@ -102,13 +104,25 @@
     ├── frontend
     │   ├── assets
     │   │   ├── css
+    │   │   │   ├── auth.css
+    │   │   │   ├── dashboard.css
+    │   │   │   └── main.css
     │   │   └── images
     │   ├── src
     │   │   ├── api
+    │   │   │   ├── auth.js
+    │   │   │   ├── client.js
+    │   │   │   └── tasks.js
     │   │   ├── components
+    │   │   │   └── TaskCard.js
     │   │   ├── utils
+    │   │   │   └── validators.js
     │   │   └── views
+    │   │       ├── auth.js
+    │   │       └── dashboard.js
     │   └── views
+    │       ├── auth.html
+    │       └── dashboard.html
     └── docker-compose.yaml
 
 ---
@@ -372,10 +386,17 @@ func main() {
 	}
 	defer db.Close()
 
-	opt, err := redis.ParseURL(cfg.ClientURL)
+	opt := &redis.Options{
+		Addr:     cfg.Redis.Addr(),
+		Password: cfg.Redis.Password,
+		DB:       cfg.Redis.DB,
+	}
 	client := redis.NewClient(opt)
-	if err := client.Ping(context.Background()).Err(); err != nil {
-		logger.Error("client connection failed", slog.String("error", err.Error()))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := client.Ping(ctx).Err(); err != nil {
+		logger.Error("redis connection failed", slog.String("error", err.Error()))
 		panic(err)
 	}
 
@@ -383,8 +404,7 @@ func main() {
 	cache := cache.NewRedisRepository(client)
 	storage := repository.NewPostgressStorage(db)
 	taskUsecase := usecase.NewTaskUsecase(storage)
-	userUsecase := usecase.NewUserUsecase(storage)
-	authUsecase := usecase.NewAuthUsecase(cache)
+	userUsecase := usecase.NewUserUsecase(storage, cache)
 	taskHandler := httpHandler.NewTaskHandler(taskUsecase, logger)
 	userHandler := httpHandler.NewUserHandler(userUsecase, logger)
 
@@ -402,6 +422,7 @@ func main() {
 
 	mux.HandleFunc("POST /auth/register", userHandler.RegisterHandler)
 	mux.HandleFunc("POST /auth/login", userHandler.LoginHandler)
+	mux.HandleFunc("POST /auth/verify2fa", userHandler.Verify2FA)
 	mux.HandleFunc("POST /auth/logout", userHandler.LogoutHandler)
 
 	wrappedMux := middleware.Logger(mux)
@@ -456,7 +477,7 @@ func main() {
 	logger.Info("stopping services...")
 	botServer.Stop()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := server.Shutdown(ctx); err != nil {
 		logger.Error("HTTP server forced shutdown", slog.String("err", err.Error()))
@@ -476,43 +497,40 @@ func main() {
 package config
 
 import (
+	"fmt"
 	"log/slog"
-	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	Env         string `env:"ENV" env-default:"development"`
-	ServerPort  string `env:"SERVER_PORT" env-default:"8080"`
-	DatabaseURL string `env:"DATABASE_URL" env-required:"true"`
-	BotToken    string `env:"TELEGRAM_BOT_TOKEN"`
-	Redis       *RedisConfig
-}
-type RedisConfig struct {
-	Host     string `env:"REDIS_HOST"`
-	Port     string `env:"REDIS_PORT"`
-	Password string `env:"REDIS_PASSWORD"`
-	DB       int    `env:"REDIS_DB"`
+	Env         string      `env:"ENV" env-default:"development"`
+	ServerPort  string      `env:"SERVER_PORT" env-default:"8080"`
+	DatabaseURL string      `env:"DATABASE_URL" env-required:"true"`
+	BotToken    string      `env:"TELEGRAM_BOT_TOKEN"`
+	Redis       RedisConfig // без указателя: cleanenv раскладывает вложенные структуры по тегам сам
 }
 
-// MustLoad считывает конфиг один раз при старте.
-// Префикс Must в Go означает, что если функция не сработает — приложение упадет (panic).
+type RedisConfig struct {
+	Host     string `env:"REDIS_HOST" env-default:"localhost"`
+	Port     string `env:"REDIS_PORT" env-default:"6379"`
+	Password string `env:"REDIS_PASSWORD"`
+	DB       int    `env:"REDIS_DB" env-default:"0"`
+}
+
+// Addr собирает host:port для redis.Options — так проще, чем городить URL
+func (r RedisConfig) Addr() string {
+	return fmt.Sprintf("%s:%s", r.Host, r.Port)
+}
+
 func MustLoad() *Config {
 	var cfg Config
-	// Читаем файл .env, если он есть рядом
-	err := cleanenv.ReadConfig(".env", &cfg)
-	if err != nil {
-		// Если файла .env нет (например, в Docker-контейнере на проде),
-		// библиотека попытается прочитать переменные напрямую из системы
-		err = cleanenv.ReadEnv(&cfg)
-		if err != nil {
-			slog.Error("failed to load env config", slog.String("error:", err.Error()))
+	if err := cleanenv.ReadConfig(".env", &cfg); err != nil {
+		if err := cleanenv.ReadEnv(&cfg); err != nil {
+			slog.Error("failed to load env config", slog.String("error", err.Error()))
 			panic(err)
 		}
 	}
-	redisDBStr := os.Getenv("REDIS_DB")
-
 	return &cfg
 }
 
@@ -691,10 +709,12 @@ package httpHandler
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	dto "proj/internal/delivery/http/entityRequest"
-	"time"
+	"proj/internal/entity"
+	customErrors "proj/internal/errors"
 )
 
 func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -704,25 +724,53 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	sessionToken, err := h.UserUC.LoginUserWeb(r.Context(), req.Email, req.Password)
+	loginResult, err := h.UserUC.LoginUserWeb(r.Context(), entity.VerificationEmail(req.Email), req.Password)
 	if err != nil {
 		h.Logger.Warn("invalid credentials or login failed", slog.String("email", req.Email))
 		w.WriteHeader(http.StatusUnauthorized) // 401 Unauthorized
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_token",
-		Value:    sessionToken, // Тот самый UUID сессии из БД
-		Expires:  time.Now().Add(24 * time.Hour),
-		Path:     "/",                  // Доступно для всех роутов
-		HttpOnly: true,                 // Защита от XSS (JS не сможет прочитать куку)
-		Secure:   false,                // Поставь true, если будешь использовать HTTPS
-		SameSite: http.SameSiteLaxMode, // Защита от CSRF атак
-	})
-
-	w.WriteHeader(http.StatusOK)
+	resp := dto.Responce2FA{Status: loginResult.Requires2FA}
+	if resp.Status == true {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(resp)
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
+func (h *UserHandler) Verify2FA(w http.ResponseWriter, r *http.Request) {
+	var req dto.Request2FA
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	loginRequest, err := h.UserUC.Verify2FA(r.Context(), entity.VerificationEmail(req.Email), req.InputCode)
+	if err != nil {
+		if errors.Is(err, customErrors.ErrInvalid2FACode) {
+			w.WriteHeader(http.StatusBadRequest) // Выставляем HTTP статус 400
+			json.NewEncoder(w).Encode(dto.ErrorResponse{
+				Error: "Неверный или истекший код подтверждения",
+			})
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    loginRequest.SessionToken,
+		Path:     "/",
+		MaxAge:   86400, // Говорит браузеру немедленно удалить куку
+		HttpOnly: true,
+		Secure:   false, // Выставь false, если локально тестируешь без HTTPS
+		SameSite: http.SameSiteLaxMode,
+	})
+	w.WriteHeader(http.StatusOK)
+
+}
 func (h *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Имя куки должно быть ровно таким же, какое ты задаешь при Login/Register
 	http.SetCookie(w, &http.Cookie{
@@ -946,11 +994,11 @@ type TaskUsecase interface {
 }
 type UserUsecase interface {
 	RegisterUserWeb(ctx context.Context, email, username, password string) error
-	LoginUserWeb(ctx context.Context, email, password string) (string, error)
+	LoginUserWeb(ctx context.Context, email entity.VerificationEmail, password string) (*entity.LoginResult, error)
+	Verify2FA(ctx context.Context, email entity.VerificationEmail, inputCode string) (*entity.LoginResult, error)
 	GetUserIDBySession(ctx context.Context, sessionID string) (int, error)
 	GetUserByWebID(ctx context.Context, userID int) (*entity.UserWeb, error)
 }
-
 type TaskHandler struct {
 	TaskUC TaskUsecase
 	Logger *slog.Logger
@@ -959,15 +1007,51 @@ type UserHandler struct {
 	UserUC UserUsecase
 	Logger *slog.Logger
 }
-type AuthHandler struct {
-	AuthUC AuthUsecase
-}
 
 func NewTaskHandler(taskUC TaskUsecase, logger *slog.Logger) *TaskHandler {
 	return &TaskHandler{TaskUC: taskUC, Logger: logger}
 }
 func NewUserHandler(userUC UserUsecase, logger *slog.Logger) *UserHandler {
 	return &UserHandler{UserUC: userUC, Logger: logger}
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\entityRequest\auth.go
+
+```
+package dto
+
+type RegisterRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+	Password string `json:"password"` // сырой пароль, только для входа
+}
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"` // сырой пароль, только для входа
+}
+type Responce2FA struct {
+	Status bool `json:"status"`
+}
+type Request2FA struct {
+	InputCode string `json:"input_code"`
+	Email     string `json:"email"`
+}
+
+```
+
+---
+
+## File: backend\internal\delivery\http\entityRequest\error.go
+
+```
+package dto
+
+type ErrorResponse struct {
+	Error string `json:"error"`
 }
 
 ```
@@ -1036,20 +1120,10 @@ type UserRequest struct {
 	Email    string `json:"email"`
 	UserID   int    `json:"user_id"`
 }
-type RegisterRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"` // сырой пароль, только для входа
-}
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"` // сырой пароль, только для входа
-}
-
-type UserTg struct {
-	ID       int64  `json:"tg_id"`
-	Username string `json:"username"`
+type UserWeb struct {
 	UserID   int    `json:"user_id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 }
 
 func (u *UserRequest) ToRequest(e *entity.UserWeb) {
@@ -1958,6 +2032,11 @@ package entity
 
 type VerificationEmail string
 
+type LoginResult struct {
+	SessionToken string
+	Requires2FA  bool
+}
+
 ```
 
 ---
@@ -2022,6 +2101,8 @@ import "errors"
 
 var ErrCacheValueNotExists error = errors.New("code not found")
 
+var ErrInvalid2FACode error = errors.New("invalid input code")
+
 ```
 
 ---
@@ -2039,7 +2120,33 @@ var ErrUserAlreadyExists error = errors.New("user already exists")
 
 ---
 
-## File: backend\internal\repository\postgres\check_affected.go
+## File: backend\internal\repository\postgres\repository.go
+
+```
+package repository
+
+import (
+	pgmodel "proj/internal/repository/postgres/entityPostgres"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/jmoiron/sqlx"
+)
+
+type Task = pgmodel.Task
+
+type PostgresStorage struct {
+	DB *sqlx.DB
+}
+
+func NewPostgressStorage(db *sqlx.DB) *PostgresStorage {
+	return &PostgresStorage{DB: db}
+}
+
+```
+
+---
+
+## File: backend\internal\repository\postgres\repository_check_affected.go
 
 ```
 package repository
@@ -2064,7 +2171,7 @@ func checkAffected(result sql.Result, notFoundMsg string) error {
 
 ---
 
-## File: backend\internal\repository\postgres\create_session.go
+## File: backend\internal\repository\postgres\repository_create_session.go
 
 ```
 package repository
@@ -2088,7 +2195,7 @@ func (s *PostgresStorage) CreateSession(ctx context.Context, userID int) (string
 
 ---
 
-## File: backend\internal\repository\postgres\create_task.go
+## File: backend\internal\repository\postgres\repository_create_task.go
 
 ```
 package repository
@@ -2117,7 +2224,7 @@ RETURNING user_task_id`
 
 ---
 
-## File: backend\internal\repository\postgres\create_user.go
+## File: backend\internal\repository\postgres\repository_create_user.go
 
 ```
 package repository
@@ -2188,7 +2295,7 @@ func (s *PostgresStorage) CreateUserTg(ctx context.Context, ID int64, username s
 
 ---
 
-## File: backend\internal\repository\postgres\delete_task.go
+## File: backend\internal\repository\postgres\repository_delete_task.go
 
 ```
 package repository
@@ -2230,7 +2337,7 @@ func (s *PostgresStorage) Recover(ctx context.Context, id int) error {
 
 ---
 
-## File: backend\internal\repository\postgres\exists_user.go
+## File: backend\internal\repository\postgres\repository_exists_user.go
 
 ```
 package repository
@@ -2271,7 +2378,7 @@ func (s *PostgresStorage) ExistsTg(ctx context.Context, ID int64) (bool, error) 
 
 ---
 
-## File: backend\internal\repository\postgres\find_session.go
+## File: backend\internal\repository\postgres\repository_find_session.go
 
 ```
 package repository
@@ -2296,7 +2403,7 @@ func (s *PostgresStorage) FindUserIDBySession(ctx context.Context, sessionID str
 
 ---
 
-## File: backend\internal\repository\postgres\find_user_by_email.go
+## File: backend\internal\repository\postgres\repository_find_user_by_email.go
 
 ```
 package repository
@@ -2307,7 +2414,7 @@ import (
 	pgmodel "proj/internal/repository/postgres/entityPostgres"
 )
 
-func (s *PostgresStorage) FindByEmail(ctx context.Context, email string) (*entity.UserWeb, error) {
+func (s *PostgresStorage) FindByEmail(ctx context.Context, email entity.VerificationEmail) (*entity.UserWeb, error) {
 	query := `SELECT password_hash, user_id, email FROM user_passwords WHERE email = $1`
 	var user pgmodel.UserWeb
 	err := s.DB.GetContext(ctx, &user, query, email)
@@ -2322,7 +2429,7 @@ func (s *PostgresStorage) FindByEmail(ctx context.Context, email string) (*entit
 
 ---
 
-## File: backend\internal\repository\postgres\find_user_by_id.go
+## File: backend\internal\repository\postgres\repository_find_user_by_id.go
 
 ```
 package repository
@@ -2362,7 +2469,7 @@ WHERE u.id = $1`
 
 ---
 
-## File: backend\internal\repository\postgres\get_tasks_by_id.go
+## File: backend\internal\repository\postgres\repository_get_tasks_by_id.go
 
 ```
 package repository
@@ -2434,33 +2541,7 @@ func (s *PostgresStorage) GetTaskByUserID(ctx context.Context, userID int, user_
 
 ---
 
-## File: backend\internal\repository\postgres\repository.go
-
-```
-package repository
-
-import (
-	pgmodel "proj/internal/repository/postgres/entityPostgres"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/jmoiron/sqlx"
-)
-
-type Task = pgmodel.Task
-
-type PostgresStorage struct {
-	DB *sqlx.DB
-}
-
-func NewPostgressStorage(db *sqlx.DB) *PostgresStorage {
-	return &PostgresStorage{DB: db}
-}
-
-```
-
----
-
-## File: backend\internal\repository\postgres\update_description.go
+## File: backend\internal\repository\postgres\repository_update_description.go
 
 ```
 package repository
@@ -2482,7 +2563,7 @@ func (s *PostgresStorage) UpdateDescription(ctx context.Context, taskID int, new
 
 ---
 
-## File: backend\internal\repository\postgres\update_status.go
+## File: backend\internal\repository\postgres\repository_update_status.go
 
 ```
 package repository
@@ -2582,19 +2663,19 @@ func (u UserWeb) ToEntitiy() entity.UserWeb {
 
 ---
 
-## File: backend\internal\repository\redis\delete.go
+## File: backend\internal\repository\redis\redis_delete_2fa.go
 
 ```
 package cache
 
 import (
 	"context"
-	"strconv"
+	"fmt"
+	"proj/internal/entity"
 )
 
-func (c RedisVerificationRepository) Delete(ctx context.Context, userID int) error {
-	userIDstr := strconv.Itoa(userID)
-	err := c.Client.Del(ctx, userIDstr).Err()
+func (c RedisVerificationRepository) Delete2FA(ctx context.Context, email entity.VerificationEmail) error {
+	err := c.Client.Del(ctx, fmt.Sprintf("2fa:email:%s", email)).Err()
 	if err != nil {
 		return err
 	}
@@ -2605,22 +2686,22 @@ func (c RedisVerificationRepository) Delete(ctx context.Context, userID int) err
 
 ---
 
-## File: backend\internal\repository\redis\get.go
+## File: backend\internal\repository\redis\redis_get_2fa.go
 
 ```
 package cache
 
 import (
 	"context"
+	"fmt"
+	"proj/internal/entity"
 	customErrors "proj/internal/errors"
-	"strconv"
 
 	"github.com/redis/go-redis/v9"
 )
 
-func (c RedisVerificationRepository) Get(ctx context.Context, userID int) (string, error) {
-	userIDstr := strconv.Itoa(userID)
-	result, err := c.Client.Get(ctx, userIDstr).Result()
+func (c RedisVerificationRepository) Get2FA(ctx context.Context, email entity.VerificationEmail) (string, error) {
+	result, err := c.Client.Get(ctx, fmt.Sprintf("2fa:email:%s", email)).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return "", customErrors.ErrCacheValueNotExists
@@ -2628,6 +2709,30 @@ func (c RedisVerificationRepository) Get(ctx context.Context, userID int) (strin
 		return "", err
 	}
 	return result, err
+}
+
+```
+
+---
+
+## File: backend\internal\repository\redis\redis_save_2fa.go
+
+```
+package cache
+
+import (
+	"context"
+	"fmt"
+	"proj/internal/entity"
+	"time"
+)
+
+func (c RedisVerificationRepository) Save2FA(ctx context.Context, email entity.VerificationEmail, unique_code string, time_duration time.Duration) error {
+	err := c.Client.Set(ctx, fmt.Sprintf("2fa:email:%s", email), unique_code, time_duration).Err()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 ```
@@ -2655,31 +2760,71 @@ func NewRedisRepository(client *redis.Client) *RedisVerificationRepository {
 
 ---
 
-## File: backend\internal\repository\redis\save.go
+## File: backend\internal\usecase\usecase.go
 
 ```
-package cache
+package usecase
 
 import (
 	"context"
-	"strconv"
+	"proj/internal/entity"
 	"time"
 )
 
-func (c RedisVerificationRepository) Save(ctx context.Context, userID int, unique_code string, time_duration time.Duration) error {
-	userIDstr := "2fa:code:" + strconv.Itoa(userID)
-	err := c.Client.Set(ctx, userIDstr, unique_code, time_duration).Err()
-	if err != nil {
-		return err
-	}
-	return nil
+type Task = entity.Task
+
+type TaskRepository interface {
+	Save(ctx context.Context, title string, userID int, done bool, description string) (int, error)
+	GetAllTasksByUserID(ctx context.Context, userID int) ([]Task, error)
+	GetDeleteTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
+	GetTask(ctx context.Context, taskID int) (*Task, error)
+	GetTaskByUserID(ctx context.Context, userID int, user_task_id int) (int, error)
+	Delete(ctx context.Context, id int) error
+	DeleteForever(ctx context.Context, id int) error
+	Recover(ctx context.Context, id int) error
+	UpdateStatus(ctx context.Context, id int, status bool) error
+	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
+}
+
+type TaskUsecaseImpl struct {
+	TaskRepo TaskRepository
+}
+
+type UserUsecaseImpl struct {
+	UserRepo UserRepository
+	AuthRepo VerificationRepository
+}
+
+type UserRepository interface {
+	CreateUserWeb(ctx context.Context, email string, passwordHash string, username string) error
+	CreateUserTg(ctx context.Context, ID int64, username string) error
+	ExistsWeb(ctx context.Context, email string) (bool, error)
+	ExistsTg(ctx context.Context, ID int64) (bool, error)
+	FindByIdTg(ctx context.Context, userID int64) (int, error)
+	FindByIdWeb(ctx context.Context, userID int) (*entity.UserWeb, error)
+	FindByEmail(ctx context.Context, email entity.VerificationEmail) (*entity.UserWeb, error)
+	CreateSession(ctx context.Context, userID int) (string, error)
+	FindUserIDBySession(ctx context.Context, sessionID string) (int, error)
+}
+
+type VerificationRepository interface {
+	Save2FA(ctx context.Context, email entity.VerificationEmail, unique_code string, time_duration time.Duration) error
+	Get2FA(ctx context.Context, email entity.VerificationEmail) (string, error)
+	Delete2FA(ctx context.Context, email entity.VerificationEmail) error
+}
+
+func NewUserUsecase(userRepo UserRepository, authRepo VerificationRepository) *UserUsecaseImpl {
+	return &UserUsecaseImpl{UserRepo: userRepo, AuthRepo: authRepo}
+}
+func NewTaskUsecase(taskRepo TaskRepository) *TaskUsecaseImpl {
+	return &TaskUsecaseImpl{TaskRepo: taskRepo}
 }
 
 ```
 
 ---
 
-## File: backend\internal\usecase\create_task.go
+## File: backend\internal\usecase\usecase_create_task.go
 
 ```
 package usecase
@@ -2712,7 +2857,7 @@ func (uc *TaskUsecaseImpl) CreateTask(ctx context.Context, title string, descrip
 
 ---
 
-## File: backend\internal\usecase\delete_task.go
+## File: backend\internal\usecase\usecase_delete_task.go
 
 ```
 package usecase
@@ -2737,7 +2882,7 @@ func (uc *TaskUsecaseImpl) RecoverTask(ctx context.Context, id int) error {
 
 ---
 
-## File: backend\internal\usecase\get_tasks_by_id.go
+## File: backend\internal\usecase\usecase_get_tasks_by_id.go
 
 ```
 package usecase
@@ -2786,7 +2931,7 @@ func (uc *TaskUsecaseImpl) GetTaskByUserID(ctx context.Context, userID int, user
 
 ---
 
-## File: backend\internal\usecase\get_user_by_tg_id.go
+## File: backend\internal\usecase\usecase_get_user_by_tg_id.go
 
 ```
 package usecase
@@ -2821,7 +2966,7 @@ func (uc *UserUsecaseImpl) GetUserByWebID(ctx context.Context, userID int) (*ent
 
 ---
 
-## File: backend\internal\usecase\get_user_id_by_session.go
+## File: backend\internal\usecase\usecase_get_user_id_by_session.go
 
 ```
 package usecase
@@ -2836,38 +2981,79 @@ func (uc *UserUsecaseImpl) GetUserIDBySession(ctx context.Context, sessionID str
 
 ---
 
-## File: backend\internal\usecase\login_user.go
+## File: backend\internal\usecase\usecase_login_user.go
 
 ```
 package usecase
 
 import (
 	"context"
+	"crypto/rand"
+	"fmt"
+	"log"
+	"math/big"
+	"proj/internal/entity"
+	customErrors "proj/internal/errors"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (uc *UserUsecaseImpl) LoginUserWeb(ctx context.Context, email, password string) (string, error) {
+func (uc *UserUsecaseImpl) LoginUserWeb(ctx context.Context, email entity.VerificationEmail, password string) (*entity.LoginResult, error) {
 	user, err := uc.UserRepo.FindByEmail(ctx, email)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	session_id, err := uc.UserRepo.CreateSession(ctx, user.UserID)
+	unique_code, err := rand.Int(rand.Reader, big.NewInt(900000))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return session_id, nil
+	unique_code_str := fmt.Sprintf("%d", unique_code.Int64()+100000)
+	go func() {
+		log.Printf("🔥 КОД ДЛЯ ПОЧТЫ %s: %s", email, unique_code_str)
+		//Горутина для будущего функционала отправки письма
+	}()
+	if err = uc.AuthRepo.Save2FA(ctx, email, unique_code_str, 5*time.Minute); err != nil {
+		return nil, err
+	}
+	return &entity.LoginResult{Requires2FA: true}, nil
+}
+func (uc *UserUsecaseImpl) Verify2FA(ctx context.Context, email entity.VerificationEmail, inputCode string) (*entity.LoginResult, error) {
+	user, err := uc.UserRepo.FindByEmail(ctx, entity.VerificationEmail(email))
+	if err != nil {
+		return nil, err
+	}
+	savedCode, err := uc.AuthRepo.Get2FA(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	if savedCode != inputCode {
+		return nil, customErrors.ErrInvalid2FACode
+	}
+
+	err = uc.AuthRepo.Delete2FA(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	sessionID, err := uc.UserRepo.CreateSession(ctx, user.UserID)
+	if err != nil {
+		return nil, err
+	}
+	return &entity.LoginResult{
+		SessionToken: sessionID,
+		Requires2FA:  false,
+	}, nil
 }
 
 ```
 
 ---
 
-## File: backend\internal\usecase\mark_as_done.go
+## File: backend\internal\usecase\usecase_mark_as_done.go
 
 ```
 package usecase
@@ -2884,7 +3070,7 @@ func (uc *TaskUsecaseImpl) MarkAsDone(ctx context.Context, id int, status bool) 
 
 ---
 
-## File: backend\internal\usecase\register_user.go
+## File: backend\internal\usecase\usecase_register_user.go
 
 ```
 package usecase
@@ -2930,91 +3116,6 @@ func (uc *UserUsecaseImpl) RegisterUserTg(ctx context.Context, ID int64, usernam
 	} else {
 		return customErrors.ErrUserAlreadyExists
 	}
-}
-
-```
-
----
-
-## File: backend\internal\usecase\update_task_description.go
-
-```
-package usecase
-
-import "context"
-
-func (uc TaskUsecaseImpl) UpdateDescription(ctx context.Context, taskID int, newDesc string) error {
-	return uc.TaskRepo.UpdateDescription(ctx, taskID, newDesc)
-}
-
-```
-
----
-
-## File: backend\internal\usecase\usecase.go
-
-```
-package usecase
-
-import (
-	"context"
-	"proj/internal/entity"
-	"time"
-)
-
-type Task = entity.Task
-
-type TaskRepository interface {
-	Save(ctx context.Context, title string, userID int, done bool, description string) (int, error)
-	GetAllTasksByUserID(ctx context.Context, userID int) ([]Task, error)
-	GetDeleteTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
-	GetTask(ctx context.Context, taskID int) (*Task, error)
-	GetTaskByUserID(ctx context.Context, userID int, user_task_id int) (int, error)
-	Delete(ctx context.Context, id int) error
-	DeleteForever(ctx context.Context, id int) error
-	Recover(ctx context.Context, id int) error
-	UpdateStatus(ctx context.Context, id int, status bool) error
-	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
-}
-
-type TaskUsecaseImpl struct {
-	TaskRepo TaskRepository
-}
-
-type UserUsecaseImpl struct {
-	UserRepo UserRepository
-}
-
-type UserRepository interface {
-	CreateUserWeb(ctx context.Context, email string, passwordHash string, username string) error
-	CreateUserTg(ctx context.Context, ID int64, username string) error
-	ExistsWeb(ctx context.Context, email string) (bool, error)
-	ExistsTg(ctx context.Context, ID int64) (bool, error)
-	FindByIdTg(ctx context.Context, userID int64) (int, error)
-	FindByIdWeb(ctx context.Context, userID int) (*entity.UserWeb, error)
-	FindByEmail(ctx context.Context, email string) (*entity.UserWeb, error)
-	CreateSession(ctx context.Context, userID int) (string, error)
-	FindUserIDBySession(ctx context.Context, sessionID string) (int, error)
-}
-
-type VerificationRepository interface {
-	Save(ctx context.Context, userID int, unique_code string, time_duration time.Duration) error
-	Get(ctx context.Context, userID int) (string, error)
-	Delete(ctx context.Context, userID int) error
-}
-type AuthUsecase struct {
-	AuthRepo VerificationRepository
-}
-
-func NewAuthUsecase(authRepo VerificationRepository) *AuthUsecase {
-	return &AuthUsecase{AuthRepo: authRepo}
-}
-
-func NewUserUsecase(userRepo UserRepository) *UserUsecaseImpl {
-	return &UserUsecaseImpl{UserRepo: userRepo}
-}
-func NewTaskUsecase(taskRepo TaskRepository) *TaskUsecaseImpl {
-	return &TaskUsecaseImpl{TaskRepo: taskRepo}
 }
 
 ```
@@ -3099,6 +3200,21 @@ package usecase
 // 		})
 // 	}
 // }
+
+```
+
+---
+
+## File: backend\internal\usecase\usecase_update_task_description.go
+
+```
+package usecase
+
+import "context"
+
+func (uc TaskUsecaseImpl) UpdateDescription(ctx context.Context, taskID int, newDesc string) error {
+	return uc.TaskRepo.UpdateDescription(ctx, taskID, newDesc)
+}
 
 ```
 
@@ -3292,4 +3408,1232 @@ CREATE TABLE user_sessions (
 );
 -- Индекс для быстрого поиска сессии при каждом запросе
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON user_sessions(expires_at);
+```
+
+---
+
+## File: frontend\assets\css\auth.css
+
+```
+/* Контейнер по центру экрана */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Растягиваем контейнер на всю высоту экрана */
+    width: 100%;       /* Занимаем всю ширину */
+    padding: 20px;     /* Небольшой отступ, чтобы на смартфонах карточка не липла к краям экрана */
+    box-sizing: border-box;
+}
+
+/* Карточка авторизации */
+.auth-card {
+    background-color: #1a1a1a;
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Заголовок */
+.auth-card h1 {
+    color: #ffffff;
+    font-size: 28px;
+    margin-bottom: 24px;
+    font-weight: 600;
+}
+
+/* Группы полей формы */
+.form-group {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    color: #8e8e93;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+/* Поля ввода (Инпуты) */
+.form-group input {
+    background-color: #2c2c2e;
+    border: 1px solid #3a3a3c;
+    border-radius: 6px;
+    color: #ffffff;
+    padding: 12px 16px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus {
+    border-color: #0084ff;
+    box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.2);
+}
+
+.form-group input::placeholder {
+    color: #545456;
+}
+
+/* Главная кнопка */
+#submit-btn {
+    background-color: #0084ff;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+#submit-btn:hover {
+    background-color: #0066cc;
+}
+
+#submit-btn:active {
+    transform: scale(0.98);
+}
+
+/* Текст ошибок (Твой второй рубеж обороны) */
+.error-text {
+    color: #ff453a;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 15px;
+    margin-bottom: 10px;
+}
+
+/* Переключатель режимов Вход / Регистрация */
+.auth-toggle {
+    margin-top: 24px;
+    text-align: center;
+}
+
+.auth-toggle a {
+    color: #0084ff;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.auth-toggle a:hover {
+    color: #0066cc;
+}
+
+/* Утилитарный класс для скрытия элементов */
+.hidden {
+    display: none !important;
+}
+```
+
+---
+
+## File: frontend\assets\css\dashboard.css
+
+```
+
+.dashboard-container {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Шапка */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+/* Контейнер для всей секции формы */
+.task-form-section {
+    max-width: 600px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+
+/* Красивая монолитная карточка формы */
+.task-form {
+    display: flex;
+    flex-direction: column;
+    background-color: #1a1a1a; /* Темный графитовый фон */
+    border: 1px solid #2d2d2d;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    gap: 16px;
+}
+
+/* Группа полей ввода */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Общие стили для инпута и textarea */
+.task-form input[type="text"], 
+.task-form textarea {
+    width: 100%;
+    background-color: #242424; /* Чуть светлее карточки для контраста */
+    border: 1px solid #333333;
+    border-radius: 8px;
+    padding: 14px 16px;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-family: inherit;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Плавное изменение высоты для описания */
+.task-form textarea {
+    resize: vertical;
+    min-height: 60px;
+    line-height: 1.5;
+}
+
+/* Фокус на полях ввода */
+.task-form input:focus, 
+.task-form textarea:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+/* Стильная кнопка "Добавить" */
+.task-form .btn-primary {
+    align-self: flex-end; /* Сдвигаем вправо */
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 28px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.task-form .btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.task-form .btn-primary:active {
+    transform: scale(0.98);
+}
+/* Контейнер для всего блока задач */
+.tasks-list-section {
+    max-width: 600px;
+    margin: 32px auto;
+    padding: 0 16px;
+}
+
+.tasks-list-section h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #fff;
+}
+
+/* Сетка для карточек */
+.tasks-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Отступ между задачами */
+}
+
+/* Стильная карточка задачи */
+.task-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1a1a1a; /* Такой же графитовый фон, как у формы */
+    border: 1px solid #2d2d2d;
+    border-radius: 10px;
+    padding: 14px 18px;
+    transition: border-color 0.2s, transform 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Эффект при наведении на карточку */
+.task-card:hover {
+    border-color: #3f3f3f;
+    transform: translateY(-1px);
+}
+
+/* Блок с текстом (заголовок + описание) */
+.task-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1; /* Занимает всё свободное место слева */
+    padding-right: 16px;
+}
+
+/* Название задачи */
+.task-title {
+    font-size: 1rem;
+    color: #ffffff;
+    font-weight: 500;
+    word-break: break-word; /* Чтобы длинный текст не ломал верстку */
+}
+
+/* Описание задачи */
+.task-desc {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #888888; /* Приглушенный серый цвет */
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+/* Блок для кнопок действий справа */
+.task-actions {
+    display: flex;
+    align-items: center;
+}
+
+/* Полный сброс уродливой стандартной кнопки-квадрата */
+.btn-delete {
+    background: none;
+    border: none;
+    outline: none;
+    padding: 6px;
+    margin: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+/* Подсветка кнопки удаления при наведении */
+.btn-delete:hover {
+    background-color: rgba(255, 69, 58, 0.15); /* Легкий красный фон */
+    transform: scale(1.05);
+}
+
+.btn-delete:active {
+    transform: scale(0.95);
+}
+
+/* Стилизация кнопки выхода */
+#logout-btn.btn-secondary {
+    background-color: transparent;
+    color: #b0b0b0; /* Приглушенный текст */
+    border: 1px solid #3a3a3a; /* Тонкая темная рамка */
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.25s ease; /* Плавный переход для всех свойств */
+}
+
+/* Эффект при наведении — деликатный намек на "выход" */
+#logout-btn.btn-secondary:hover {
+    color: #ff453a; /* Красный цвет текста */
+    border-color: rgba(255, 69, 58, 0.4); /* Красная полупрозрачная рамка */
+    background-color: rgba(255, 69, 58, 0.06); /* Едва заметный красный фон */
+    box-shadow: 0 0 12px rgba(255, 69, 58, 0.1);
+}
+
+/* Эффект при клике (нажатии) */
+#logout-btn.btn-secondary:active {
+    transform: scale(0.96);
+    background-color: rgba(255, 69, 58, 0.12);
+}
+
+/* Делаем всю карточку полупрозрачной */
+.task-card--completed {
+    opacity: 0.55;
+    border-color: #222; /* делаем рамку темнее */
+}
+
+/* Перечеркиваем заголовок выполненной задачи */
+.task-card--completed .task-title {
+    text-decoration: line-through;
+    color: #777;
+}
+.btn-status {
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background-color 0.2s;
+}
+
+/* Лёгкая подсветка при наведении */
+.btn-status:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    transform: scale(1.05);
+}
+
+.btn-status:active {
+    transform: scale(0.95);
+}
+.btn-restore{
+    background: none;
+    border: none;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background-color 0.2s;
+}
+
+/* Лёгкая подсветка при наведении */
+.btn-restore:hover {
+    background-color: rgba(36, 142, 255, 0.08);
+    transform: scale(1.05);
+}
+
+.btn-restore:active {
+    transform: scale(0.95);
+}
+.btn-delete-forever {
+    background: none;
+    border: none;
+    outline: none;
+    padding: 6px;
+    margin: 0;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+/* Подсветка кнопки удаления при наведении */
+.btn-delete-forever:hover {
+    background-color: rgba(255, 69, 58, 0.15); /* Легкий красный фон */
+    transform: scale(1.05);
+}
+
+.btn-delete-forever:active {
+    transform: scale(0.95);
+}
+
+.hidden {
+    display: none !important;
+}
+/* Контейнер для вкладок */
+.tabs-navigation {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    margin-top: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 12px;
+}
+
+/* Базовый стиль кнопок-вкладок */
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: #777777; /* Приглушенный цвет для неактивной вкладки */
+    padding: 8px 16px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+/* Эффект при наведении на неактивную вкладку */
+.tab-btn:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Активная вкладка (под цвет твоей кнопки "Добавить") */
+.tab-btn.active {
+    color: #ffffff;
+    background-color: #007bff; /* Твой синий акцент */
+}
+
+/* --- Служебные тексты (Загрузка, Пусто, Ошибка) --- */
+
+.loading-text, .empty-text, .error-text {
+    text-align: center;
+    padding: 30px 20px;
+    font-size: 15px;
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
+/* Состояние загрузки и пустоты — спокойный серый */
+.loading-text, .empty-text {
+    color: #666666;
+}
+
+/* Ошибка — аккуратный пастельно-красный */
+.error-text {
+    color: #ff6b6b;
+    border-color: rgba(255, 107, 107, 0.2);
+    background-color: rgba(255, 107, 107, 0.02);
+}
+```
+
+---
+
+## File: frontend\assets\css\main.css
+
+```
+body {
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+```
+
+---
+
+## File: frontend\src\api\auth.js
+
+```
+import { apiRequest } from './client.js';
+
+export async function login(email, password) {
+    return apiRequest('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+    });
+}
+export async function verify2FA(email, inputCode) {
+    return apiRequest('/auth/verify2fa', {
+        method: 'POST',
+        body: JSON.stringify({ email: email, input_code: inputCode })
+    });
+}
+
+// Задел на будущее
+export async function register(email, password, username) {
+    return apiRequest('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, username })
+    });
+}
+
+// Функция для проверки текущей сессии (получение профиля)
+export async function getProfile() {
+    return apiRequest('/auth/me', {
+        method: 'GET'
+    });
+}
+
+export async function logout() {
+    return apiRequest('/auth/logout', {
+        method: 'POST'
+    });
+}
+```
+
+---
+
+## File: frontend\src\api\client.js
+
+```
+// Базовый URL нашего API. Когда поднимем Nginx, запросы пойдут на него.
+const BASE_URL = '/api';
+
+export async function apiRequest(endpoint, options = {}) {
+    const url = `${BASE_URL}${endpoint}`;
+    
+    // Задаем дефолтные заголовки, если они не переданы
+    options.headers = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+    };
+
+    try {
+        const response = await fetch(url, options);
+        
+        // Перехватываем глобальные системные штуки (например, если токен протух)
+        if (response.status === 401) {
+            console.warn('Пользователь не авторизован (401)');
+    
+            // Проверяем, что мы сейчас НЕ на странице auth.html
+            if (!window.location.pathname.includes('auth.html')) {
+                // Только в этом случае делаем жесткий редирект на логин
+                window.location.href = '/views/auth.html';
+            }
+        }
+
+        return response;
+    } catch (error) {
+        console.error(`Сетевая ошибка при запросе к ${endpoint}:`, error);
+        throw error; // Прокидываем ошибку дальше в хендлер страницы
+    }
+}
+```
+
+---
+
+## File: frontend\src\api\tasks.js
+
+```
+import { apiRequest } from './client.js';
+
+// Получить все активные задачи
+export async function getTasks() {
+    return apiRequest('/tasks/', {
+        method: 'GET'
+    });
+}
+export async function getTrashTasks() {
+    return apiRequest('/tasks/trash', {
+        method: 'GET',
+    });
+}
+
+// Создать новую задачу
+export async function createTask(taskData) {
+    return apiRequest('/tasks', {
+        method: 'POST',
+        body: JSON.stringify(taskData)
+    });
+}
+
+export async function deleteTask(user_task_id) {
+    return apiRequest(`/tasks/${user_task_id}`, {
+        method: 'DELETE',
+    })
+}
+export async function updateStatus(user_task_id, taskData) {
+    return apiRequest(`/tasks/${user_task_id}`, {
+        method: 'PUT',
+        body: JSON.stringify(taskData)
+    })
+}
+export async function restoreTask(user_task_id) {
+    return apiRequest(`/tasks/restore/${user_task_id}`, {
+        method: 'PUT',
+    })
+}
+```
+
+---
+
+## File: frontend\src\components\TaskCard.js
+
+```
+
+// Функция для обычного списка
+export function createActiveTaskCard(task, onComplete, onDelete) {
+    const card = document.createElement('div');
+    card.className = 'task-card';
+
+    // Если бэкенд говорит, что задача выполнена — докидываем специальный класс
+    if (task.done) {
+        card.classList.add('task-card--completed');
+    }
+    card.innerHTML = `
+    <div class="task-content">
+        <span class="task-title">[#${task.user_task_id}] ${task.title}</span>
+        ${task.description ? `<p class="task-desc">${task.description}</p>` : ''}
+    </div>
+    <div class="task-actions">
+        ${task.done ? `<button class="btn-status">❌</button>` : `<button class="btn-status">✅</button>`}
+        <button class="btn-delete">🗑️</button>
+    </div>`;
+    // Находим кнопку внутри свежесозданной карточки
+    const deleteBtn = card.querySelector('.btn-delete');
+
+    // Вешаем событие клика
+    deleteBtn.addEventListener('click', () => {
+        onDelete(task.user_task_id); // Передаем ID задачи в колбэк, который прилетел из главного скрипта
+    });
+
+    const statusBtn = card.querySelector('.btn-status');
+    statusBtn.addEventListener('click', () => {
+        onComplete(task.user_task_id, task.done);
+    });
+    return card;
+}
+
+// Функция для корзины
+export function createTrashTaskCard(task, onRestore, onDeleteForever) {
+    const card = document.createElement('div');
+    card.className = 'task-card';
+
+    // Если бэкенд говорит, что задача выполнена — докидываем специальный класс
+    if (task.done) {
+        card.classList.add('task-card--completed');
+    }
+    card.innerHTML = `
+    <div class="task-content">
+        <span class="task-title">[#${task.user_task_id}] ${task.title}</span>
+        ${task.description ? `<p class="task-desc">${task.description}</p>` : ''}
+    </div>
+    <div class="task-actions">
+        <button class="btn-restore">🔄</button>
+        <button class="btn-delete-forever">🗑️</button>
+    </div>`;
+    // Находим кнопку внутри свежесозданной карточки
+    const restoreBtn = card.querySelector('.btn-restore');
+
+    // Вешаем событие клика
+    restoreBtn.addEventListener('click', () => {
+        onRestore(task.user_task_id); // Передаем ID задачи в колбэк, который прилетел из главного скрипта
+    });
+
+    const deleteForverBtn = card.querySelector('.btn-delete-forever');
+    deleteForverBtn.addEventListener('click', () => {
+        onDeleteForever(task.user_task_id);
+    });
+    return card;
+}
+```
+
+---
+
+## File: frontend\src\utils\validators.js
+
+```
+export function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
+}
+
+export function validatePassword(password) {
+    // Пароль должен быть минимум 6 символов
+    return password && password.length >= 6;
+}
+```
+
+---
+
+## File: frontend\src\views\auth.js
+
+```
+import { validateEmail, validatePassword } from '../utils/validators.js';
+import { login, register, getProfile, verify2FA } from '../api/auth.js';
+
+// Элементы DOM
+const authForm = document.getElementById('auth-form');
+const authTitle = document.getElementById('auth-title');
+const submitBtn = document.getElementById('submit-btn');
+const usernameGroup = document.getElementById('username-group');
+const usernameInput = document.getElementById('username');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
+const errorContainer = document.getElementById('error-message');
+const toggleLink = document.getElementById('toggle-mode-link');
+const verify2faGroup = document.getElementById('2fa-group');
+const verify2faInput = document.getElementById('2fa-code');
+
+// Состояние экрана (true = Вход, false = Регистрация)
+let isLoginMode = true;
+let is2FAVerifyMode = false;
+// 1. Логика переключения режимов (Вход / Регистрация)
+toggleLink.addEventListener('click', (event) => {
+    event.preventDefault(); // Отменяем переход по ссылке
+    isLoginMode = !isLoginMode; // Меняем флаг
+
+    // Очищаем ошибки прошлых попыток
+    hideError();
+
+    if (isLoginMode) {
+        authTitle.textContent = 'Войти в аккаунт';
+        submitBtn.textContent = 'Продолжить';
+        toggleLink.textContent = 'Нет аккаунта? Зарегистрироваться';
+        usernameGroup.classList.add('hidden');
+        usernameInput.removeAttribute('required');
+    } else if (!is2FAVerifyMode){
+        authTitle.textContent = 'Регистрация';
+        submitBtn.textContent = 'Создать аккаунт';
+        toggleLink.textContent = 'Уже есть аккаунт? Войти';
+        usernameGroup.classList.remove('hidden');
+        usernameInput.setAttribute('required', 'true');
+    } else {
+        authTitle.textContent = 'Верификация';
+        submitBtn.textContent = 'Войти';
+        usernameGroup.classList.remove('hidden');
+        usernameInput.setAttribute('required', 'true');
+    }
+});
+
+// 2. Обработка отправки формы
+authForm.addEventListener('submit', async (event) => {
+    event.preventDefault(); // КРИТИЧНО: предотвращаем ту самую перезагрузку с "?"
+    hideError();
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    const username = usernameInput.value.trim();
+
+    // Фронтенд валидация пароля
+    if (!validatePassword(password)) {
+        showError('Пароль должен быть не менее 6 символов');
+        return;
+    }
+
+    // Если мы в режиме регистрации, проверим еще и имя
+    if (!isLoginMode && username.length < 2) {
+        showError('Имя пользователя должно быть не менее 2 символов');
+        return;
+    }
+
+    try {
+        let response;
+
+        // Вместо сырого fetch вызываем твои готовые функции из api/auth.js
+        if (isLoginMode) {
+            response = await login(email, password);
+        } else {
+            response = await register(email, password, username);
+        }
+
+        // Твой apiRequest возвращает оригинальный объект response,
+        // поэтому вся дальнейшая логика проверки статусов остается прежней!
+        if (response.ok) {
+            // Успех — летим на дашборд
+            window.location.href = '/views/dashboard.html';
+        } else {
+            // Ошибка от бэкенда (400, 401, 409)
+            const errorData = await response.json().catch(() => ({}));
+            const message = errorData.message || 'Что-то пошло не так. Попробуйте снова.';
+            showError(message);
+        }
+    } catch (err) {
+        console.error('Сетевая ошибка:', err);
+        showError('Не удалось связаться с сервером. Проверьте сеть.');
+    }
+});
+
+// Вспомогательные функции для отображения ошибок
+function showError(text) {
+    errorContainer.textContent = text;
+    errorContainer.classList.remove('hidden');
+}
+
+function hideError() {
+    errorContainer.textContent = '';
+    errorContainer.classList.add('hidden');
+}
+async function checkExistingAuth() {
+    // Важно: временно отключаем авто-редирект из client.js для этого вызова,
+    // но так как мы проверяем pathname внутри client.js (auth.html), он и так не сработает.
+    try {
+        const response = await getProfile();
+        if (response.ok) {
+            // Если сессия жива — пользователю нечего делать на странице логина
+            window.location.href = '/views/dashboard.html';
+        }
+    } catch (error) {
+        // Если ошибка — всё отлично, значит пользователь не авторизован и должен видеть форму
+        console.log('Активной сессии не найдено, показываем форму входа.');
+    }
+}
+
+// Запускаем проверку
+checkExistingAuth();
+```
+
+---
+
+## File: frontend\src\views\dashboard.js
+
+```
+import { getProfile, logout } from '../api/auth.js';
+import { getTasks, createTask, deleteTask, updateStatus, restoreTask, getTrashTasks } from '../api/tasks.js';
+import { createActiveTaskCard, createTrashTaskCard } from '../components/TaskCard.js';
+
+async function initDashboard() {
+    try {
+        // Вызываем проверку профиля при старте страницы
+        const response = await getProfile();
+
+        if (!response.ok) {
+            // Если бэкенд вернул ошибку, отличную от 401 (например, 500)
+            // на всякий случай тоже отправляем на авторизацию
+            window.location.href = '/views/auth.html';
+            return;
+        }
+
+        // Если всё ок, вытаскиваем данные пользователя (например, имя)
+        const user = await response.json();
+        console.log('Успешная авторизация. Добро пожаловать,', user.username);
+
+        // Здесь запускаем инициализацию остального интерфейса дашборда
+        setupDashboardUI(user);
+        await loadUserTasks();
+        setupFormListeners();
+
+        setupLogoutListener();
+
+    } catch (error) {
+        console.error('Ошибка при проверке авторизации:', error);
+        window.location.href = '/views/auth.html';
+    }
+}
+
+function setupDashboardUI(user) {
+    const usernameDisplay = document.getElementById('username-display');
+    if (usernameDisplay) {
+        usernameDisplay.textContent = user.username;
+    }
+}
+async function loadUserTasks() {
+    const container = document.getElementById('tasks-container');
+    if (!container) return;
+    try {
+        const response = await getTasks();
+        if (!response.ok) throw new Error('Не удалось загрузить задачи');
+
+        const tasks = await response.json();
+        container.innerHTML = ''; // Очищаем текст загрузки
+
+        if (!tasks || tasks.length === 0) {
+            container.innerHTML = '<p class="empty-text">У вас пока нет задач. Самое время создать первую!</p>';
+            return;
+        }
+
+        // Рендерим каждую задачу (подстрой поля под структуру твоей DTO/модели в Go)
+        tasks.forEach(task => {
+            const taskElement = createActiveTaskCard(task, onComplete, onDelete);
+            container.appendChild(taskElement);
+        });
+
+    } catch (error) {
+        console.error(error);
+        container.innerHTML = '<p class="error-text">Ошибка при загрузке задач с сервера.</p>';
+    }
+}
+async function loadTrashTasks() {
+    const trashContainer = document.getElementById('trash-container');
+    if (!trashContainer) return;
+    try {
+        const response = await getTrashTasks();
+        if (!response.ok) throw new Error('Не удалось загрузить задачи из корзины');
+
+        const tasks = await response.json();
+        trashContainer.innerHTML = ''; // Очищаем текст загрузки
+
+        if (!tasks || tasks.length === 0) {
+            trashContainer.innerHTML = '<p class="empty-text">Корзина пуста.</p>';
+            return;
+        }
+
+        // Рендерим каждую задачу (подстрой поля под структуру твоей DTO/модели в Go)
+        tasks.forEach(task => {
+            const taskElement = createTrashTaskCard(task, onRestore, onDeletePermanently);
+            trashContainer.appendChild(taskElement);
+        });
+
+    } catch (error) {
+        console.error(error);
+        trashContainer.innerHTML = '<p class="error-text">Ошибка при загрузке корзины с сервера.</p>';
+    }
+}
+
+// Обработка отправки формы
+function setupFormListeners() {
+    const form = document.getElementById('add-task-form');
+    const titleInput = document.getElementById('task-title-input');
+    const descInput = document.getElementById('task-desc-input'); // Добавляем ссылку на описание
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const title = titleInput.value.trim();
+        const description = descInput.value.trim(); // Забираем значение
+        
+        if (!title) return;
+
+        try {
+            // Передаем и title, и description. 
+            // Ключ 'description' должен совпадать с json-тегом в твоей Go-структуре!
+            const response = await createTask({ 
+                title: title, 
+                description: description 
+            });
+            
+            if (response.ok) {
+                titleInput.value = ''; 
+                descInput.value = ''; // Очищаем поле описания после успешного создания
+                await loadUserTasks(); 
+            } else {
+                alert('Не удалось создать задачу');
+            }
+        } catch (error) {
+            console.error('Ошибка при создании задачи:', error);
+        }
+    });
+}
+function setupLogoutListener() {
+    const logoutBtn = document.getElementById('logout-btn');
+    if (!logoutBtn) return;
+
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            const response = await logout();
+            
+            if (response.ok) {
+                // Если бэкенд успешно удалил куку, отправляем пользователя на авторизацию
+                window.location.href = '/views/auth.html';
+            } else {
+                alert('Не удалось выйти из системы. Попробуйте еще раз.');
+            }
+        } catch (error) {
+            console.error('Ошибка при выходе:', error);
+        }
+    });
+}
+
+async function onDelete(user_task_id) {
+    try {
+        const response = await deleteTask(user_task_id);
+
+        if (response.ok) {
+            await loadUserTasks(); 
+        } else {
+            alert('Не удалось удалить задачу');
+        }
+    } catch (error) {
+        console.error('Ошибка при удалении задачи:', error);
+    }
+}
+async function onRestore(user_task_id) {
+    try {
+        const response = await restoreTask(user_task_id);
+
+        if (response.ok) {
+            await loadUserTasks(); 
+            await loadTrashTasks();
+        } else {
+            alert('Не удалось восстановить задачу');
+        }
+    } catch (error) {
+        console.error('Ошибка при восстановлении задачи:', error);
+    }
+}
+async function onComplete(user_task_id, done) {
+    try {
+        const response = await updateStatus(user_task_id, {done: !done});
+
+        if (response.ok) {
+            await loadUserTasks(); 
+        } else {
+            alert('Не удалось обновить задачу');
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении задачи:', error);
+    }
+}
+async function onDeletePermanently(user_task_id) {
+    if (!confirm('Удалить эту задачу навсегда?')) return;
+    try {
+        const response = await deleteTask(user_task_id);
+        if (response.ok) {
+            await loadTrashTasks();
+        }
+    } catch (error) {
+        console.error('Ошибка при полном удалении:', error);
+    }
+}
+function setupTabListeners() {
+    const btnActive = document.getElementById('btn-tab-active');
+    const btnTrash = document.getElementById('btn-tab-trash');
+    const activeContainer = document.getElementById('tasks-container');
+    const trashContainer = document.getElementById('trash-container');
+    const taskForm = document.querySelector('.task-form'); // твоя форма добавления задач
+
+    btnActive.addEventListener('click', () => {
+        // Меняем активный класс у кнопок
+        btnActive.classList.add('active');
+        btnTrash.classList.remove('active');
+        
+        // Показываем активные задачи и форму создания, скрываем корзину
+        activeContainer.classList.remove('hidden');
+        if (taskForm) taskForm.classList.remove('hidden');
+        trashContainer.classList.add('hidden');
+        
+        // Обновляем данные
+        loadUserTasks();
+    });
+
+    btnTrash.addEventListener('click', () => {
+        // Меняем активный класс у кнопок
+        btnTrash.classList.add('active');
+        btnActive.classList.remove('active');
+        
+        // Скрываем активные и форму, показываем корзину
+        activeContainer.classList.add('hidden');
+        if (taskForm) taskForm.classList.add('hidden'); // В корзине форма создания не нужна
+        trashContainer.classList.remove('hidden');
+        
+        // Загружаем удалённые задачи
+        loadTrashTasks();
+    });
+}
+// Запускаем проверку немедленно при загрузке файла скрипта
+setupTabListeners();
+initDashboard();
+```
+
+---
+
+## File: frontend\views\auth.html
+
+```
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App - Авторизация</title>
+    <link rel="stylesheet" href="/assets/css/auth.css">
+    <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card">
+            <!-- ID для динамической смены заголовка -->
+            <h1 id="auth-title">Войти в аккаунт</h1> 
+            
+            <form id="auth-form">
+                <!-- Группа Username, по умолчанию скрыта через класс hidden -->
+                <div class="form-group hidden" id="username-group">
+                    <label for="username">Имя пользователя</label>
+                    <input type="text" id="username" placeholder="Введите ваше имя">
+                </div>
+                <div class="form-group hidden" id="2fa-group">
+                    <label for="2fa-code">Код подтверждения с почты</label>
+                    <input type="text" id="2fa-code" placeholder="Введите код подтверждения">
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required placeholder="marisov96@mail.ru">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Пароль</label>
+                    <input type="password" id="password" required placeholder="••••••">
+                </div>
+
+                <!-- Контейнер для вывода ошибок -->
+                <div id="error-message" class="error-text hidden"></div>
+
+                <!-- ID для динамической смены текста кнопки -->
+                <button type="submit" id="submit-btn">Войти</button>
+            </form>
+
+            <!-- Ссылка-переключатель -->
+            <div class="auth-toggle">
+                <a href="#" id="toggle-mode-link">Нет аккаунта? Зарегистрироваться</a>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/views/auth.js"></script>
+</body>
+</html>
+```
+
+---
+
+## File: frontend\views\dashboard.html
+
+```
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель задач - Todo App</title>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <!-- Шапка с профилем -->
+        <header class="dashboard-header">
+            <div class="user-info">
+                <span class="avatar">👤</span>
+                <span id="username-display">Загрузка...</span>
+            </div>
+            <button id="logout-btn" class="btn-secondary">Выйти</button>
+        </header>
+
+        <!-- Основной контент -->
+        <main class="main-content">
+            
+           <section class="task-form-section">
+                <form id="add-task-form" class="task-form">
+                    <div class="form-group">
+                        <input 
+                            type="text" 
+                            id="task-title-input" 
+                            placeholder="Что нужно сделать?" 
+                            required 
+                            autocomplete="off"
+                        >
+                        <textarea 
+                            id="task-desc-input" 
+                            placeholder="Добавить описание к задаче..." 
+                            rows="2"
+                        ></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary">Добавить</button>
+                </form>
+            </section>
+
+            <!-- Список задач -->
+            <section class="tasks-list-section">
+                <h2>Мои задачи</h2>
+                <div class="tabs-navigation">
+                    <button class="tab-btn active" id="btn-tab-active">Активные</button>
+                    <button class="tab-btn" id="btn-tab-trash">Корзина</button>
+                </div>
+                <div id="tasks-container" class="tasks-container">
+                    <!-- Сюда JS будет рендерить карточки тасок -->
+                    <p class="loading-text">Загрузка списка задач...</p>
+                </div>
+                <div id="trash-container" class="tasks-container hidden">
+                    <p class="loading-text">Загрузка корзины...</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script type="module" src="/src/views/dashboard.js"></script>
+</body>
+</html>
 ```

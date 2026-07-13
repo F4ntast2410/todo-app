@@ -2,10 +2,12 @@ package httpHandler
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	dto "proj/internal/delivery/http/entityRequest"
-	"time"
+	"proj/internal/entity"
+	customErrors "proj/internal/errors"
 )
 
 func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -15,25 +17,53 @@ func (h *UserHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	sessionToken, err := h.UserUC.LoginUserWeb(r.Context(), req.Email, req.Password)
+	loginResult, err := h.UserUC.LoginUserWeb(r.Context(), entity.VerificationEmail(req.Email), req.Password)
 	if err != nil {
 		h.Logger.Warn("invalid credentials or login failed", slog.String("email", req.Email))
 		w.WriteHeader(http.StatusUnauthorized) // 401 Unauthorized
 		return
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name:     "session_token",
-		Value:    sessionToken, // Тот самый UUID сессии из БД
-		Expires:  time.Now().Add(24 * time.Hour),
-		Path:     "/",                  // Доступно для всех роутов
-		HttpOnly: true,                 // Защита от XSS (JS не сможет прочитать куку)
-		Secure:   false,                // Поставь true, если будешь использовать HTTPS
-		SameSite: http.SameSiteLaxMode, // Защита от CSRF атак
-	})
-
-	w.WriteHeader(http.StatusOK)
+	resp := dto.Responce2FA{Status: loginResult.Requires2FA}
+	if resp.Status == true {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(resp)
+	} else {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }
 
+func (h *UserHandler) Verify2FA(w http.ResponseWriter, r *http.Request) {
+	var req dto.Request2FA
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	loginRequest, err := h.UserUC.Verify2FA(r.Context(), entity.VerificationEmail(req.Email), req.InputCode)
+	if err != nil {
+		if errors.Is(err, customErrors.ErrInvalid2FACode) {
+			w.WriteHeader(http.StatusBadRequest) // Выставляем HTTP статус 400
+			json.NewEncoder(w).Encode(dto.ErrorResponse{
+				Error: "Неверный или истекший код подтверждения",
+			})
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    loginRequest.SessionToken,
+		Path:     "/",
+		MaxAge:   86400, // Говорит браузеру немедленно удалить куку
+		HttpOnly: true,
+		Secure:   false, // Выставь false, если локально тестируешь без HTTPS
+		SameSite: http.SameSiteLaxMode,
+	})
+	w.WriteHeader(http.StatusOK)
+
+}
 func (h *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// Имя куки должно быть ровно таким же, какое ты задаешь при Login/Register
 	http.SetCookie(w, &http.Cookie{
