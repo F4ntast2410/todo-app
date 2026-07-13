@@ -1,5 +1,5 @@
 import { getProfile, logout } from '../api/auth.js';
-import { getTasks, createTask, deleteTask, updateStatus, restoreTask, getTrashTasks } from '../api/tasks.js';
+import { getTasks, createTask, deleteTask, updateTask, restoreTask, getTrashTasks } from '../api/tasks.js';
 import { createActiveTaskCard, createTrashTaskCard } from '../components/TaskCard.js';
 
 async function initDashboard() {
@@ -54,7 +54,7 @@ async function loadUserTasks() {
 
         // Рендерим каждую задачу (подстрой поля под структуру твоей DTO/модели в Go)
         tasks.forEach(task => {
-            const taskElement = createActiveTaskCard(task, onComplete, onDelete);
+            const taskElement = createActiveTaskCard(task, onComplete, onDelete, onEditDescription);
             container.appendChild(taskElement);
         });
 
@@ -173,7 +173,7 @@ async function onRestore(user_task_id) {
 }
 async function onComplete(user_task_id, done) {
     try {
-        const response = await updateStatus(user_task_id, {done: !done});
+        const response = await updateTask(user_task_id, {done: !done});
 
         if (response.ok) {
             await loadUserTasks(); 
@@ -190,9 +190,23 @@ async function onDeletePermanently(user_task_id) {
         const response = await deleteTask(user_task_id);
         if (response.ok) {
             await loadTrashTasks();
+        } else {
+            alert('Не удалось удалить задачу');
         }
     } catch (error) {
         console.error('Ошибка при полном удалении:', error);
+    }
+}
+async function onEditDescription(user_task_id, description) {
+    try {
+        const response = await updateTask(user_task_id, {description: description});
+        if (response.ok) {
+            await loadUserTasks();
+        } else {
+            alert('Не удалось обновить описание задачи');
+        }
+    } catch (error) {
+        console.error('Ошибка при обновлении описания:', error);
     }
 }
 function setupTabListeners() {
@@ -230,6 +244,7 @@ function setupTabListeners() {
         loadTrashTasks();
     });
 }
+
 // Запускаем проверку немедленно при загрузке файла скрипта
 setupTabListeners();
 initDashboard();

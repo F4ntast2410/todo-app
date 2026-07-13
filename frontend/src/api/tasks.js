@@ -25,7 +25,7 @@ export async function deleteTask(user_task_id) {
         method: 'DELETE',
     })
 }
-export async function updateStatus(user_task_id, taskData) {
+export async function updateTask(user_task_id, taskData) {
     return apiRequest(`/tasks/${user_task_id}`, {
         method: 'PUT',
         body: JSON.stringify(taskData)
