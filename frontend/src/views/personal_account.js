@@ -1,21 +1,85 @@
-import { changeInfo, changePassword } from "../api/personal_account";
+import { changeInfo, changePassword, checkLinkTg } from "../api/personal_account";
 
-function initTelegramWidget() {
+async function initTelegramSection(showMsg) {
     const container = document.getElementById('tg-widget-container');
     if (!container) return;
 
+    try {
+        // 1. Запрашиваем у бэкенда текущий статус привязки
+        const response = await checkLinkTg();
+        if (!response.ok) throw new Error('Не удалось получить статус привязки');
+        
+        const data = await response.json();
+
+        if (data.Linked) {
+            // 2. Если уже привязан — рендерим статус
+            renderTelegramLinked(container, data.Username);
+        } else {
+            // 3. Если не привязан — рендерим кнопку виджета
+            renderTelegramWidget(container, showMsg);
+        }
+    } catch (err) {
+        container.innerHTML = `<p class="error-text">Не удалось загрузить данные интеграции</p>`;
+    }
+}
+
+// Рендер состояния "Аккаунт привязан"
+function renderTelegramLinked(container, username) {
+    container.innerHTML = `
+        <div class="tg-linked-badge">
+            <span class="tg-icon">🌀</span>
+            <div class="tg-info">
+                <p class="tg-title">Telegram привязан</p>
+                <p class="tg-username">@${username}</p>
+            </div>
+        </div>
+    `;
+}
+
+// Рендер самого виджета Telegram
+function renderTelegramWidget(container, showMsg) {
+    container.innerHTML = `<div id="tg-login-button"></div>`;
+
+    // Создаем глобальный коллбэк, который вызовет скрипт Telegram при успешном входе
+    window.onTelegramAuth = async function(user) {
+        try {
+            // user содержит: id, first_name, last_name, username, photo_url, auth_date, hash
+            // Отправляем все эти поля на твой POST эндпоинт
+            const response = await fetch('/auth/telegram/link', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(user)
+            });
+
+            if (response.ok) {
+                showMsg('Telegram успешно привязан!', true);
+                renderTelegramLinked(container, user.username);
+            } else if (response.status === 409) {
+                // Твой обработчик конфликта (StatusConflict) на бэкенде
+                const errData = await response.json();
+                showMsg(errData.error || 'Этот Telegram-аккаунт уже занят другим пользователем');
+            } else {
+                showMsg('Ошибка авторизации Telegram. Попробуйте еще раз.');
+            }
+        } catch (err) {
+            showMsg('Ошибка сети при привязке Telegram');
+        }
+    };
+
+    // Динамически загружаем скрипт виджета Telegram
     const script = document.createElement('script');
     script.src = "https://telegram.org/js/telegram-widget.js?22";
     script.async = true;
     
-    // Переносим настройки из data-атрибутов
-    script.setAttribute('data-telegram-login', 'todo_test42_bot');
-    script.setAttribute('data-size', 'medium');
-    script.setAttribute('data-auth-url', '/auth/telegram/link'); // Куда бэкенд примет callback
+    // Настройки виджета
+    script.setAttribute('data-telegram-login', 'ИМЯ_ТВОЕГО_БОТА'); // Замени на имя своего бота
+    script.setAttribute('data-size', 'large');
+    script.setAttribute('data-radius', '10');
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)'); // Указываем наш глобальный коллбэк
     script.setAttribute('data-request-access', 'write');
 
-    // Вставляем скрипт в контейнер — теперь браузер его выполнит и отрендерит кнопку
-    container.appendChild(script);
+    // Вставляем скрипт, чтобы Telegram отрендерил кнопку внутри контейнера
+    document.getElementById('tg-login-button').appendChild(script);
 }
 
 function openProfileModal(userData) {
@@ -107,7 +171,7 @@ function initModalEvents(modalElement) {
             email: infoForm.querySelector('input[name="email"]').value
         };
         
-        const response = await changeInfo
+        const response = await changeInfo()
 
         if (response.ok) {
             showMsg('Данные профиля успешно обновлены!', true);
@@ -126,7 +190,7 @@ function initModalEvents(modalElement) {
             new_password: passwordForm.querySelector('input[name="new_password"]').value
         };
         
-        const response = await changePassword
+        const response = await changePassword()
 
         if (response.ok) {
             showMsg('Пароль успешно изменен!', true);
