@@ -1,0 +1,1 @@
+ALTER TABLE user_telegram DROP CONSTRAINT IF EXISTS uq_user_telegram_user_id;

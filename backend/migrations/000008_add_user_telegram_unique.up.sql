@@ -1,0 +1,1 @@
+ALTER TABLE user_telegram ADD CONSTRAINT uq_user_telegram_user_id UNIQUE (user_id);

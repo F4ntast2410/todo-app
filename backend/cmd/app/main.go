@@ -55,7 +55,7 @@ func main() {
 	taskUsecase := usecase.NewTaskUsecase(storage)
 	userUsecase := usecase.NewUserUsecase(storage, cache)
 	taskHandler := httpHandler.NewTaskHandler(taskUsecase, logger)
-	userHandler := httpHandler.NewUserHandler(userUsecase, logger)
+	userHandler := httpHandler.NewUserHandler(userUsecase, logger, cfg.BotToken)
 
 	authMiddleware := middleware.Auth(userUsecase)
 	mux := http.NewServeMux()
@@ -73,6 +73,12 @@ func main() {
 	mux.HandleFunc("POST /auth/login", userHandler.LoginHandler)
 	mux.HandleFunc("POST /auth/verify2fa", userHandler.Verify2FA)
 	mux.HandleFunc("POST /auth/logout", userHandler.LogoutHandler)
+
+	mux.Handle("PUT /auth/me", authMiddleware(http.HandlerFunc(userHandler.UpdateProfileHandler)))
+	mux.Handle("PUT /auth/me/password", authMiddleware(http.HandlerFunc(userHandler.ChangePasswordHandler)))
+	mux.Handle("GET /auth/telegram/link", authMiddleware(http.HandlerFunc(userHandler.GetTelegramLinkHandler)))
+	mux.Handle("POST /auth/telegram/link", authMiddleware(http.HandlerFunc(userHandler.LinkTelegramHandler)))
+	mux.HandleFunc("POST /auth/telegram/login", userHandler.TelegramLoginHandler)
 
 	wrappedMux := middleware.Logger(mux)
 	server := &http.Server{

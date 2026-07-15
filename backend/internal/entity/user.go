@@ -20,3 +20,8 @@ type UserTg struct {
 	Username string
 	UserID   int
 }
+
+type TelegramLink struct {
+	TgID     int64
+	Username string
+}

@@ -40,6 +40,10 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email entity.VerificationEmail) (*entity.UserWeb, error)
 	CreateSession(ctx context.Context, userID int) (string, error)
 	FindUserIDBySession(ctx context.Context, sessionID string) (int, error)
+	UpdateProfile(ctx context.Context, userID int, username, email string) error
+	UpdatePasswordHash(ctx context.Context, userID int, passwordHash string) error
+	LinkTelegramAccount(ctx context.Context, userID int, tgID int64, username string) error
+	GetTelegramLinkByUserID(ctx context.Context, userID int) (*entity.TelegramLink, error)
 }
 
 type VerificationRepository interface {
