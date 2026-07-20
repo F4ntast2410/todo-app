@@ -2,14 +2,14 @@ import { apiRequest } from './client.js';
 
 export async function changeInfo(payload) {
     return apiRequest('/auth/me', {
-        method: 'POST',
+        method: 'PUT',
         body: JSON.stringify(payload)
     });
 }
 
 export async function changePassword(payload) {
     return apiRequest('/auth/me/password', {
-        method: 'POST',
+        method: 'PUT',
         body: JSON.stringify(payload)
     });
 }

@@ -6,20 +6,28 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: todo_db
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
 
-  db_migrations:
+  tasks_db_migrations:
     image: migrate/migrate
     volumes:
-      - ./backend/migrations:/migrations 
-    command: -path=/migrations -database="postgres://postgres:secret@postgres_db:5432/todo_db?sslmode=disable" up
+      - ./todo-tasks/migrations:/migrations
+    command: -path=/migrations -database="postgres://postgres:secret@postgres_db:5432/todo_tasks_db?sslmode=disable" up
     depends_on:
       - postgres_db
 
+  users_db_migrations:
+    image: migrate/migrate
+    volumes:
+      - ./todo-users/migrations:/migrations
+    command: -path=/migrations -database="postgres://postgres:secret@postgres_db:5432/todo_users_db?sslmode=disable" up
+    depends_on:
+      - postgres_db
 
   redis_db:
     image: redis:7-alpine
@@ -29,38 +37,76 @@ services:
     volumes:
       - redisdata:/data
 
- 
-  backend:
-    build: ./backend # Указываем на папку с Go-кодом
-    env_file:
-      - ./backend/.env # Путь к твоему файлу окружения
-    container_name: todo_app_compose
+  todo-users:
+    build:
+      context: .
+      dockerfile: todo-users/Dockerfile
+    container_name: todo_users_compose
     ports:
       - "8080:8080"
+      - "9090:9090"
     depends_on:
-      db_migrations:
+      users_db_migrations:
         condition: service_completed_successfully
-      redis_db: # Ждем, пока поднимется Redis
+      redis_db:
         condition: service_started
     environment:
-      DATABASE_URL: "postgres://postgres:secret@postgres_db:5432/todo_db?sslmode=disable"
-      REDIS_HOST: "redis_db" # Передаем бэкенду имя контейнера Redis
+      SERVER_PORT: "8080"
+      GRPC_PORT: "9090"
+      DATABASE_URL: "postgres://postgres:secret@postgres_db:5432/todo_users_db?sslmode=disable"
+      REDIS_HOST: "redis_db"
       REDIS_PORT: "6379"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
+      SMTP_HOST: "smtp.gmail.com"
+      SMTP_PORT: "465"
+      SMTP_USERNAME: "todo42test@gmail.com"
+      SMTP_PASSWORD: "kmqlfqyagufbamay"
+      SMTP_FROM: "todo42test@gmail.com"
 
-  # 5. Наш веб-сервер Nginx + Фронтенд
+  todo-tasks:
+    build:
+      context: .
+      dockerfile: todo-tasks/Dockerfile
+    container_name: todo_tasks_compose
+    ports:
+      - "8081:8081"
+      - "9091:9091"
+    depends_on:
+      tasks_db_migrations:
+        condition: service_completed_successfully
+      todo-users:
+        condition: service_started
+    environment:
+      SERVER_PORT: "8081"
+      GRPC_PORT: "9091"
+      DATABASE_URL: "postgres://postgres:secret@postgres_db:5432/todo_tasks_db?sslmode=disable"
+      USER_SERVICE_GRPC_ADDR: "todo-users:9090"
+
+  todo-telegram:
+    build:
+      context: .
+      dockerfile: todo-telegram/Dockerfile
+    container_name: todo_telegram_compose
+    depends_on:
+      - todo-tasks
+      - todo-users
+    environment:
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
+      TASK_SERVICE_GRPC_ADDR: "todo-tasks:9091"
+      USER_SERVICE_GRPC_ADDR: "todo-users:9090"
+
   nginx:
     image: nginx:alpine
     container_name: todo_nginx_compose
     ports:
-      - "80:80" # Слушает стандартный порт для сайтов
+      - "80:80"
     volumes:
-      # Монтируем конфигурацию, которую мы написали на прошлом шаге
       - ./frontend/default.conf:/etc/nginx/conf.d/default.conf:ro
-      # Монтируем всю модульную структуру фронтенда целиком
       - ./frontend:/usr/share/nginx/html:ro
     depends_on:
-      - backend
+      - todo-users
+      - todo-tasks
 
 volumes:
   pgdata:
-  redisdata: 
+  redisdata:

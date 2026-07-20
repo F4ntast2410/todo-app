@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package usertg;
+
+option go_package = "todo-proto/usertg";
+
+service UserTgService {
+  rpc RegisterUserTg(RegisterUserTgRequest) returns (RegisterUserTgResponse);
+  rpc GetUserByTgID(GetUserByTgIDRequest) returns (UserTg);
+}
+
+message RegisterUserTgRequest {
+  int64 tg_id = 1;
+  string username = 2;
+}
+
+message RegisterUserTgResponse {}
+
+message GetUserByTgIDRequest {
+  int64 tg_id = 1;
+  string username = 2;
+}
+
+message UserTg {
+  int64 id = 1;
+  string username = 2;
+  int64 user_id = 3;
+}

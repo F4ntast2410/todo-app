@@ -22,7 +22,7 @@
 
                 <div class="form-group">
                     <label for="email">Email</label>
-                    <input type="email" id="email" required placeholder="marisov96@mail.ru">
+                    <input type="email" id="email" required placeholder="address@gmail.com">
                 </div>
 
                 <div class="form-group">
@@ -43,7 +43,21 @@
                         autocomplete="one-time-code"
                     >
                 </div>
+                <div id="tg-login" class="hidden">
+                    <div class="auth-separator">или</div>
 
+                    <div id="tg-login-container" class="tg-login-wrapper">
+                        <script 
+                            async 
+                            src="https://telegram.org/js/telegram-widget.js?22" 
+                            data-telegram-login="todo_test42_bot" 
+                            data-size="large" 
+                            data-radius="10" 
+                            data-onauth="onTelegramAuth(user)" 
+                            data-request-access="write">
+                        </script>
+                    </div>
+                </div>
                 <!-- Контейнер для вывода ошибок / успешных сообщений -->
                 <div id="error-message" class="error-text hidden"></div>
 

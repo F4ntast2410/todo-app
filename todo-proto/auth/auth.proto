@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "todo-proto/auth";
+
+service AuthService {
+  rpc ValidateSession(ValidateSessionRequest) returns (ValidateSessionResponse);
+}
+
+message ValidateSessionRequest {
+  string session_token = 1;
+}
+
+message ValidateSessionResponse {
+  int64 user_id = 1;
+}

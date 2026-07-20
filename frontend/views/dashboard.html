@@ -6,6 +6,7 @@
     <title>Панель задач - Todo App</title>
     <link rel="stylesheet" href="/assets/css/main.css">
     <link rel="stylesheet" href="/assets/css/dashboard.css">
+    <link rel="stylesheet" href="/assets/css/personal_account.css">
 </head>
 <body>
 
@@ -13,10 +14,18 @@
         <!-- Шапка с профилем -->
         <header class="dashboard-header">
             <div class="user-info">
-                <span class="avatar">👤</span>
-                <span id="username-display">Загрузка...</span>
+                <span>👋 Привет, <span id="username-display">Загрузка...</span></span>
             </div>
-            <button id="logout-btn" class="btn-secondary">Выйти</button>
+            
+            <!-- Группа кнопок управления -->
+            <div class="header-actions">
+                <button id="profile-btn" class="btn-secondary">
+                    👤 Профиль
+                </button>
+                <button id="logout-btn" class="btn-secondary">
+                    🚪 Выход
+                </button>
+            </div>
         </header>
 
         <!-- Основной контент -->

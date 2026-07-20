@@ -208,6 +208,41 @@
     transform: scale(0.96);
     background-color: rgba(255, 69, 58, 0.12);
 }
+/* Контейнер для кнопок в шапке */
+.header-actions {
+    display: flex;
+    gap: 10px; /* Отступ между Профилем и Выходом */
+    align-items: center;
+}
+
+/* Делаем класс .btn-secondary общим для обеих кнопок */
+.btn-secondary {
+    background-color: transparent;
+    color: #b0b0b0; /* Приглушенный текст */
+    border: 1px solid #3a3a3a; /* Тонкая темная рамка */
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.25s ease;
+}
+
+/* --- Эффекты для кнопки Профиля (Синий акцент) --- */
+#profile-btn.btn-secondary:hover {
+    color: #007bff; /* Твой фирменный синий */
+    border-color: rgba(0, 123, 255, 0.4);
+    background-color: rgba(0, 123, 255, 0.06);
+    box-shadow: 0 0 12px rgba(0, 123, 255, 0.1);
+}
+
+#profile-btn.btn-secondary:active {
+    transform: scale(0.96);
+    background-color: rgba(0, 123, 255, 0.12);
+}
 
 /* Делаем всю карточку полупрозрачной */
 .task-card--completed {

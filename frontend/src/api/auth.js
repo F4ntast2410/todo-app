@@ -6,6 +6,12 @@ export async function login(email, password) {
         body: JSON.stringify({ email, password })
     });
 }
+export async function loginWithTg(user) {
+    return apiRequest('/auth/telegram/login', {
+        method: 'POST',
+        body: JSON.stringify(user)
+    })
+}
 export async function verify2FA(email, inputCode) {
     return apiRequest('/auth/verify2fa', {
         method: 'POST',

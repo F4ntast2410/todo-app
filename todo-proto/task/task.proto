@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package task;
+
+option go_package = "todo-proto/task";
+
+import "google/protobuf/timestamp.proto";
+
+service TaskService {
+  rpc CreateTask(CreateTaskRequest) returns (Task);
+  rpc GetTasksByUserID(GetTasksByUserIDRequest) returns (TaskList);
+  rpc GetRemovedTasksByUserID(GetTasksByUserIDRequest) returns (TaskList);
+  rpc GetTask(GetTaskRequest) returns (Task);
+  rpc DeleteTask(TaskIDRequest) returns (Empty);
+  rpc RecoverTask(TaskIDRequest) returns (Empty);
+  rpc UpdateDescription(UpdateDescriptionRequest) returns (Empty);
+  rpc MarkAsDone(MarkAsDoneRequest) returns (Empty);
+}
+
+message CreateTaskRequest {
+  string title = 1;
+  string description = 2;
+  int64 user_id = 3;
+}
+
+message GetTasksByUserIDRequest {
+  int64 user_id = 1;
+}
+
+message GetTaskRequest {
+  int64 task_id = 1;
+}
+
+message TaskIDRequest {
+  int64 id = 1;
+}
+
+message UpdateDescriptionRequest {
+  int64 task_id = 1;
+  string new_description = 2;
+}
+
+message MarkAsDoneRequest {
+  int64 id = 1;
+  bool status = 2;
+}
+
+message Task {
+  int64 id = 1;
+  string title = 2;
+  bool done = 3;
+  int64 user_id = 4;
+  int64 user_task_id = 5;
+  string description = 6;
+  google.protobuf.Timestamp deleted_at = 7;
+}
+
+message TaskList {
+  repeated Task tasks = 1;
+}
+
+message Empty {}

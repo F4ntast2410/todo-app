@@ -1,5 +1,5 @@
 import { validateEmail, validatePassword } from '../utils/validators.js';
-import { login, register, getProfile, verify2FA } from '../api/auth.js';
+import { login, register, getProfile, verify2FA, loginWithTg } from '../api/auth.js';
 
 // Элементы DOM
 const authForm = document.getElementById('auth-form');
@@ -15,7 +15,7 @@ const errorContainer = document.getElementById('error-message');
 const toggleLink = document.getElementById('toggle-mode-link');
 const verify2faGroup = document.getElementById('2fa-group');
 const verify2faInput = document.getElementById('2fa-code');
-
+const tgLoginContainer = document.getElementById('tg-login')
 // Состояние экрана: 'login' | 'register' | '2fa'
 let mode = 'login';
 // Email, для которого запрошен код — нужен на шаге verify2fa,
@@ -28,7 +28,7 @@ function renderMode() {
 
     if (mode === 'login') {
         authTitle.textContent = 'Войти в аккаунт';
-        submitBtn.textContent = 'Продолжить';
+        submitBtn.textContent = 'Войти';
         toggleLink.textContent = 'Нет аккаунта? Зарегистрироваться';
 
         usernameGroup.classList.add('hidden');
@@ -41,6 +41,9 @@ function renderMode() {
         passwordGroup.classList.remove('hidden');
         emailInput.removeAttribute('disabled');
         passwordInput.removeAttribute('disabled');
+
+        tgLoginContainer.classList.remove('hidden');
+        tgLoginContainer.setAttribute('required', 'true')
     } else if (mode === 'register') {
         authTitle.textContent = 'Регистрация';
         submitBtn.textContent = 'Создать аккаунт';
@@ -56,6 +59,9 @@ function renderMode() {
         passwordGroup.classList.remove('hidden');
         emailInput.removeAttribute('disabled');
         passwordInput.removeAttribute('disabled');
+
+        tgLoginContainer.classList.add('hidden');
+        tgLoginContainer.removeAttribute('disabled');
     } else if (mode === '2fa') {
         authTitle.textContent = 'Подтверждение входа';
         submitBtn.textContent = 'Подтвердить';
@@ -75,6 +81,9 @@ function renderMode() {
         verify2faInput.setAttribute('required', 'true');
         verify2faInput.value = '';
         verify2faInput.focus();
+        
+        tgLoginContainer.classList.add('hidden');
+        tgLoginContainer.removeAttribute('disabled');
     }
 }
 
@@ -232,7 +241,31 @@ async function checkExistingAuth() {
         console.log('Активной сессии не найдено, показываем форму входа.');
     }
 }
+async function initTelegramLogin() {
+    const container = document.getElementById('tg-login-container');
+    if (!container) return;
 
+    // 1. Создаем глобальную функцию-колбэк, которую вызовет скрипт Telegram
+    window.onTelegramAuth = async function(user) {
+        try {
+            // 2. Отправляем данные авторизации на твой эндпоинт Go
+            const response = await loginWithTg(user)
+
+            if (response.ok) {
+                // 3. Если бэк сказал "ОК", значит сессия создана. 
+                // Просто перенаправляем пользователя на дашборд!
+                window.location.href = '/views/dashboard.html';
+            } else {
+                const errData = await response.json();
+                alert(errData.error || 'Ошибка входа через Telegram');
+            }
+        } catch (err) {
+            console.error('Ошибка сети:', err);
+            alert('Не удалось связаться с сервером');
+        }
+    };
+}
 // Запускаем проверку и первичную отрисовку
+initTelegramLogin();
 renderMode();
 checkExistingAuth();

@@ -1,6 +1,7 @@
 import { getProfile, logout } from '../api/auth.js';
 import { getTasks, createTask, deleteTask, updateTask, restoreTask, getTrashTasks } from '../api/tasks.js';
 import { createActiveTaskCard, createTrashTaskCard } from '../components/TaskCard.js';
+import { openProfileModal } from './profile.js'
 
 async function initDashboard() {
     try {
@@ -19,11 +20,12 @@ async function initDashboard() {
         console.log('Успешная авторизация. Добро пожаловать,', user.username);
 
         // Здесь запускаем инициализацию остального интерфейса дашборда
-        setupDashboardUI(user);
+        setupDashboardUI(user.username);
         await loadUserTasks();
         setupFormListeners();
 
         setupLogoutListener();
+        setupProfileListener();
 
     } catch (error) {
         console.error('Ошибка при проверке авторизации:', error);
@@ -31,10 +33,11 @@ async function initDashboard() {
     }
 }
 
-function setupDashboardUI(user) {
+export function setupDashboardUI(username) {
+    
     const usernameDisplay = document.getElementById('username-display');
     if (usernameDisplay) {
-        usernameDisplay.textContent = user.username;
+        usernameDisplay.textContent = username;
     }
 }
 async function loadUserTasks() {
@@ -140,6 +143,35 @@ function setupLogoutListener() {
             }
         } catch (error) {
             console.error('Ошибка при выходе:', error);
+        }
+    });
+}
+function setupProfileListener() {
+    const profileBtn = document.getElementById('profile-btn')
+    profileBtn.addEventListener('click', async () => {
+        try {
+            // Запрашиваем актуальные данные текущего пользователя
+            // (Обычно это GET-запрос на тот же роут, что и обновление профиля)
+            const response = await getProfile();
+            
+            if (response.status === 401) {
+                // Если сессия протухла — отправляем на авторизацию
+                window.location.href = '/login';
+                return;
+            }
+            
+            if (!response.ok) {
+                throw new Error('Не удалось получить данные профиля');
+            }
+
+            const userData = await response.json(); // Ожидаем JSON вида { username: "...", email: "..." }
+            
+            // Открываем модальное окно и передаем туда свежие данные
+            openProfileModal(userData);
+
+        } catch (err) {
+            console.error(err);
+            alert('Не удалось открыть личный кабинет. Попробуйте позже.');
         }
     });
 }

@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS user_sessions, user_telegram, user_passwords, users CASCADE;

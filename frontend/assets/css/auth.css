@@ -128,3 +128,62 @@
 .hidden {
     display: none !important;
 }
+.auth-separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #a1a1aa; /* Серый текст */
+    font-size: 13px;
+    font-weight: 500;
+    margin: 24px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Тонкие линии по бокам от слова "или" */
+.auth-separator::before,
+.auth-separator::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #2f2f37; /* Цвет линий совпадает с границами */
+}
+
+.auth-separator:not(:empty)::before {
+    margin-right: 16px;
+}
+
+.auth-separator:not(:empty)::after {
+    margin-left: 16px;
+}
+
+/* 2. Стильная подложка-контейнер для кнопки Telegram */
+.tg-login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px;
+    background: #18181c; /* Темный фон в цвет ЛК */
+    border: 1px solid #2f2f37; /* Аккуратная рамка */
+    border-radius: 12px;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+    cursor: pointer;
+}
+
+/* Эффект при наведении на область кнопки */
+.tg-login-wrapper:hover {
+    border-color: #3b82f6; /* Фирменное синее свечение */
+    background: #1c1c21; /* Чуть-чуть осветляем фон */
+    box-shadow: 0 0 16px rgba(59, 130, 246, 0.1);
+}
+
+/* Делаем сам iframe адаптивным и центрированным */
+.tg-login-wrapper iframe {
+    margin: 0 auto !important;
+    display: block !important;
+    transition: transform 0.2s ease;
+}
+
+/* Легкий интерактивный микро-эффект для самой кнопки */
+.tg-login-wrapper:active iframe {
+    transform: scale(0.98);
+}
