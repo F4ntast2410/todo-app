@@ -58,10 +58,10 @@ services:
       REDIS_PORT: "6379"
       TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
       SMTP_HOST: "smtp.gmail.com"
-      SMTP_PORT: "465"
-      SMTP_USERNAME: "todo42test@gmail.com"
-      SMTP_PASSWORD: "kmqlfqyagufbamay"
-      SMTP_FROM: "todo42test@gmail.com"
+      SMTP_PORT: "587"
+      SMTP_USERNAME: "${SMTP_USERNAME}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD}"
+      SMTP_FROM: "${SMTP_FROM}"
 
   todo-tasks:
     build:
