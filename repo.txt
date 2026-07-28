@@ -181,24 +181,25 @@
     │   │   │   │   ├── repository_telegram_link.go
     │   │   │   │   └── repository_update_profile.go
     │   │   │   └── redis
-    │   │   │       ├── redis_delete_2fa.go
-    │   │   │       ├── redis_get_2fa.go
-    │   │   │       ├── redis_save_2fa.go
+    │   │   │       ├── redis_email.go
+    │   │   │       ├── redis_sessions.go
     │   │   │       └── redis_verification.go
     │   │   └── usecase
     │   │       ├── usecase.go
     │   │       ├── usecase_get_user_by_tg_id.go
-    │   │       ├── usecase_get_user_id_by_session.go
     │   │       ├── usecase_login_user.go
     │   │       ├── usecase_register_user.go
     │   │       ├── usecase_send_and_verify.go
+    │   │       ├── usecase_sessions.go
     │   │       ├── usecase_set_email.go
     │   │       ├── usecase_test.go
     │   │       ├── usecase_update_profile.go
     │   │       └── usecases_telegram_auth.go
     │   ├── migrations
     │   │   ├── 000001_init.down.sql
-    │   │   └── 000001_init.up.sql
+    │   │   ├── 000001_init.up.sql
+    │   │   ├── 000002_add_token_hash.down.sql
+    │   │   └── 000002_add_token_hash.up.sql
     │   ├── Dockerfile
     │   ├── go.mod
     │   └── go.sum
@@ -215,9 +216,9 @@ services:
     image: postgres:15-alpine
     container_name: todo_postgres_compose
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: secret
-      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -228,7 +229,7 @@ services:
     image: migrate/migrate
     volumes:
       - ./todo-tasks/migrations:/migrations
-    command: -path=/migrations -database="postgres://postgres:secret@postgres_db:5432/todo_tasks_db?sslmode=disable" up
+    command: -path=/migrations -database="${TASKS_DB_URL}" up
     depends_on:
       - postgres_db
 
@@ -236,7 +237,7 @@ services:
     image: migrate/migrate
     volumes:
       - ./todo-users/migrations:/migrations
-    command: -path=/migrations -database="postgres://postgres:secret@postgres_db:5432/todo_users_db?sslmode=disable" up
+    command: -path=/migrations -database="${USERS_DB_URL}" up
     depends_on:
       - postgres_db
 
@@ -264,12 +265,12 @@ services:
     environment:
       SERVER_PORT: "8080"
       GRPC_PORT: "9090"
-      DATABASE_URL: "postgres://postgres:secret@postgres_db:5432/todo_users_db?sslmode=disable"
+      DATABASE_URL: "${USERS_DB_URL}"
       REDIS_HOST: "redis_db"
       REDIS_PORT: "6379"
       TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
-      SMTP_HOST: "smtp.gmail.com"
-      SMTP_PORT: "587"
+      SMTP_HOST: "${SMTP_HOST}"
+      SMTP_PORT: "${SMTP_PORT}"
       SMTP_USERNAME: "${SMTP_USERNAME}"
       SMTP_PASSWORD: "${SMTP_PASSWORD}"
       SMTP_FROM: "${SMTP_FROM}"
@@ -290,7 +291,7 @@ services:
     environment:
       SERVER_PORT: "8081"
       GRPC_PORT: "9091"
-      DATABASE_URL: "postgres://postgres:secret@postgres_db:5432/todo_tasks_db?sslmode=disable"
+      DATABASE_URL: "${TASKS_DB_URL}"
       USER_SERVICE_GRPC_ADDR: "todo-users:9090"
 
   todo-telegram:
@@ -311,9 +312,11 @@ services:
     container_name: todo_nginx_compose
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./frontend/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./frontend:/usr/share/nginx/html:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - todo-users
       - todo-tasks
@@ -1698,7 +1701,7 @@ async function handleLogin(email, password) {
             if (data.status) {
                 // Бэкенд подтвердил учётные данные и отправил код — переходим к вводу кода
                 pendingEmail = email;
-                mode = '2fa';
+                mode = 'login-2fa';
                 renderMode();
             } else {
                 // На случай, если бэкенд когда-нибудь начнёт пускать без 2FA
@@ -2237,6 +2240,7 @@ export function openProfileModal(userData) {
         <!-- Сообщение об ошибках/успехе -->
         <div id="modal-message" class="modal-msg" style="display: none;"></div>
         <h3>Личные данные</h3>
+        
         <!-- Форма 1: Данные профиля -->
         <form id="profile-info-username-form" class="hidden">
             <div class="input-group">
@@ -2244,14 +2248,15 @@ export function openProfileModal(userData) {
                 <input type="text" name="username" value="${userData.username}" required>
             </div>
             <button type="submit" class="btn-save">Изменить имя пользователя</button>
+            <hr>
         </form>
-        <hr>
         <form id="profile-info-email-form" class="hidden">
             <div class="input-group">
                 <label>Email</label>
                 <input type="email" name="email" value="${userData.email}" required>
             </div>
             <button type="submit" class="btn-save">Изменить почту</button>
+            <hr>
         </form>
 
         <form id="profile-tg-link-email" class="hidden">
@@ -2261,6 +2266,7 @@ export function openProfileModal(userData) {
                 <input type="email" name="email" required>
             </div>
             <button type="submit" class="btn-save">Привязать</button>
+            <hr>
         </form>
 
         <form id="profile-tg-link-email-verify2fa" class="hidden">
@@ -2279,6 +2285,7 @@ export function openProfileModal(userData) {
                 >
             </div>
             <button type="submit" class="btn-save">Подтвердить</button>
+            <hr>
         </form>
 
         <form id="profile-tg-link-set-password" class="hidden">
@@ -2288,9 +2295,9 @@ export function openProfileModal(userData) {
                 <input type="password" name="new_password" required>
             </div>
             <button type="submit" class="btn-save">Установить пароль</button>
+            <hr>
         </form>
 
-        <hr>
 
         <!-- Форма 2: Смена пароля -->
         <form id="profile-password-form" class="hidden">
@@ -2304,9 +2311,9 @@ export function openProfileModal(userData) {
                 <input type="password" name="new_password" required>
             </div>
             <button type="submit" class="btn-save">Обновить пароль</button>
+            <hr>
         </form>
 
-        <hr>
 
         <!-- Секция Telegram -->
         <h3>Интеграция</h3>
@@ -2396,6 +2403,7 @@ function initModalEvents(modalElement, showMsg, userData) {
             const response = await setEmailVerify2FA(userData.pendingEmail, codeVal);
             if (response.ok) {
                 userData.email = userData.pendingEmail;
+                emailForm.querySelector('input[name="email"]').value = userData.email;
                 updateFormVisibility();
                 showMsg('Почта успешно подтверждена!', true);
             } else if (response.status === 400) {
@@ -2405,7 +2413,7 @@ function initModalEvents(modalElement, showMsg, userData) {
                 showMsg('Неверный код или срок его действия истек.');
             }
         } else {
-            const response = await changeEmailVerify({ email: userData.pendingEmail, input_code: codeVal});
+            const response = await changeEmailVerify({ email: userData.email, input_code: codeVal, new_email: userData.pendingEmail});
             if (response.ok) {
                 userData.email = userData.pendingEmail;
                 updateFormVisibility();
@@ -2451,7 +2459,7 @@ function initModalEvents(modalElement, showMsg, userData) {
         e.preventDefault();
         const newEmail = emailForm.querySelector('input[name="email"]').value;
             
-        const response = await changeInfo({ email: newEmail });
+        const response = await changeInfo({ email: userData.email, new_email: newEmail });
         if (response.ok) {
             userData.pendingEmail = newEmail;
             emailForm.classList.add('hidden')
@@ -3559,7 +3567,7 @@ const file_task_task_proto_rawDesc = "" +
 	"\bTaskList\x12 \n" +
 	"\x05tasks\x18\x01 \x03(\v2\n" +
 	".task.TaskR\x05tasks\"\a\n" +
-	"\x05Empty2\xd1\x03\n" +
+	"\x05Empty2\x88\x04\n" +
 	"\vTaskService\x121\n" +
 	"\n" +
 	"CreateTask\x12\x17.task.CreateTaskRequest\x1a\n" +
@@ -3569,7 +3577,8 @@ const file_task_task_proto_rawDesc = "" +
 	"\aGetTask\x12\x14.task.GetTaskRequest\x1a\n" +
 	".task.Task\x12.\n" +
 	"\n" +
-	"DeleteTask\x12\x13.task.TaskIDRequest\x1a\v.task.Empty\x12/\n" +
+	"DeleteTask\x12\x13.task.TaskIDRequest\x1a\v.task.Empty\x125\n" +
+	"\x11DeleteForeverTask\x12\x13.task.TaskIDRequest\x1a\v.task.Empty\x12/\n" +
 	"\vRecoverTask\x12\x13.task.TaskIDRequest\x1a\v.task.Empty\x12@\n" +
 	"\x11UpdateDescription\x12\x1e.task.UpdateDescriptionRequest\x1a\v.task.Empty\x122\n" +
 	"\n" +
@@ -3608,19 +3617,21 @@ var file_task_task_proto_depIdxs = []int32{
 	1,  // 4: task.TaskService.GetRemovedTasksByUserID:input_type -> task.GetTasksByUserIDRequest
 	2,  // 5: task.TaskService.GetTask:input_type -> task.GetTaskRequest
 	3,  // 6: task.TaskService.DeleteTask:input_type -> task.TaskIDRequest
-	3,  // 7: task.TaskService.RecoverTask:input_type -> task.TaskIDRequest
-	4,  // 8: task.TaskService.UpdateDescription:input_type -> task.UpdateDescriptionRequest
-	5,  // 9: task.TaskService.MarkAsDone:input_type -> task.MarkAsDoneRequest
-	6,  // 10: task.TaskService.CreateTask:output_type -> task.Task
-	7,  // 11: task.TaskService.GetTasksByUserID:output_type -> task.TaskList
-	7,  // 12: task.TaskService.GetRemovedTasksByUserID:output_type -> task.TaskList
-	6,  // 13: task.TaskService.GetTask:output_type -> task.Task
-	8,  // 14: task.TaskService.DeleteTask:output_type -> task.Empty
-	8,  // 15: task.TaskService.RecoverTask:output_type -> task.Empty
-	8,  // 16: task.TaskService.UpdateDescription:output_type -> task.Empty
-	8,  // 17: task.TaskService.MarkAsDone:output_type -> task.Empty
-	10, // [10:18] is the sub-list for method output_type
-	2,  // [2:10] is the sub-list for method input_type
+	3,  // 7: task.TaskService.DeleteForeverTask:input_type -> task.TaskIDRequest
+	3,  // 8: task.TaskService.RecoverTask:input_type -> task.TaskIDRequest
+	4,  // 9: task.TaskService.UpdateDescription:input_type -> task.UpdateDescriptionRequest
+	5,  // 10: task.TaskService.MarkAsDone:input_type -> task.MarkAsDoneRequest
+	6,  // 11: task.TaskService.CreateTask:output_type -> task.Task
+	7,  // 12: task.TaskService.GetTasksByUserID:output_type -> task.TaskList
+	7,  // 13: task.TaskService.GetRemovedTasksByUserID:output_type -> task.TaskList
+	6,  // 14: task.TaskService.GetTask:output_type -> task.Task
+	8,  // 15: task.TaskService.DeleteTask:output_type -> task.Empty
+	8,  // 16: task.TaskService.DeleteForeverTask:output_type -> task.Empty
+	8,  // 17: task.TaskService.RecoverTask:output_type -> task.Empty
+	8,  // 18: task.TaskService.UpdateDescription:output_type -> task.Empty
+	8,  // 19: task.TaskService.MarkAsDone:output_type -> task.Empty
+	11, // [11:20] is the sub-list for method output_type
+	2,  // [2:11] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
 	2,  // [2:2] is the sub-list for extension extendee
 	0,  // [0:2] is the sub-list for field type_name
@@ -3683,6 +3694,7 @@ const (
 	TaskService_GetRemovedTasksByUserID_FullMethodName = "/task.TaskService/GetRemovedTasksByUserID"
 	TaskService_GetTask_FullMethodName                 = "/task.TaskService/GetTask"
 	TaskService_DeleteTask_FullMethodName              = "/task.TaskService/DeleteTask"
+	TaskService_DeleteForeverTask_FullMethodName       = "/task.TaskService/DeleteForeverTask"
 	TaskService_RecoverTask_FullMethodName             = "/task.TaskService/RecoverTask"
 	TaskService_UpdateDescription_FullMethodName       = "/task.TaskService/UpdateDescription"
 	TaskService_MarkAsDone_FullMethodName              = "/task.TaskService/MarkAsDone"
@@ -3697,6 +3709,7 @@ type TaskServiceClient interface {
 	GetRemovedTasksByUserID(ctx context.Context, in *GetTasksByUserIDRequest, opts ...grpc.CallOption) (*TaskList, error)
 	GetTask(ctx context.Context, in *GetTaskRequest, opts ...grpc.CallOption) (*Task, error)
 	DeleteTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error)
+	DeleteForeverTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error)
 	RecoverTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error)
 	UpdateDescription(ctx context.Context, in *UpdateDescriptionRequest, opts ...grpc.CallOption) (*Empty, error)
 	MarkAsDone(ctx context.Context, in *MarkAsDoneRequest, opts ...grpc.CallOption) (*Empty, error)
@@ -3760,6 +3773,16 @@ func (c *taskServiceClient) DeleteTask(ctx context.Context, in *TaskIDRequest, o
 	return out, nil
 }
 
+func (c *taskServiceClient) DeleteForeverTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, TaskService_DeleteForeverTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *taskServiceClient) RecoverTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Empty)
@@ -3799,6 +3822,7 @@ type TaskServiceServer interface {
 	GetRemovedTasksByUserID(context.Context, *GetTasksByUserIDRequest) (*TaskList, error)
 	GetTask(context.Context, *GetTaskRequest) (*Task, error)
 	DeleteTask(context.Context, *TaskIDRequest) (*Empty, error)
+	DeleteForeverTask(context.Context, *TaskIDRequest) (*Empty, error)
 	RecoverTask(context.Context, *TaskIDRequest) (*Empty, error)
 	UpdateDescription(context.Context, *UpdateDescriptionRequest) (*Empty, error)
 	MarkAsDone(context.Context, *MarkAsDoneRequest) (*Empty, error)
@@ -3826,6 +3850,9 @@ func (UnimplementedTaskServiceServer) GetTask(context.Context, *GetTaskRequest) 
 }
 func (UnimplementedTaskServiceServer) DeleteTask(context.Context, *TaskIDRequest) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteTask not implemented")
+}
+func (UnimplementedTaskServiceServer) DeleteForeverTask(context.Context, *TaskIDRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteForeverTask not implemented")
 }
 func (UnimplementedTaskServiceServer) RecoverTask(context.Context, *TaskIDRequest) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method RecoverTask not implemented")
@@ -3947,6 +3974,24 @@ func _TaskService_DeleteTask_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TaskService_DeleteForeverTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TaskIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).DeleteForeverTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_DeleteForeverTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).DeleteForeverTask(ctx, req.(*TaskIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TaskService_RecoverTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TaskIDRequest)
 	if err := dec(in); err != nil {
@@ -4027,6 +4072,10 @@ var TaskService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteTask",
 			Handler:    _TaskService_DeleteTask_Handler,
+		},
+		{
+			MethodName: "DeleteForeverTask",
+			Handler:    _TaskService_DeleteForeverTask_Handler,
 		},
 		{
 			MethodName: "RecoverTask",
@@ -4937,6 +4986,7 @@ type TaskUsecase interface {
 	GetRemovedTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
 	GetTask(ctx context.Context, taskID int) (*entity.Task, error)
 	DeleteTask(ctx context.Context, id int) error
+	DeleteForeverTask(ctx context.Context, id int) error
 	RecoverTask(ctx context.Context, id int) error
 	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
 	MarkAsDone(ctx context.Context, id int, status bool) error
@@ -4997,6 +5047,13 @@ func (s *TaskServer) GetTask(ctx context.Context, req *task.GetTaskRequest) (*ta
 
 func (s *TaskServer) DeleteTask(ctx context.Context, req *task.TaskIDRequest) (*task.Empty, error) {
 	err := s.TaskUC.DeleteTask(ctx, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	return &task.Empty{}, nil
+}
+func (s *TaskServer) DeleteForeverTask(ctx context.Context, req *task.TaskIDRequest) (*task.Empty, error) {
+	err := s.TaskUC.DeleteForeverTask(ctx, int(req.Id))
 	if err != nil {
 		return nil, err
 	}
@@ -6417,6 +6474,13 @@ func (c *Client) DeleteTask(ctx context.Context, id int) error {
 	}
 	return nil
 }
+func (c *Client) DeleteForeverTask(ctx context.Context, id int) error {
+	_, err := c.taskClient.DeleteForeverTask(ctx, &task.TaskIDRequest{Id: int64(id)})
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (c *Client) RecoverTask(ctx context.Context, id int) error {
 	_, err := c.taskClient.RecoverTask(ctx, &task.TaskIDRequest{Id: int64(id)})
@@ -6570,6 +6634,7 @@ type TaskUsecase interface {
 	GetRemovedTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
 	GetTask(ctx context.Context, taskID int) (*entity.Task, error)
 	DeleteTask(ctx context.Context, id int) error
+	DeleteForeverTask(ctx context.Context, id int) error
 	RecoverTask(ctx context.Context, id int) error
 	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
 	MarkAsDone(ctx context.Context, id int, status bool) error
@@ -6707,6 +6772,21 @@ func (b *BotServer) handleCallback(query *tgbotapi.CallbackQuery) {
 		b.handlerUpdateDecriptionCallback(query, taskID)
 	case "trash_list":
 		b.handleTrashList(ctx, query)
+	case "del_perm_confirm":
+		taskID, err := strconv.Atoi(data[1])
+		if err != nil {
+			b.logger.Error("error converting string to int", slog.String("error", err.Error()))
+			return
+		}
+		b.handlerDeleteTaskPermanentlyConfirmation(query, taskID)
+	case "delete_perm":
+		taskID, err := strconv.Atoi(data[1])
+		if err != nil {
+			b.logger.Error("error converting string to int", slog.String("error", err.Error()))
+			return
+		}
+		b.handlerDeleteTaskPermanently(ctx, query, taskID)
+
 	}
 }
 
@@ -6848,6 +6928,7 @@ package tgbot
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -6866,6 +6947,31 @@ func (b *BotServer) handlerDeleteTask(ctx context.Context, query *tgbotapi.Callb
 		return
 	}
 	b.editTaskViewCallback(ctx, query, taskID)
+}
+func (b *BotServer) handlerDeleteTaskPermanently(ctx context.Context, query *tgbotapi.CallbackQuery, taskID int) {
+	err := b.taskUC.DeleteForeverTask(ctx, taskID)
+	if err != nil {
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			b.logger.Error("database timeout during task creating")
+			message := tgbotapi.NewMessage(query.From.ID, "⚠️ База данных не ответила вовремя. Попробуйте еще раз.")
+			b.Send(message)
+			return
+		}
+		b.logger.Error("error deleting permanently task", slog.String("error", err.Error()))
+		return
+	}
+	b.editTaskList(ctx, query)
+}
+func (b *BotServer) handlerDeleteTaskPermanentlyConfirmation(query *tgbotapi.CallbackQuery, taskID int) {
+	text := "Вы уверены, что хотите удалить задачу навсегда?"
+	keyboardMarkup := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Подтвердить", fmt.Sprintf("delete_perm:%d", taskID)),
+			tgbotapi.NewInlineKeyboardButtonData("Назад", fmt.Sprintf("task_view:%d", taskID)),
+		),
+	)
+	edit := tgbotapi.NewEditMessageTextAndMarkup(query.From.ID, query.Message.MessageID, text, keyboardMarkup)
+	b.Send(edit)
 }
 
 func (b *BotServer) handlerRecoverTask(ctx context.Context, query *tgbotapi.CallbackQuery, taskID int) {
@@ -7104,6 +7210,7 @@ func (b *BotServer) handleTaskView(ctx context.Context, taskID int) (string, tgb
 	var status_text string
 	var status_delete string
 	var status_delete_query string
+	button_switch_delete_status := tgbotapi.NewInlineKeyboardButtonData(status_text, fmt.Sprintf("mark_as_done:%d", taskID))
 	switch task.Done {
 	case true:
 		status = "✅"
@@ -7113,16 +7220,21 @@ func (b *BotServer) handleTaskView(ctx context.Context, taskID int) (string, tgb
 		status_text = "Отметить выполненным✅"
 	}
 	if task.DeletedAt == nil {
+		button_switch_delete_status.Text = status_text
 		status_delete = "Удалить задачу⛔"
 		status_delete_query = "delete_task"
 	} else {
+		status_text = fmt.Sprintf("del_perm_confirm:%d", taskID)
+		button_switch_delete_status.Text = "Удалить навсегда🗑️"
+		button_switch_delete_status.CallbackData = &status_text
 		status_delete = "Восстановить задачу🔄"
 		status_delete_query = "recover_task"
 	}
+
 	text := fmt.Sprintf("Заголовок: %s\nСтатус выполнения: %s\nОписание: %s", task.Title, status, task.Description)
 	keyboardMarkup := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData(status_text, fmt.Sprintf("mark_as_done:%d", taskID)),
+			button_switch_delete_status,
 			tgbotapi.NewInlineKeyboardButtonData(status_delete, fmt.Sprintf("%s:%d", status_delete_query, taskID)),
 		),
 		tgbotapi.NewInlineKeyboardRow(
@@ -8318,7 +8430,7 @@ func (h *UserHandler) UpdateProfileHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if req.Email != nil {
-		err = h.UserUC.UpdateEmail(r.Context(), entity.VerificationEmail(*req.Email))
+		err = h.UserUC.UpdateEmail(r.Context(), entity.VerificationEmail(*req.NewEmail), entity.VerificationEmail(*req.Email))
 		if err != nil {
 			if errors.Is(err, customErrors.ErrUserAlreadyExists) {
 				w.WriteHeader(http.StatusBadRequest)
@@ -8349,7 +8461,7 @@ func (h *UserHandler) UpdateEmailVerifyHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err := h.UserUC.UpdateEmailVerify(r.Context(), userID, entity.VerificationEmail(req.Email), req.InputCode)
+	err := h.UserUC.UpdateEmailVerify(r.Context(), userID, entity.VerificationEmail(req.NewEmail), entity.VerificationEmail(req.Email), req.InputCode)
 	if err != nil {
 		if errors.Is(err, customErrors.ErrInvalid2FACode) {
 			w.WriteHeader(http.StatusBadRequest)
@@ -8408,8 +8520,8 @@ type UserUsecase interface {
 	GetUserIDBySession(ctx context.Context, sessionID string) (int, error)
 	GetUserByWebID(ctx context.Context, userID int) (*entity.UserWeb, error)
 	UpdateUsername(ctx context.Context, userID int, username string) error
-	UpdateEmail(ctx context.Context, email entity.VerificationEmail) error
-	UpdateEmailVerify(ctx context.Context, userID int, email entity.VerificationEmail, inputCode string) error
+	UpdateEmail(ctx context.Context, newEmail, email entity.VerificationEmail) error
+	UpdateEmailVerify(ctx context.Context, userID int, newEmail, email entity.VerificationEmail, inputCode string) error
 	ChangePassword(ctx context.Context, userID int, oldPassword, newPassword string) error
 	GetTelegramLink(ctx context.Context, userID int) (*entity.TelegramLink, error)
 	LinkTelegram(ctx context.Context, userID int, tgID int64, tgUsername string) error
@@ -8451,6 +8563,7 @@ type Responce2FA struct {
 type Request2FA struct {
 	InputCode string `json:"input_code"`
 	Email     string `json:"email"`
+	NewEmail  string `json:"new_email,omitempty"`
 }
 type Request2FARegister struct {
 	Username  string `json:"username"`
@@ -8566,6 +8679,7 @@ func (u *UserRequest) ToRequest(e *entity.UserWeb) {
 type UpdateProfileRequest struct {
 	Username *string `json:"username"`
 	Email    *string `json:"email"`
+	NewEmail *string `json:"new_email,omitempty"`
 }
 type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password"`
@@ -8876,14 +8990,10 @@ import (
 	"time"
 )
 
-func (s *PostgresStorage) CreateSession(ctx context.Context, userID int) (string, error) {
-	query := `INSERT INTO user_sessions (user_id, expires_at) VALUES ($1, $2) RETURNING id`
-	var id string
-	err := s.DB.GetContext(ctx, &id, query, userID, time.Now().Add(24*time.Hour))
-	if err != nil {
-		return "", err
-	}
-	return id, nil
+func (s *PostgresStorage) CreateSession(ctx context.Context, userID int, tokenHash string) error {
+	query := `INSERT INTO user_sessions (user_id, expires_at, token_hash) VALUES ($1, $2, $3) RETURNING id`
+	_, err := s.DB.ExecContext(ctx, query, userID, time.Now().Add(24*time.Hour), tokenHash)
+	return err
 }
 
 ```
@@ -9223,30 +9333,7 @@ func (t TelegramLink) ToEntitiy() entity.TelegramLink {
 
 ---
 
-## File: todo-users\internal\repository\redis\redis_delete_2fa.go
-
-```
-package cache
-
-import (
-	"context"
-	"fmt"
-	"proj/internal/entity"
-)
-
-func (c RedisVerificationRepository) Delete2FA(ctx context.Context, email entity.VerificationEmail) error {
-	err := c.Client.Del(ctx, fmt.Sprintf("2fa:email:%s", email)).Err()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-```
-
----
-
-## File: todo-users\internal\repository\redis\redis_get_2fa.go
+## File: todo-users\internal\repository\redis\redis_email.go
 
 ```
 package cache
@@ -9256,10 +9343,18 @@ import (
 	"fmt"
 	"proj/internal/entity"
 	customErrors "proj/internal/errors"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
+func (c RedisVerificationRepository) Delete2FA(ctx context.Context, email entity.VerificationEmail) error {
+	err := c.Client.Del(ctx, fmt.Sprintf("2fa:email:%s", email)).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
 func (c RedisVerificationRepository) Get2FA(ctx context.Context, email entity.VerificationEmail) (string, error) {
 	result, err := c.Client.Get(ctx, fmt.Sprintf("2fa:email:%s", email)).Result()
 	if err != nil {
@@ -9270,12 +9365,19 @@ func (c RedisVerificationRepository) Get2FA(ctx context.Context, email entity.Ve
 	}
 	return result, err
 }
+func (c RedisVerificationRepository) Save2FA(ctx context.Context, email entity.VerificationEmail, unique_code string, time_duration time.Duration) error {
+	err := c.Client.Set(ctx, fmt.Sprintf("2fa:email:%s", email), unique_code, time_duration).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 ```
 
 ---
 
-## File: todo-users\internal\repository\redis\redis_save_2fa.go
+## File: todo-users\internal\repository\redis\redis_sessions.go
 
 ```
 package cache
@@ -9283,12 +9385,33 @@ package cache
 import (
 	"context"
 	"fmt"
-	"proj/internal/entity"
+	customErrors "proj/internal/errors"
+	"strconv"
 	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
-func (c RedisVerificationRepository) Save2FA(ctx context.Context, email entity.VerificationEmail, unique_code string, time_duration time.Duration) error {
-	err := c.Client.Set(ctx, fmt.Sprintf("2fa:email:%s", email), unique_code, time_duration).Err()
+func (c RedisVerificationRepository) DeleteSessionToken(ctx context.Context, sessionID string) error {
+	err := c.Client.Del(ctx, fmt.Sprintf("session:session_token:%s", sessionID)).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (c RedisVerificationRepository) GetUserID(ctx context.Context, sessionID string) (int, error) {
+	result, err := c.Client.Get(ctx, fmt.Sprintf("session:session_token:%s", sessionID)).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return 0, customErrors.ErrCacheValueNotExists
+		}
+		return 0, err
+	}
+	userID, err := strconv.Atoi(result)
+	return userID, err
+}
+func (c RedisVerificationRepository) SaveSessionToken(ctx context.Context, sessionID string, userID int, time_duration time.Duration) error {
+	err := c.Client.Set(ctx, fmt.Sprintf("session:session_token:%s", sessionID), userID, time_duration).Err()
 	if err != nil {
 		return err
 	}
@@ -9345,7 +9468,7 @@ type UserRepository interface {
 	FindByIdTg(ctx context.Context, userID int64) (int, error)
 	FindByIdWeb(ctx context.Context, userID int) (*entity.UserWeb, error)
 	FindByEmail(ctx context.Context, email entity.VerificationEmail) (*entity.UserWeb, error)
-	CreateSession(ctx context.Context, userID int) (string, error)
+	CreateSession(ctx context.Context, userID int, tokenHash string) error
 	FindUserIDBySession(ctx context.Context, sessionID string) (int, error)
 	UpdateUsername(ctx context.Context, userID int, username string) error
 	UpdateEmail(ctx context.Context, userID int, email entity.VerificationEmail) error
@@ -9359,6 +9482,9 @@ type VerificationRepository interface {
 	Save2FA(ctx context.Context, email entity.VerificationEmail, unique_code string, time_duration time.Duration) error
 	Get2FA(ctx context.Context, email entity.VerificationEmail) (string, error)
 	Delete2FA(ctx context.Context, email entity.VerificationEmail) error
+	DeleteSessionToken(ctx context.Context, sessionID string) error
+	GetUserID(ctx context.Context, sessionID string) (int, error)
+	SaveSessionToken(ctx context.Context, sessionID string, userID int, time_duration time.Duration) error
 }
 type Mailer interface {
 	Send2FACode(to string, code string) error
@@ -9407,21 +9533,6 @@ func (uc *UserUsecaseImpl) GetUserByWebID(ctx context.Context, userID int) (*ent
 
 ---
 
-## File: todo-users\internal\usecase\usecase_get_user_id_by_session.go
-
-```
-package usecase
-
-import "context"
-
-func (uc *UserUsecaseImpl) GetUserIDBySession(ctx context.Context, sessionID string) (int, error) {
-	return uc.UserRepo.FindUserIDBySession(ctx, sessionID)
-}
-
-```
-
----
-
 ## File: todo-users\internal\usecase\usecase_login_user.go
 
 ```
@@ -9455,7 +9566,7 @@ func (uc *UserUsecaseImpl) Verify2FA(ctx context.Context, email entity.Verificat
 	if err != nil {
 		return nil, err
 	}
-	sessionID, err := uc.UserRepo.CreateSession(ctx, user.UserID)
+	sessionID, err := uc.createSessionForUser(ctx, user.UserID)
 	if err != nil {
 		return nil, err
 	}
@@ -9510,7 +9621,7 @@ func (uc *UserUsecaseImpl) RegisterUserWeb(ctx context.Context, email entity.Ver
 	if err != nil {
 		return nil, err
 	}
-	sessionID, err := uc.UserRepo.CreateSession(ctx, userID)
+	sessionID, err := uc.createSessionForUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -9587,6 +9698,55 @@ func (uc UserUsecaseImpl) Verify2FACode(ctx context.Context, email entity.Verifi
 		return err
 	}
 	return nil
+}
+
+```
+
+---
+
+## File: todo-users\internal\usecase\usecase_sessions.go
+
+```
+package usecase
+
+import (
+	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"time"
+)
+
+// generateSessionToken создаёт криптографически случайный токен (уходит клиенту)
+// и его SHA-256-хэш (хранится в БД). Раздельно — чтобы сырой токен нигде,
+// кроме куки в браузере пользователя, не оседал.
+func generateSessionToken() (rawToken string, tokenHash string, err error) {
+	raw := make([]byte, 32) // 256 бит энтропии
+	if _, err := rand.Read(raw); err != nil {
+		return "", "", err
+	}
+	rawToken = hex.EncodeToString(raw)
+	tokenHash = hashToken(rawToken)
+	return rawToken, tokenHash, nil
+}
+
+func hashToken(token string) string {
+	sum := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(sum[:])
+}
+func (uc *UserUsecaseImpl) createSessionForUser(ctx context.Context, userID int) (string, error) {
+	rawToken, tokenHash, err := generateSessionToken()
+	if err != nil {
+		return "", err
+	}
+	if err := uc.AuthRepo.SaveSessionToken(ctx, tokenHash, userID, 24*time.Hour); err != nil {
+		return "", err
+	}
+	err = uc.UserRepo.CreateSession(ctx, userID, tokenHash)
+	return rawToken, err
+}
+func (uc *UserUsecaseImpl) GetUserIDBySession(ctx context.Context, sessionID string) (int, error) {
+	return uc.AuthRepo.GetUserID(ctx, hashToken(sessionID))
 }
 
 ```
@@ -9729,8 +9889,8 @@ import (
 func (uc *UserUsecaseImpl) UpdateUsername(ctx context.Context, userID int, username string) error {
 	return uc.UserRepo.UpdateUsername(ctx, userID, username)
 }
-func (uc *UserUsecaseImpl) UpdateEmail(ctx context.Context, email entity.VerificationEmail) error {
-	exists, err := uc.UserRepo.ExistsWeb(ctx, email)
+func (uc *UserUsecaseImpl) UpdateEmail(ctx context.Context, newEmail, email entity.VerificationEmail) error {
+	exists, err := uc.UserRepo.ExistsWeb(ctx, newEmail)
 	if err != nil {
 		return err
 	}
@@ -9745,12 +9905,12 @@ func (uc *UserUsecaseImpl) UpdateEmail(ctx context.Context, email entity.Verific
 	return nil
 }
 
-func (uc *UserUsecaseImpl) UpdateEmailVerify(ctx context.Context, userID int, email entity.VerificationEmail, inputCode string) error {
+func (uc *UserUsecaseImpl) UpdateEmailVerify(ctx context.Context, userID int, newEmail, email entity.VerificationEmail, inputCode string) error {
 	err := uc.Verify2FACode(ctx, email, inputCode)
 	if err != nil {
 		return err
 	}
-	err = uc.UserRepo.UpdateEmail(ctx, userID, email)
+	err = uc.UserRepo.UpdateEmail(ctx, userID, newEmail)
 	return err
 }
 
@@ -9840,7 +10000,7 @@ func (uc *UserUsecaseImpl) LoginByTelegram(ctx context.Context, tgID int64, tgUs
 			return nil, err
 		}
 	}
-	sessionID, err := uc.UserRepo.CreateSession(ctx, userID)
+	sessionID, err := uc.createSessionForUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -9892,4 +10052,21 @@ CREATE TABLE user_sessions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_sessions_expires_at ON user_sessions(expires_at);
+```
+
+---
+
+## File: todo-users\migrations\000002_add_token_hash.down.sql
+
+```
+ALTER TABLE user_sessions DROP COLUMN IF EXISTS token_hash;
+```
+
+---
+
+## File: todo-users\migrations\000002_add_token_hash.up.sql
+
+```
+DELETE FROM user_sessions;
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS token_hash TEXT UNIQUE NOT NULL;
 ```
