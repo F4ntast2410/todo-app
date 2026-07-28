@@ -2,6 +2,7 @@ package mailer
 
 import (
 	"fmt"
+	"mime"
 	"net/smtp"
 )
 
@@ -22,7 +23,7 @@ func New(cfg Config) *SMTPMailer {
 }
 
 func (m *SMTPMailer) Send2FACode(to string, code string) error {
-	subject := "Код подтверждения"
+	subject := mime.BEncoding.Encode("UTF-8", "Код подтверждения")
 	body := fmt.Sprintf(
 		"Ваш код подтверждения: %s\r\n\r\nКод действителен 5 минут. Если вы не запрашивали вход — просто игнорируйте это письмо.",
 		code,

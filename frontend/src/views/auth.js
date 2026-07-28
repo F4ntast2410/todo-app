@@ -1,5 +1,5 @@
 import { validateEmail, validatePassword } from '../utils/validators.js';
-import { login, register, getProfile, verify2FA, loginWithTg } from '../api/auth.js';
+import { login, register, registerVerify, getProfile, verify2FA, loginWithTg } from '../api/auth.js';
 
 // Элементы DOM
 const authForm = document.getElementById('auth-form');
@@ -16,11 +16,13 @@ const toggleLink = document.getElementById('toggle-mode-link');
 const verify2faGroup = document.getElementById('2fa-group');
 const verify2faInput = document.getElementById('2fa-code');
 const tgLoginContainer = document.getElementById('tg-login')
-// Состояние экрана: 'login' | 'register' | '2fa'
+// Состояние экрана: 'login' | 'register' | 'login-2fa' | 'register-confirm'
 let mode = 'login';
 // Email, для которого запрошен код — нужен на шаге verify2fa,
 // т.к. сам email-инпут на этом шаге скрыт/задизейблен
 let pendingEmail = '';
+let pendingPassword = '';
+let pendingUsername = '';
 
 // 1. Отрисовка состояния формы под текущий режим
 function renderMode() {
@@ -62,8 +64,8 @@ function renderMode() {
 
         tgLoginContainer.classList.add('hidden');
         tgLoginContainer.removeAttribute('disabled');
-    } else if (mode === '2fa') {
-        authTitle.textContent = 'Подтверждение входа';
+    } else if (mode === 'login-2fa' || mode === 'register-confirm') {
+        authTitle.textContent = mode === 'login-2fa' ? 'Подтверждение входа' : 'Подтверждение регистрации';
         submitBtn.textContent = 'Подтвердить';
         toggleLink.textContent = 'Отмена, ввести данные заново';
 
@@ -91,9 +93,12 @@ function renderMode() {
 toggleLink.addEventListener('click', (event) => {
     event.preventDefault();
 
-    if (mode === '2fa') {
+    if (mode === 'login-2fa') {
         // Отмена верификации — возвращаемся к чистой форме логина
         mode = 'login';
+        pendingEmail = '';
+    } else if (mode === 'register-confirm') {
+        mode = 'register';
         pendingEmail = '';
     } else {
         mode = mode === 'login' ? 'register' : 'login';
@@ -107,8 +112,12 @@ authForm.addEventListener('submit', async (event) => {
     event.preventDefault(); // предотвращаем перезагрузку страницы
     hideMessage();
 
-    if (mode === '2fa') {
+    if (mode === 'login-2fa') {
         await handleVerify2FA();
+        return;
+    }
+    if (mode === 'register-confirm') {
+        await handleConfirmRegistration();
         return;
     }
 
@@ -146,7 +155,7 @@ async function handleLogin(email, password) {
             if (data.status) {
                 // Бэкенд подтвердил учётные данные и отправил код — переходим к вводу кода
                 pendingEmail = email;
-                mode = '2fa';
+                mode = 'login-2fa';
                 renderMode();
             } else {
                 // На случай, если бэкенд когда-нибудь начнёт пускать без 2FA
@@ -189,18 +198,45 @@ async function handleVerify2FA() {
         showError('Не удалось связаться с сервером. Проверьте сеть.');
     }
 }
+async function handleConfirmRegistration() {
+    const code = verify2faInput.value.trim();
+
+    if (!/^\d{6}$/.test(code)) {
+        showError('Код должен состоять из 6 цифр');
+        return;
+    }
+
+    try {
+        const response = await registerVerify(pendingEmail, pendingPassword, pendingUsername, code);
+
+        if (response.ok) {
+            // Сессионная кука уже выставлена бэкендом — летим на дашборд
+            window.location.href = '/views/dashboard.html';
+        } else if (response.status === 400) {
+            const errorData = await response.json().catch(() => ({}));
+            showError(errorData.error || 'Неверный или истекший код подтверждения');
+        } else {
+            showError('Что-то пошло не так. Попробуйте снова.');
+        }
+    } catch (err) {
+        console.error('Сетевая ошибка:', err);
+        showError('Не удалось связаться с сервером. Проверьте сеть.');
+    }
+}
 
 // --- Регистрация ---
 async function handleRegister(email, password, username) {
     try {
-        const response = await register(email, password, username);
+        const response = await register(email);
 
         if (response.status === 201) {
             // После регистрации отдельного шага логина всё равно требует 2FA —
             // просто переключаем пользователя на форму входа
-            mode = 'login';
+            pendingEmail = email;
+            pendingPassword = password;
+            pendingUsername = username;
+            mode = 'register-confirm';
             renderMode();
-            showSuccess('Регистрация успешна. Теперь войдите в аккаунт.');
         } else if (response.status === 409) {
             showError('Пользователь с таким email уже существует');
         } else {

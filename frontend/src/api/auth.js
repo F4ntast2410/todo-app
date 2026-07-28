@@ -19,11 +19,16 @@ export async function verify2FA(email, inputCode) {
     });
 }
 
-// Задел на будущее
-export async function register(email, password, username) {
+export async function register(email) {
     return apiRequest('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ email, password, username })
+        body: JSON.stringify({ email })
+    });
+}
+export async function registerVerify(email, password, username, inputCode) {
+    return apiRequest('/auth/register/verify', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, username, input_code: inputCode })
     });
 }
 

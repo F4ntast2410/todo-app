@@ -13,6 +13,7 @@ type UserWeb struct {
 	Email        string
 	Username     string
 	PasswordHash string
+	HasPassword  bool
 }
 
 type UserTg struct {

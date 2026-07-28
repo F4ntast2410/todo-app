@@ -1,4 +1,4 @@
-import { changeInfo, changePassword, checkLinkTg, linkTg } from "../api/personal_account.js";
+import { changeInfo, changeEmailVerify, changePassword, checkLinkTg, linkTg, setEmail, setEmailPassword, setEmailVerify2FA } from "../api/personal_account.js";
 import { setupDashboardUI } from "./dashboard.js";
 async function initTelegramSection(showMsg) {
     const container = document.getElementById('tg-widget-container');
@@ -84,50 +84,94 @@ export function openProfileModal(userData) {
     
     // 2. Набиваем HTML-структуру
     overlay.innerHTML = `
-        <div class="profile-modal">
-            <button class="close-btn" id="modal-close">✕</button>
-            <h2>Личный кабинет</h2>
-            
-            <!-- Сообщение об ошибках/успехе -->
-            <div id="modal-message" class="modal-msg" style="display: none;"></div>
-
-            <!-- Форма 1: Данные профиля -->
-            <form id="profile-info-form">
-                <h3>Личные данные</h3>
-                <div class="input-group">
-                    <label>Имя пользователя</label>
-                    <input type="text" name="username" value="${userData.username}" required>
-                </div>
-                <div class="input-group">
-                    <label>Email</label>
-                    <input type="email" name="email" value="${userData.email}" required>
-                </div>
-                <button type="submit" class="btn-save">Сохранить изменения</button>
-            </form>
-
+    <div class="profile-modal">
+        <button class="close-btn" id="modal-close">✕</button>
+        <h2>Личный кабинет</h2>
+        
+        <!-- Сообщение об ошибках/успехе -->
+        <div id="modal-message" class="modal-msg" style="display: none;"></div>
+        <h3>Личные данные</h3>
+        
+        <!-- Форма 1: Данные профиля -->
+        <form id="profile-info-username-form" class="hidden">
+            <div class="input-group">
+                <label>Имя пользователя</label>
+                <input type="text" name="username" value="${userData.username}" required>
+            </div>
+            <button type="submit" class="btn-save">Изменить имя пользователя</button>
             <hr>
-
-            <!-- Форма 2: Смена пароля -->
-            <form id="profile-password-form">
-                <h3>Безопасность</h3>
-                <div class="input-group">
-                    <label>Текущий пароль</label>
-                    <input type="password" name="old_password" required>
-                </div>
-                <div class="input-group">
-                    <label>Новый пароль</label>
-                    <input type="password" name="new_password" required>
-                </div>
-                <button type="submit" class="btn-save">Обновить пароль</button>
-            </form>
-
+        </form>
+        <form id="profile-info-email-form" class="hidden">
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" name="email" value="${userData.email}" required>
+            </div>
+            <button type="submit" class="btn-save">Изменить почту</button>
             <hr>
+        </form>
 
-            <!-- Секция Telegram -->
-            <h3>Интеграция</h3>
-            <div id="tg-widget-container"></div>
-        </div>
+        <form id="profile-tg-link-email" class="hidden">
+            <h3>Привязать почту</h3>
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" name="email" required>
+            </div>
+            <button type="submit" class="btn-save">Привязать</button>
+            <hr>
+        </form>
+
+        <form id="profile-tg-link-email-verify2fa" class="hidden">
+            <h3>Введите код подтверждения с почты</h3>
+            <div class="input-group">
+                <label for="2fa-code">Код подтверждения с почты</label>
+                <input
+                    name="code"
+                    type="text"
+                    id="2fa-code"
+                    placeholder="000000"
+                    maxlength="6"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    autocomplete="one-time-code"
+                >
+            </div>
+            <button type="submit" class="btn-save">Подтвердить</button>
+            <hr>
+        </form>
+
+        <form id="profile-tg-link-set-password" class="hidden">
+            <h3>Установить пароль</h3>
+            <div class="input-group">
+                <label>Новый пароль</label>
+                <input type="password" name="new_password" required>
+            </div>
+            <button type="submit" class="btn-save">Установить пароль</button>
+            <hr>
+        </form>
+
+
+        <!-- Форма 2: Смена пароля -->
+        <form id="profile-password-form" class="hidden">
+            <h3>Безопасность</h3>
+            <div class="input-group">
+                <label>Текущий пароль</label>
+                <input type="password" name="old_password" required>
+            </div>
+            <div class="input-group">
+                <label>Новый пароль</label>
+                <input type="password" name="new_password" required>
+            </div>
+            <button type="submit" class="btn-save">Обновить пароль</button>
+            <hr>
+        </form>
+
+
+        <!-- Секция Telegram -->
+        <h3>Интеграция</h3>
+        <div id="tg-widget-container"></div>
+    </div>
     `;
+    
 
     document.body.appendChild(overlay);
 
@@ -139,59 +183,159 @@ export function openProfileModal(userData) {
     };
 
     // Передаем showMsg в инициализаторы
-    initModalEvents(overlay, showMsg);
+    initModalEvents(overlay, showMsg, userData);
     initTelegramSection(showMsg);
 }
 
-function initModalEvents(modalElement, showMsg) {
+function initModalEvents(modalElement, showMsg, userData) {
+
     const closeBtn = modalElement.querySelector('#modal-close');
-    const infoForm = modalElement.querySelector('#profile-info-form');
+    const emailTGLinkForm = modalElement.querySelector('#profile-tg-link-email');
+    const emailVerify2FATGLinkForm = modalElement.querySelector('#profile-tg-link-email-verify2fa');
+    const setPasswordTGLinkForm = modalElement.querySelector('#profile-tg-link-set-password');
+    const usernameForm = modalElement.querySelector('#profile-info-username-form');
+    const emailForm = modalElement.querySelector('#profile-info-email-form');
     const passwordForm = modalElement.querySelector('#profile-password-form');
+    let mode = 'verify-email';
+    function updateFormVisibility() {
+        const hasEmail = Boolean(userData.email && userData.email.trim() !== '');
+        const hasPassword = Boolean(userData.has_password);
 
+        // По умолчанию всё скрываем
+        emailTGLinkForm.classList.add('hidden');
+        emailVerify2FATGLinkForm.classList.add('hidden');
+        setPasswordTGLinkForm.classList.add('hidden');
+        usernameForm.classList.add('hidden');
+        emailForm.classList.add('hidden');
+        passwordForm.classList.add('hidden');
 
+        // Логика переключения шагов
+        if (!hasEmail && !hasPassword) {
+            // Шаг 1: Нет почты -> Запрашиваем почту
+            emailTGLinkForm.classList.remove('hidden');
+        } else if (hasEmail && !hasPassword) {
+            // Шаг 2: Почта есть, нет пароля -> Запрашиваем пароль
+            setPasswordTGLinkForm.classList.remove('hidden');
+        } else {
+            // Шаг 3: Полный аккаунт -> Показываем редактирование и смену пароля
+            usernameForm.classList.remove('hidden');
+            emailForm.classList.remove('hidden');
+            passwordForm.classList.remove('hidden');
+        }
+    }
+    updateFormVisibility();
     // Закрытие модалки
     closeBtn.addEventListener('click', () => modalElement.remove());
     modalElement.addEventListener('click', (e) => {
         if (e.target === modalElement) modalElement.remove();
     });
-
-    // Хэндлер для формы личных данных (Имя / Email)
-    infoForm.addEventListener('submit', async (e) => {
+    emailTGLinkForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const emailVal = emailTGLinkForm.querySelector('input[name="email"]').value;
         
-        const payload = {
-            username: infoForm.querySelector('input[name="username"]').value,
-            email: infoForm.querySelector('input[name="email"]').value
-        };
-        
-        const response = await changeInfo(payload);
-
+        const response = await setEmail(emailVal);
         if (response.ok) {
-            setupDashboardUI(infoForm.querySelector('input[name="username"]').value)
+            userData.pendingEmail = emailVal;
+            mode = 'set-email';
+            emailTGLinkForm.classList.add('hidden');
+            emailVerify2FATGLinkForm.classList.remove('hidden');
+            showMsg('Код отправлен на вашу почту!', true);
+        }else if (response.status === 400) {
+            const errorData = await response.json().catch(() => ({}));
+            showMsg(errorData.error || 'Почта уже занята');
+        } else {
+            showMsg('Ошибка при отправке почты. Попробуйте позже.');
+        }
+    });
+    emailVerify2FATGLinkForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const codeVal = emailVerify2FATGLinkForm.querySelector('input[name="code"]').value;
+        if (mode === 'set-email') {
+            const response = await setEmailVerify2FA(userData.pendingEmail, codeVal);
+            if (response.ok) {
+                userData.email = userData.pendingEmail;
+                emailForm.querySelector('input[name="email"]').value = userData.email;
+                updateFormVisibility();
+                showMsg('Почта успешно подтверждена!', true);
+            } else if (response.status === 400) {
+                const errorData = await response.json().catch(() => ({}));
+                showMsg(errorData.error || 'Неверный или истекший код');
+            } else {
+                showMsg('Неверный код или срок его действия истек.');
+            }
+        } else {
+            const response = await changeEmailVerify({ email: userData.email, input_code: codeVal, new_email: userData.pendingEmail});
+            if (response.ok) {
+                userData.email = userData.pendingEmail;
+                updateFormVisibility();
+                showMsg('Почта успешно изменена!', true);
+            } else if (response.status === 400) {
+                const errorData = await response.json().catch(() => ({}));
+                showMsg(errorData.error || 'Неверный или истекший код');
+            } else {
+                showMsg('Неверный код или срок его действия истек.');
+            }
+        }
+
+    });
+    setPasswordTGLinkForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const passVal = setPasswordTGLinkForm.querySelector('input[name="new_password"]').value;
+        
+        const response = await setEmailPassword(userData.email, passVal);
+        if (response.ok) {
+            userData.has_password = true; // Фиксируем наличие пароля
+            updateFormVisibility(); // Переключаем на полный профиль
+            showMsg('Пароль успешно установлен!', true);
+        } else {
+            const errData = await response.json().catch(() => ({}));
+            showMsg(errData.error || 'Не удалось установить пароль');
+        }
+    });
+    // Хэндлер для формы личных данных (Имя / Email)
+    usernameForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newUsername = usernameForm.querySelector('input[name="username"]').value;
+            
+        const response = await changeInfo({ username: newUsername });
+        if (response.ok) {
+            userData.username = newUsername;
+            setupDashboardUI(newUsername);
             showMsg('Данные профиля успешно обновлены!', true);
         } else {
             showMsg('Ошибка при обновлении профиля. Попробуйте позже.');
         }
     });
-
+    emailForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newEmail = emailForm.querySelector('input[name="email"]').value;
+            
+        const response = await changeInfo({ email: userData.email, new_email: newEmail });
+        if (response.ok) {
+            userData.pendingEmail = newEmail;
+            emailForm.classList.add('hidden')
+            emailVerify2FATGLinkForm.classList.remove('hidden')
+        } else if (response.status == 400) {
+            showMsg('Почта уже занята');
+        }
+         else {
+            showMsg('Ошибка при обновлении профиля. Попробуйте позже.');
+        }
+    });
     // Хэндлер для формы смены пароля
     passwordForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-
         const payload = {
             old_password: passwordForm.querySelector('input[name="old_password"]').value,
             new_password: passwordForm.querySelector('input[name="new_password"]').value
         };
-        
+            
         const response = await changePassword(payload);
-
         if (response.ok) {
             showMsg('Пароль успешно изменен!', true);
             passwordForm.reset(); 
         } else {
-            const errData = await response.json();
-            // Перехватываем твою кастомную ошибку "Неверный текущий пароль"
+            const errData = await response.json().catch(() => ({}));
             showMsg(errData.error || 'Не удалось изменить пароль');
         }
     });

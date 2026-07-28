@@ -1,0 +1,2 @@
+DELETE FROM user_sessions;
+ALTER TABLE user_sessions ADD COLUMN IF NOT EXISTS token_hash TEXT UNIQUE NOT NULL;

@@ -83,15 +83,21 @@ func main() {
 	mux.Handle("GET /auth/me", authMiddleware(http.HandlerFunc(userHandler.GetUserHandler)))
 
 	mux.HandleFunc("POST /auth/register", userHandler.RegisterHandler)
+	mux.HandleFunc("POST /auth/register/verify", userHandler.RegisterVerify2FAHandler)
 	mux.HandleFunc("POST /auth/login", userHandler.LoginHandler)
 	mux.HandleFunc("POST /auth/verify2fa", userHandler.Verify2FA)
 	mux.HandleFunc("POST /auth/logout", userHandler.LogoutHandler)
 
 	mux.Handle("PUT /auth/me", authMiddleware(http.HandlerFunc(userHandler.UpdateProfileHandler)))
+	mux.Handle("PUT /auth/me/email/verify", authMiddleware(http.HandlerFunc(userHandler.UpdateEmailVerifyHandler)))
 	mux.Handle("PUT /auth/me/password", authMiddleware(http.HandlerFunc(userHandler.ChangePasswordHandler)))
 	mux.Handle("GET /auth/telegram/link", authMiddleware(http.HandlerFunc(userHandler.GetTelegramLinkHandler)))
 	mux.Handle("POST /auth/telegram/link", authMiddleware(http.HandlerFunc(userHandler.LinkTelegramHandler)))
 	mux.HandleFunc("POST /auth/telegram/login", userHandler.TelegramLoginHandler)
+
+	mux.Handle("POST /auth/me/link/email", authMiddleware(http.HandlerFunc(userHandler.SetEmailHandler)))
+	mux.Handle("POST /auth/me/link/verify2fa", authMiddleware(http.HandlerFunc(userHandler.EmailSetVerify2FAHandler)))
+	mux.Handle("POST /auth/me/link/password", authMiddleware(http.HandlerFunc(userHandler.SetEmailPasswordHandler)))
 
 	wrappedMux := middleware.Logger(mux)
 	server := &http.Server{

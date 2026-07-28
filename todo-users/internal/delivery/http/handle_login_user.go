@@ -40,10 +40,10 @@ func (h *UserHandler) Verify2FA(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	loginRequest, err := h.UserUC.Verify2FA(r.Context(), entity.VerificationEmail(req.Email), req.InputCode)
+	loginResult, err := h.UserUC.Verify2FA(r.Context(), entity.VerificationEmail(req.Email), req.InputCode)
 	if err != nil {
 		if errors.Is(err, customErrors.ErrInvalid2FACode) {
-			w.WriteHeader(http.StatusBadRequest) // Выставляем HTTP статус 400
+			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(dto.ErrorResponse{
 				Error: "Неверный или истекший код подтверждения",
 			})
@@ -54,25 +54,24 @@ func (h *UserHandler) Verify2FA(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_token",
-		Value:    loginRequest.SessionToken,
+		Value:    loginResult.SessionToken,
 		Path:     "/",
-		MaxAge:   86400, // Говорит браузеру немедленно удалить куку
+		MaxAge:   86400,
 		HttpOnly: true,
-		Secure:   false, // Выставь false, если локально тестируешь без HTTPS
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})
 	w.WriteHeader(http.StatusOK)
 
 }
 func (h *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	// Имя куки должно быть ровно таким же, какое ты задаешь при Login/Register
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_token",
 		Value:    "",
 		Path:     "/",
-		MaxAge:   -1, // Говорит браузеру немедленно удалить куку
+		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   false, // Выставь false, если локально тестируешь без HTTPS
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})
 

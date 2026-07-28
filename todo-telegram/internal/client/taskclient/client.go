@@ -91,6 +91,13 @@ func (c *Client) DeleteTask(ctx context.Context, id int) error {
 	}
 	return nil
 }
+func (c *Client) DeleteForeverTask(ctx context.Context, id int) error {
+	_, err := c.taskClient.DeleteForeverTask(ctx, &task.TaskIDRequest{Id: int64(id)})
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func (c *Client) RecoverTask(ctx context.Context, id int) error {
 	_, err := c.taskClient.RecoverTask(ctx, &task.TaskIDRequest{Id: int64(id)})

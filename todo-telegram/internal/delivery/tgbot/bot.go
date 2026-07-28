@@ -17,6 +17,7 @@ type TaskUsecase interface {
 	GetRemovedTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
 	GetTask(ctx context.Context, taskID int) (*entity.Task, error)
 	DeleteTask(ctx context.Context, id int) error
+	DeleteForeverTask(ctx context.Context, id int) error
 	RecoverTask(ctx context.Context, id int) error
 	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
 	MarkAsDone(ctx context.Context, id int, status bool) error

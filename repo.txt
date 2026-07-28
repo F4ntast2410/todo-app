@@ -27,14 +27,31 @@
     │       ├── auth.html
     │       └── dashboard.html
     ├── todo-messenger
+    ├── todo-proto
+    │   ├── auth
+    │   │   ├── auth.pb.go
+    │   │   └── auth_grpc.pb.go
+    │   ├── task
+    │   │   ├── task.pb.go
+    │   │   └── task_grpc.pb.go
+    │   ├── usertg
+    │   │   ├── usertg.pb.go
+    │   │   └── usertg_grpc.pb.go
+    │   ├── go.mod
+    │   └── go.sum
     ├── todo-tasks
     │   ├── cmd
     │   │   └── app
     │   │       └── main.go
     │   ├── internal
+    │   │   ├── client
+    │   │   │   └── authclient
+    │   │   │       └── client.go
     │   │   ├── config
     │   │   │   └── config.go
     │   │   ├── delivery
+    │   │   │   ├── grpc
+    │   │   │   │   └── task_server.go
     │   │   │   └── http
     │   │   │       ├── entityRequest
     │   │   │       │   ├── error.go
@@ -74,21 +91,7 @@
     │   │       └── usecase_update_task_description.go
     │   ├── migrations
     │   │   ├── 000001_init.down.sql
-    │   │   ├── 000001_init.up.sql
-    │   │   ├── 000002_add_deleted_at.down.sql
-    │   │   ├── 000002_add_deleted_at.up.sql
-    │   │   ├── 000003_add_users.down.sql
-    │   │   ├── 000003_add_users.up.sql
-    │   │   ├── 000004_add_user_task_id.down.sql
-    │   │   ├── 000004_add_user_task_id.up.sql
-    │   │   ├── 000005_add_user_migration.down.sql
-    │   │   ├── 000005_add_user_migration.up.sql
-    │   │   ├── 000006_add_task_description.down.sql
-    │   │   ├── 000006_add_task_description.up.sql
-    │   │   ├── 000007_add_sessions.down.sql
-    │   │   ├── 000007_add_sessions.up.sql
-    │   │   ├── 000008_add_user_telegram_unique.down.sql
-    │   │   └── 000008_add_user_telegram_unique.up.sql
+    │   │   └── 000001_init.up.sql
     │   ├── Dockerfile
     │   ├── go.mod
     │   └── go.sum
@@ -97,6 +100,11 @@
     │   │   └── app
     │   │       └── main.go
     │   ├── internal
+    │   │   ├── client
+    │   │   │   ├── taskclient
+    │   │   │   │   └── client.go
+    │   │   │   └── usertgclient
+    │   │   │       └── client.go
     │   │   ├── config
     │   │   │   └── config.go
     │   │   ├── delivery
@@ -111,7 +119,7 @@
     │   │   │       ├── handle_start_command.go
     │   │   │       ├── handle_task_list.go
     │   │   │       ├── handle_trash_list.go
-    │   │   │       ├── hanlde_update_task.go
+    │   │   │       ├── handle_update_task.go
     │   │   │       ├── middleware.go
     │   │   │       └── session.go
     │   │   ├── entity
@@ -120,6 +128,7 @@
     │   │   └── errors
     │   │       ├── redis_nil.go
     │   │       └── user_exists.go
+    │   ├── Dockerfile
     │   ├── go.mod
     │   └── go.sum
     ├── todo-users
@@ -130,6 +139,9 @@
     │   │   ├── config
     │   │   │   └── config.go
     │   │   ├── delivery
+    │   │   │   ├── grpc
+    │   │   │   │   ├── auth_server.go
+    │   │   │   │   └── usertg_server.go
     │   │   │   └── http
     │   │   │       ├── entityRequest
     │   │   │       │   ├── auth.go
@@ -142,6 +154,7 @@
     │   │   │       ├── handle_get_user.go
     │   │   │       ├── handle_login_user.go
     │   │   │       ├── handle_register_user.go
+    │   │   │       ├── handle_set_email.go
     │   │   │       ├── handle_telegram.go
     │   │   │       ├── handle_update_profile.go
     │   │   │       └── handler.go
@@ -151,6 +164,8 @@
     │   │   ├── errors
     │   │   │   ├── redis_nil.go
     │   │   │   └── user_exists.go
+    │   │   ├── mailer
+    │   │   │   └── mailer.go
     │   │   ├── repository
     │   │   │   ├── postgres
     │   │   │   │   ├── entityPostgres
@@ -176,26 +191,17 @@
     │   │       ├── usecase_get_user_id_by_session.go
     │   │       ├── usecase_login_user.go
     │   │       ├── usecase_register_user.go
+    │   │       ├── usecase_send_and_verify.go
+    │   │       ├── usecase_set_email.go
     │   │       ├── usecase_test.go
     │   │       ├── usecase_update_profile.go
     │   │       └── usecases_telegram_auth.go
-    │   └── migrations
-    │       ├── 000001_init.down.sql
-    │       ├── 000001_init.up.sql
-    │       ├── 000002_add_deleted_at.down.sql
-    │       ├── 000002_add_deleted_at.up.sql
-    │       ├── 000003_add_users.down.sql
-    │       ├── 000003_add_users.up.sql
-    │       ├── 000004_add_user_task_id.down.sql
-    │       ├── 000004_add_user_task_id.up.sql
-    │       ├── 000005_add_user_migration.down.sql
-    │       ├── 000005_add_user_migration.up.sql
-    │       ├── 000006_add_task_description.down.sql
-    │       ├── 000006_add_task_description.up.sql
-    │       ├── 000007_add_sessions.down.sql
-    │       ├── 000007_add_sessions.up.sql
-    │       ├── 000008_add_user_telegram_unique.down.sql
-    │       └── 000008_add_user_telegram_unique.up.sql
+    │   ├── migrations
+    │   │   ├── 000001_init.down.sql
+    │   │   └── 000001_init.up.sql
+    │   ├── Dockerfile
+    │   ├── go.mod
+    │   └── go.sum
     └── docker-compose.yaml
 
 ---
@@ -211,20 +217,28 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: secret
-      POSTGRES_DB: todo_db
+      POSTGRES_DB: postgres
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
 
-  db_migrations:
+  tasks_db_migrations:
     image: migrate/migrate
     volumes:
-      - ./backend/migrations:/migrations 
-    command: -path=/migrations -database="postgres://postgres:secret@postgres_db:5432/todo_db?sslmode=disable" up
+      - ./todo-tasks/migrations:/migrations
+    command: -path=/migrations -database="postgres://postgres:secret@postgres_db:5432/todo_tasks_db?sslmode=disable" up
     depends_on:
       - postgres_db
 
+  users_db_migrations:
+    image: migrate/migrate
+    volumes:
+      - ./todo-users/migrations:/migrations
+    command: -path=/migrations -database="postgres://postgres:secret@postgres_db:5432/todo_users_db?sslmode=disable" up
+    depends_on:
+      - postgres_db
 
   redis_db:
     image: redis:7-alpine
@@ -234,41 +248,79 @@ services:
     volumes:
       - redisdata:/data
 
- 
-  todo-tasks:
-    build: ./todo-tasks # Указываем на папку с Go-кодом
-    env_file:
-      - ./backend/.env # Путь к твоему файлу окружения
-    container_name: todo_app_compose
+  todo-users:
+    build:
+      context: .
+      dockerfile: todo-users/Dockerfile
+    container_name: todo_users_compose
     ports:
       - "8080:8080"
+      - "9090:9090"
     depends_on:
-      db_migrations:
+      users_db_migrations:
         condition: service_completed_successfully
-      redis_db: # Ждем, пока поднимется Redis
+      redis_db:
         condition: service_started
     environment:
-      DATABASE_URL: "postgres://postgres:secret@postgres_db:5432/todo_db?sslmode=disable"
-      REDIS_HOST: "redis_db" # Передаем бэкенду имя контейнера Redis
+      SERVER_PORT: "8080"
+      GRPC_PORT: "9090"
+      DATABASE_URL: "postgres://postgres:secret@postgres_db:5432/todo_users_db?sslmode=disable"
+      REDIS_HOST: "redis_db"
       REDIS_PORT: "6379"
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
+      SMTP_HOST: "smtp.gmail.com"
+      SMTP_PORT: "587"
+      SMTP_USERNAME: "${SMTP_USERNAME}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD}"
+      SMTP_FROM: "${SMTP_FROM}"
 
-  # 5. Наш веб-сервер Nginx + Фронтенд
+  todo-tasks:
+    build:
+      context: .
+      dockerfile: todo-tasks/Dockerfile
+    container_name: todo_tasks_compose
+    ports:
+      - "8081:8081"
+      - "9091:9091"
+    depends_on:
+      tasks_db_migrations:
+        condition: service_completed_successfully
+      todo-users:
+        condition: service_started
+    environment:
+      SERVER_PORT: "8081"
+      GRPC_PORT: "9091"
+      DATABASE_URL: "postgres://postgres:secret@postgres_db:5432/todo_tasks_db?sslmode=disable"
+      USER_SERVICE_GRPC_ADDR: "todo-users:9090"
+
+  todo-telegram:
+    build:
+      context: .
+      dockerfile: todo-telegram/Dockerfile
+    container_name: todo_telegram_compose
+    depends_on:
+      - todo-tasks
+      - todo-users
+    environment:
+      TELEGRAM_BOT_TOKEN: "${TELEGRAM_BOT_TOKEN}"
+      TASK_SERVICE_GRPC_ADDR: "todo-tasks:9091"
+      USER_SERVICE_GRPC_ADDR: "todo-users:9090"
+
   nginx:
     image: nginx:alpine
     container_name: todo_nginx_compose
     ports:
-      - "80:80" # Слушает стандартный порт для сайтов
+      - "80:80"
     volumes:
-      # Монтируем конфигурацию, которую мы написали на прошлом шаге
       - ./frontend/default.conf:/etc/nginx/conf.d/default.conf:ro
-      # Монтируем всю модульную структуру фронтенда целиком
       - ./frontend:/usr/share/nginx/html:ro
     depends_on:
-      - backend
+      - todo-users
+      - todo-tasks
 
 volumes:
   pgdata:
-  redisdata: 
+  redisdata:
 ```
 
 ---
@@ -294,7 +346,7 @@ volumes:
     border-radius: 8px;
     padding: 40px;
     width: 100%;
-    max-width: 400px;
+    max-width: 500px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 
@@ -1182,11 +1234,16 @@ export async function verify2FA(email, inputCode) {
     });
 }
 
-// Задел на будущее
-export async function register(email, password, username) {
+export async function register(email) {
     return apiRequest('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ email, password, username })
+        body: JSON.stringify({ email })
+    });
+}
+export async function registerVerify(email, password, username, inputCode) {
+    return apiRequest('/auth/register/verify', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, username, input_code: inputCode })
     });
 }
 
@@ -1202,6 +1259,7 @@ export async function logout() {
         method: 'POST'
     });
 }
+
 ```
 
 ---
@@ -1256,6 +1314,12 @@ export async function changeInfo(payload) {
         body: JSON.stringify(payload)
     });
 }
+export async function changeEmailVerify(payload) {
+    return apiRequest('/auth/me/email/verify', {
+        method: 'PUT',
+        body: JSON.stringify(payload)
+    });
+}
 
 export async function changePassword(payload) {
     return apiRequest('/auth/me/password', {
@@ -1275,6 +1339,24 @@ export async function linkTg(user) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(user)
+    });
+}
+export async function setEmail(email) {
+    return apiRequest('/auth/me/link/email', {
+        method: 'POST',
+        body: JSON.stringify({ email: email })
+    });
+}
+export async function setEmailVerify2FA(email, inputCode) {
+    return apiRequest('/auth/me/link/verify2fa', {
+        method: 'POST',
+        body: JSON.stringify({ email: email, input_code: inputCode })
+    });
+}
+export async function setEmailPassword(email, password) {
+    return apiRequest('/auth/me/link/password', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
     });
 }
 ```
@@ -1460,7 +1542,7 @@ export function validatePassword(password) {
 
 ```
 import { validateEmail, validatePassword } from '../utils/validators.js';
-import { login, register, getProfile, verify2FA, loginWithTg } from '../api/auth.js';
+import { login, register, registerVerify, getProfile, verify2FA, loginWithTg } from '../api/auth.js';
 
 // Элементы DOM
 const authForm = document.getElementById('auth-form');
@@ -1477,11 +1559,13 @@ const toggleLink = document.getElementById('toggle-mode-link');
 const verify2faGroup = document.getElementById('2fa-group');
 const verify2faInput = document.getElementById('2fa-code');
 const tgLoginContainer = document.getElementById('tg-login')
-// Состояние экрана: 'login' | 'register' | '2fa'
+// Состояние экрана: 'login' | 'register' | 'login-2fa' | 'register-confirm'
 let mode = 'login';
 // Email, для которого запрошен код — нужен на шаге verify2fa,
 // т.к. сам email-инпут на этом шаге скрыт/задизейблен
 let pendingEmail = '';
+let pendingPassword = '';
+let pendingUsername = '';
 
 // 1. Отрисовка состояния формы под текущий режим
 function renderMode() {
@@ -1523,8 +1607,8 @@ function renderMode() {
 
         tgLoginContainer.classList.add('hidden');
         tgLoginContainer.removeAttribute('disabled');
-    } else if (mode === '2fa') {
-        authTitle.textContent = 'Подтверждение входа';
+    } else if (mode === 'login-2fa' || mode === 'register-confirm') {
+        authTitle.textContent = mode === 'login-2fa' ? 'Подтверждение входа' : 'Подтверждение регистрации';
         submitBtn.textContent = 'Подтвердить';
         toggleLink.textContent = 'Отмена, ввести данные заново';
 
@@ -1552,9 +1636,12 @@ function renderMode() {
 toggleLink.addEventListener('click', (event) => {
     event.preventDefault();
 
-    if (mode === '2fa') {
+    if (mode === 'login-2fa') {
         // Отмена верификации — возвращаемся к чистой форме логина
         mode = 'login';
+        pendingEmail = '';
+    } else if (mode === 'register-confirm') {
+        mode = 'register';
         pendingEmail = '';
     } else {
         mode = mode === 'login' ? 'register' : 'login';
@@ -1568,8 +1655,12 @@ authForm.addEventListener('submit', async (event) => {
     event.preventDefault(); // предотвращаем перезагрузку страницы
     hideMessage();
 
-    if (mode === '2fa') {
+    if (mode === 'login-2fa') {
         await handleVerify2FA();
+        return;
+    }
+    if (mode === 'register-confirm') {
+        await handleConfirmRegistration();
         return;
     }
 
@@ -1650,18 +1741,45 @@ async function handleVerify2FA() {
         showError('Не удалось связаться с сервером. Проверьте сеть.');
     }
 }
+async function handleConfirmRegistration() {
+    const code = verify2faInput.value.trim();
+
+    if (!/^\d{6}$/.test(code)) {
+        showError('Код должен состоять из 6 цифр');
+        return;
+    }
+
+    try {
+        const response = await registerVerify(pendingEmail, pendingPassword, pendingUsername, code);
+
+        if (response.ok) {
+            // Сессионная кука уже выставлена бэкендом — летим на дашборд
+            window.location.href = '/views/dashboard.html';
+        } else if (response.status === 400) {
+            const errorData = await response.json().catch(() => ({}));
+            showError(errorData.error || 'Неверный или истекший код подтверждения');
+        } else {
+            showError('Что-то пошло не так. Попробуйте снова.');
+        }
+    } catch (err) {
+        console.error('Сетевая ошибка:', err);
+        showError('Не удалось связаться с сервером. Проверьте сеть.');
+    }
+}
 
 // --- Регистрация ---
 async function handleRegister(email, password, username) {
     try {
-        const response = await register(email, password, username);
+        const response = await register(email);
 
         if (response.status === 201) {
             // После регистрации отдельного шага логина всё равно требует 2FA —
             // просто переключаем пользователя на форму входа
-            mode = 'login';
+            pendingEmail = email;
+            pendingPassword = password;
+            pendingUsername = username;
+            mode = 'register-confirm';
             renderMode();
-            showSuccess('Регистрация успешна. Теперь войдите в аккаунт.');
         } else if (response.status === 409) {
             showError('Пользователь с таким email уже существует');
         } else {
@@ -2026,7 +2144,7 @@ initDashboard();
 ## File: frontend\src\views\profile.js
 
 ```
-import { changeInfo, changePassword, checkLinkTg, linkTg } from "../api/personal_account.js";
+import { changeInfo, changeEmailVerify, changePassword, checkLinkTg, linkTg, setEmail, setEmailPassword, setEmailVerify2FA } from "../api/personal_account.js";
 import { setupDashboardUI } from "./dashboard.js";
 async function initTelegramSection(showMsg) {
     const container = document.getElementById('tg-widget-container');
@@ -2112,50 +2230,90 @@ export function openProfileModal(userData) {
     
     // 2. Набиваем HTML-структуру
     overlay.innerHTML = `
-        <div class="profile-modal">
-            <button class="close-btn" id="modal-close">✕</button>
-            <h2>Личный кабинет</h2>
-            
-            <!-- Сообщение об ошибках/успехе -->
-            <div id="modal-message" class="modal-msg" style="display: none;"></div>
+    <div class="profile-modal">
+        <button class="close-btn" id="modal-close">✕</button>
+        <h2>Личный кабинет</h2>
+        
+        <!-- Сообщение об ошибках/успехе -->
+        <div id="modal-message" class="modal-msg" style="display: none;"></div>
+        <h3>Личные данные</h3>
+        <!-- Форма 1: Данные профиля -->
+        <form id="profile-info-username-form" class="hidden">
+            <div class="input-group">
+                <label>Имя пользователя</label>
+                <input type="text" name="username" value="${userData.username}" required>
+            </div>
+            <button type="submit" class="btn-save">Изменить имя пользователя</button>
+        </form>
+        <hr>
+        <form id="profile-info-email-form" class="hidden">
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" name="email" value="${userData.email}" required>
+            </div>
+            <button type="submit" class="btn-save">Изменить почту</button>
+        </form>
 
-            <!-- Форма 1: Данные профиля -->
-            <form id="profile-info-form">
-                <h3>Личные данные</h3>
-                <div class="input-group">
-                    <label>Имя пользователя</label>
-                    <input type="text" name="username" value="${userData.username}" required>
-                </div>
-                <div class="input-group">
-                    <label>Email</label>
-                    <input type="email" name="email" value="${userData.email}" required>
-                </div>
-                <button type="submit" class="btn-save">Сохранить изменения</button>
-            </form>
+        <form id="profile-tg-link-email" class="hidden">
+            <h3>Привязать почту</h3>
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" name="email" required>
+            </div>
+            <button type="submit" class="btn-save">Привязать</button>
+        </form>
 
-            <hr>
+        <form id="profile-tg-link-email-verify2fa" class="hidden">
+            <h3>Введите код подтверждения с почты</h3>
+            <div class="input-group">
+                <label for="2fa-code">Код подтверждения с почты</label>
+                <input
+                    name="code"
+                    type="text"
+                    id="2fa-code"
+                    placeholder="000000"
+                    maxlength="6"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    autocomplete="one-time-code"
+                >
+            </div>
+            <button type="submit" class="btn-save">Подтвердить</button>
+        </form>
 
-            <!-- Форма 2: Смена пароля -->
-            <form id="profile-password-form">
-                <h3>Безопасность</h3>
-                <div class="input-group">
-                    <label>Текущий пароль</label>
-                    <input type="password" name="old_password" required>
-                </div>
-                <div class="input-group">
-                    <label>Новый пароль</label>
-                    <input type="password" name="new_password" required>
-                </div>
-                <button type="submit" class="btn-save">Обновить пароль</button>
-            </form>
+        <form id="profile-tg-link-set-password" class="hidden">
+            <h3>Установить пароль</h3>
+            <div class="input-group">
+                <label>Новый пароль</label>
+                <input type="password" name="new_password" required>
+            </div>
+            <button type="submit" class="btn-save">Установить пароль</button>
+        </form>
 
-            <hr>
+        <hr>
 
-            <!-- Секция Telegram -->
-            <h3>Интеграция</h3>
-            <div id="tg-widget-container"></div>
-        </div>
+        <!-- Форма 2: Смена пароля -->
+        <form id="profile-password-form" class="hidden">
+            <h3>Безопасность</h3>
+            <div class="input-group">
+                <label>Текущий пароль</label>
+                <input type="password" name="old_password" required>
+            </div>
+            <div class="input-group">
+                <label>Новый пароль</label>
+                <input type="password" name="new_password" required>
+            </div>
+            <button type="submit" class="btn-save">Обновить пароль</button>
+        </form>
+
+        <hr>
+
+        <!-- Секция Telegram -->
+        <h3>Интеграция</h3>
+        <div id="tg-widget-container"></div>
+    </div>
     `;
+    
 
     document.body.appendChild(overlay);
 
@@ -2167,59 +2325,158 @@ export function openProfileModal(userData) {
     };
 
     // Передаем showMsg в инициализаторы
-    initModalEvents(overlay, showMsg);
+    initModalEvents(overlay, showMsg, userData);
     initTelegramSection(showMsg);
 }
 
-function initModalEvents(modalElement, showMsg) {
+function initModalEvents(modalElement, showMsg, userData) {
+
     const closeBtn = modalElement.querySelector('#modal-close');
-    const infoForm = modalElement.querySelector('#profile-info-form');
+    const emailTGLinkForm = modalElement.querySelector('#profile-tg-link-email');
+    const emailVerify2FATGLinkForm = modalElement.querySelector('#profile-tg-link-email-verify2fa');
+    const setPasswordTGLinkForm = modalElement.querySelector('#profile-tg-link-set-password');
+    const usernameForm = modalElement.querySelector('#profile-info-username-form');
+    const emailForm = modalElement.querySelector('#profile-info-email-form');
     const passwordForm = modalElement.querySelector('#profile-password-form');
+    let mode = 'verify-email';
+    function updateFormVisibility() {
+        const hasEmail = Boolean(userData.email && userData.email.trim() !== '');
+        const hasPassword = Boolean(userData.has_password);
 
+        // По умолчанию всё скрываем
+        emailTGLinkForm.classList.add('hidden');
+        emailVerify2FATGLinkForm.classList.add('hidden');
+        setPasswordTGLinkForm.classList.add('hidden');
+        usernameForm.classList.add('hidden');
+        emailForm.classList.add('hidden');
+        passwordForm.classList.add('hidden');
 
+        // Логика переключения шагов
+        if (!hasEmail && !hasPassword) {
+            // Шаг 1: Нет почты -> Запрашиваем почту
+            emailTGLinkForm.classList.remove('hidden');
+        } else if (hasEmail && !hasPassword) {
+            // Шаг 2: Почта есть, нет пароля -> Запрашиваем пароль
+            setPasswordTGLinkForm.classList.remove('hidden');
+        } else {
+            // Шаг 3: Полный аккаунт -> Показываем редактирование и смену пароля
+            usernameForm.classList.remove('hidden');
+            emailForm.classList.remove('hidden');
+            passwordForm.classList.remove('hidden');
+        }
+    }
+    updateFormVisibility();
     // Закрытие модалки
     closeBtn.addEventListener('click', () => modalElement.remove());
     modalElement.addEventListener('click', (e) => {
         if (e.target === modalElement) modalElement.remove();
     });
-
-    // Хэндлер для формы личных данных (Имя / Email)
-    infoForm.addEventListener('submit', async (e) => {
+    emailTGLinkForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const emailVal = emailTGLinkForm.querySelector('input[name="email"]').value;
         
-        const payload = {
-            username: infoForm.querySelector('input[name="username"]').value,
-            email: infoForm.querySelector('input[name="email"]').value
-        };
-        
-        const response = await changeInfo(payload);
-
+        const response = await setEmail(emailVal);
         if (response.ok) {
-            setupDashboardUI(infoForm.querySelector('input[name="username"]').value)
+            userData.pendingEmail = emailVal;
+            mode = 'set-email';
+            emailTGLinkForm.classList.add('hidden');
+            emailVerify2FATGLinkForm.classList.remove('hidden');
+            showMsg('Код отправлен на вашу почту!', true);
+        }else if (response.status === 400) {
+            const errorData = await response.json().catch(() => ({}));
+            showMsg(errorData.error || 'Почта уже занята');
+        } else {
+            showMsg('Ошибка при отправке почты. Попробуйте позже.');
+        }
+    });
+    emailVerify2FATGLinkForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const codeVal = emailVerify2FATGLinkForm.querySelector('input[name="code"]').value;
+        if (mode === 'set-email') {
+            const response = await setEmailVerify2FA(userData.pendingEmail, codeVal);
+            if (response.ok) {
+                userData.email = userData.pendingEmail;
+                updateFormVisibility();
+                showMsg('Почта успешно подтверждена!', true);
+            } else if (response.status === 400) {
+                const errorData = await response.json().catch(() => ({}));
+                showMsg(errorData.error || 'Неверный или истекший код');
+            } else {
+                showMsg('Неверный код или срок его действия истек.');
+            }
+        } else {
+            const response = await changeEmailVerify({ email: userData.pendingEmail, input_code: codeVal});
+            if (response.ok) {
+                userData.email = userData.pendingEmail;
+                updateFormVisibility();
+                showMsg('Почта успешно изменена!', true);
+            } else if (response.status === 400) {
+                const errorData = await response.json().catch(() => ({}));
+                showMsg(errorData.error || 'Неверный или истекший код');
+            } else {
+                showMsg('Неверный код или срок его действия истек.');
+            }
+        }
+
+    });
+    setPasswordTGLinkForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const passVal = setPasswordTGLinkForm.querySelector('input[name="new_password"]').value;
+        
+        const response = await setEmailPassword(userData.email, passVal);
+        if (response.ok) {
+            userData.has_password = true; // Фиксируем наличие пароля
+            updateFormVisibility(); // Переключаем на полный профиль
+            showMsg('Пароль успешно установлен!', true);
+        } else {
+            const errData = await response.json().catch(() => ({}));
+            showMsg(errData.error || 'Не удалось установить пароль');
+        }
+    });
+    // Хэндлер для формы личных данных (Имя / Email)
+    usernameForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newUsername = usernameForm.querySelector('input[name="username"]').value;
+            
+        const response = await changeInfo({ username: newUsername });
+        if (response.ok) {
+            userData.username = newUsername;
+            setupDashboardUI(newUsername);
             showMsg('Данные профиля успешно обновлены!', true);
         } else {
             showMsg('Ошибка при обновлении профиля. Попробуйте позже.');
         }
     });
-
+    emailForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newEmail = emailForm.querySelector('input[name="email"]').value;
+            
+        const response = await changeInfo({ email: newEmail });
+        if (response.ok) {
+            userData.pendingEmail = newEmail;
+            emailForm.classList.add('hidden')
+            emailVerify2FATGLinkForm.classList.remove('hidden')
+        } else if (response.status == 400) {
+            showMsg('Почта уже занята');
+        }
+         else {
+            showMsg('Ошибка при обновлении профиля. Попробуйте позже.');
+        }
+    });
     // Хэндлер для формы смены пароля
     passwordForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-
         const payload = {
             old_password: passwordForm.querySelector('input[name="old_password"]').value,
             new_password: passwordForm.querySelector('input[name="new_password"]').value
         };
-        
+            
         const response = await changePassword(payload);
-
         if (response.ok) {
             showMsg('Пароль успешно изменен!', true);
             passwordForm.reset(); 
         } else {
-            const errData = await response.json();
-            // Перехватываем твою кастомную ошибку "Неверный текущий пароль"
+            const errData = await response.json().catch(() => ({}));
             showMsg(errData.error || 'Не удалось изменить пароль');
         }
     });
@@ -2394,39 +2651,1899 @@ function initModalEvents(modalElement, showMsg) {
 
 ---
 
+## File: todo-proto\go.mod
+
+```
+module todo-proto
+
+go 1.26.4
+
+require (
+	google.golang.org/grpc v1.82.1
+	google.golang.org/protobuf v1.36.11
+)
+
+require (
+	golang.org/x/net v0.53.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/text v0.36.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
+)
+
+```
+
+---
+
+## File: todo-proto\go.sum
+
+```
+github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
+github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
+github.com/go-logr/logr v1.4.3 h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=
+github.com/go-logr/logr v1.4.3/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
+github.com/go-logr/stdr v1.2.2 h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=
+github.com/go-logr/stdr v1.2.2/go.mod h1:mMo/vtBO5dYbehREoey6XUKy/eSumjCCveDpRre4VKE=
+github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
+github.com/golang/protobuf v1.5.4/go.mod h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6rSs7xps=
+github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
+github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
+go.opentelemetry.io/auto/sdk v1.2.1/go.mod h1:KRTj+aOaElaLi+wW1kO/DZRXwkF4C5xPbEe3ZiIhN7Y=
+go.opentelemetry.io/otel v1.43.0 h1:mYIM03dnh5zfN7HautFE4ieIig9amkNANT+xcVxAj9I=
+go.opentelemetry.io/otel v1.43.0/go.mod h1:JuG+u74mvjvcm8vj8pI5XiHy1zDeoCS2LB1spIq7Ay0=
+go.opentelemetry.io/otel/metric v1.43.0 h1:d7638QeInOnuwOONPp4JAOGfbCEpYb+K6DVWvdxGzgM=
+go.opentelemetry.io/otel/metric v1.43.0/go.mod h1:RDnPtIxvqlgO8GRW18W6Z/4P462ldprJtfxHxyKd2PY=
+go.opentelemetry.io/otel/sdk v1.43.0 h1:pi5mE86i5rTeLXqoF/hhiBtUNcrAGHLKQdhg4h4V9Dg=
+go.opentelemetry.io/otel/sdk v1.43.0/go.mod h1:P+IkVU3iWukmiit/Yf9AWvpyRDlUeBaRg6Y+C58QHzg=
+go.opentelemetry.io/otel/sdk/metric v1.43.0 h1:S88dyqXjJkuBNLeMcVPRFXpRw2fuwdvfCGLEo89fDkw=
+go.opentelemetry.io/otel/sdk/metric v1.43.0/go.mod h1:C/RJtwSEJ5hzTiUz5pXF1kILHStzb9zFlIEe85bhj6A=
+go.opentelemetry.io/otel/trace v1.43.0 h1:BkNrHpup+4k4w+ZZ86CZoHHEkohws8AY+WTX09nk+3A=
+go.opentelemetry.io/otel/trace v1.43.0/go.mod h1:/QJhyVBUUswCphDVxq+8mld+AvhXZLhe+8WVFxiFff0=
+golang.org/x/net v0.53.0 h1:d+qAbo5L0orcWAr0a9JweQpjXF19LMXJE8Ey7hwOdUA=
+golang.org/x/net v0.53.0/go.mod h1:JvMuJH7rrdiCfbeHoo3fCQU24Lf5JJwT9W3sJFulfgs=
+golang.org/x/sys v0.43.0 h1:Rlag2XtaFTxp19wS8MXlJwTvoh8ArU6ezoyFsMyCTNI=
+golang.org/x/sys v0.43.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
+golang.org/x/text v0.36.0 h1:JfKh3XmcRPqZPKevfXVpI1wXPTqbkE5f7JA92a55Yxg=
+golang.org/x/text v0.36.0/go.mod h1:NIdBknypM8iqVmPiuco0Dh6P5Jcdk8lJL0CUebqK164=
+gonum.org/v1/gonum v0.17.0 h1:VbpOemQlsSMrYmn7T2OUvQ4dqxQXU+ouZFQsZOx50z4=
+gonum.org/v1/gonum v0.17.0/go.mod h1:El3tOrEuMpv2UdMrbNlKEh9vd86bmQ6vqIcDwxEOc1E=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 h1:RmoJA1ujG+/lRGNfUnOMfhCy5EipVMyvUE+KNbPbTlw=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
+google.golang.org/grpc v1.82.1 h1:NnAxzGRA0677vCa4BUkOAnO5+FfQqVl9iUXeD0IqcGE=
+google.golang.org/grpc v1.82.1/go.mod h1:yzTZ1TB1Z3SG+LIYaI+WiE8D5+PZ3ArnrSp8zF3+/ZA=
+google.golang.org/protobuf v1.36.11 h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
+google.golang.org/protobuf v1.36.11/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
+
+```
+
+---
+
+## File: todo-proto\auth\auth.pb.go
+
+```
+// Code generated by protoc-gen-go. DO NOT EDIT.
+// versions:
+// 	protoc-gen-go v1.36.11
+// 	protoc        v7.35.1
+// source: auth/auth.proto
+
+package auth
+
+import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
+)
+
+const (
+	// Verify that this generated code is sufficiently up-to-date.
+	_ = protoimpl.EnforceVersion(20 - protoimpl.MinVersion)
+	// Verify that runtime/protoimpl is sufficiently up-to-date.
+	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
+)
+
+type ValidateSessionRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionToken  string                 `protobuf:"bytes,1,opt,name=session_token,json=sessionToken,proto3" json:"session_token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ValidateSessionRequest) Reset() {
+	*x = ValidateSessionRequest{}
+	mi := &file_auth_auth_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ValidateSessionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ValidateSessionRequest) ProtoMessage() {}
+
+func (x *ValidateSessionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_auth_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ValidateSessionRequest.ProtoReflect.Descriptor instead.
+func (*ValidateSessionRequest) Descriptor() ([]byte, []int) {
+	return file_auth_auth_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ValidateSessionRequest) GetSessionToken() string {
+	if x != nil {
+		return x.SessionToken
+	}
+	return ""
+}
+
+type ValidateSessionResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ValidateSessionResponse) Reset() {
+	*x = ValidateSessionResponse{}
+	mi := &file_auth_auth_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ValidateSessionResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ValidateSessionResponse) ProtoMessage() {}
+
+func (x *ValidateSessionResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_auth_auth_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ValidateSessionResponse.ProtoReflect.Descriptor instead.
+func (*ValidateSessionResponse) Descriptor() ([]byte, []int) {
+	return file_auth_auth_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *ValidateSessionResponse) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+var File_auth_auth_proto protoreflect.FileDescriptor
+
+const file_auth_auth_proto_rawDesc = "" +
+	"\n" +
+	"\x0fauth/auth.proto\x12\x04auth\"=\n" +
+	"\x16ValidateSessionRequest\x12#\n" +
+	"\rsession_token\x18\x01 \x01(\tR\fsessionToken\"2\n" +
+	"\x17ValidateSessionResponse\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId2]\n" +
+	"\vAuthService\x12N\n" +
+	"\x0fValidateSession\x12\x1c.auth.ValidateSessionRequest\x1a\x1d.auth.ValidateSessionResponseB\x11Z\x0ftodo-proto/authb\x06proto3"
+
+var (
+	file_auth_auth_proto_rawDescOnce sync.Once
+	file_auth_auth_proto_rawDescData []byte
+)
+
+func file_auth_auth_proto_rawDescGZIP() []byte {
+	file_auth_auth_proto_rawDescOnce.Do(func() {
+		file_auth_auth_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_auth_auth_proto_rawDesc), len(file_auth_auth_proto_rawDesc)))
+	})
+	return file_auth_auth_proto_rawDescData
+}
+
+var file_auth_auth_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_auth_auth_proto_goTypes = []any{
+	(*ValidateSessionRequest)(nil),  // 0: auth.ValidateSessionRequest
+	(*ValidateSessionResponse)(nil), // 1: auth.ValidateSessionResponse
+}
+var file_auth_auth_proto_depIdxs = []int32{
+	0, // 0: auth.AuthService.ValidateSession:input_type -> auth.ValidateSessionRequest
+	1, // 1: auth.AuthService.ValidateSession:output_type -> auth.ValidateSessionResponse
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
+}
+
+func init() { file_auth_auth_proto_init() }
+func file_auth_auth_proto_init() {
+	if File_auth_auth_proto != nil {
+		return
+	}
+	type x struct{}
+	out := protoimpl.TypeBuilder{
+		File: protoimpl.DescBuilder{
+			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_auth_auth_proto_rawDesc), len(file_auth_auth_proto_rawDesc)),
+			NumEnums:      0,
+			NumMessages:   2,
+			NumExtensions: 0,
+			NumServices:   1,
+		},
+		GoTypes:           file_auth_auth_proto_goTypes,
+		DependencyIndexes: file_auth_auth_proto_depIdxs,
+		MessageInfos:      file_auth_auth_proto_msgTypes,
+	}.Build()
+	File_auth_auth_proto = out.File
+	file_auth_auth_proto_goTypes = nil
+	file_auth_auth_proto_depIdxs = nil
+}
+
+```
+
+---
+
+## File: todo-proto\auth\auth_grpc.pb.go
+
+```
+// Code generated by protoc-gen-go-grpc. DO NOT EDIT.
+// versions:
+// - protoc-gen-go-grpc v1.6.2
+// - protoc             v7.35.1
+// source: auth/auth.proto
+
+package auth
+
+import (
+	context "context"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+)
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.64.0 or later.
+const _ = grpc.SupportPackageIsVersion9
+
+const (
+	AuthService_ValidateSession_FullMethodName = "/auth.AuthService/ValidateSession"
+)
+
+// AuthServiceClient is the client API for AuthService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type AuthServiceClient interface {
+	ValidateSession(ctx context.Context, in *ValidateSessionRequest, opts ...grpc.CallOption) (*ValidateSessionResponse, error)
+}
+
+type authServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
+	return &authServiceClient{cc}
+}
+
+func (c *authServiceClient) ValidateSession(ctx context.Context, in *ValidateSessionRequest, opts ...grpc.CallOption) (*ValidateSessionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ValidateSessionResponse)
+	err := c.cc.Invoke(ctx, AuthService_ValidateSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AuthServiceServer is the server API for AuthService service.
+// All implementations must embed UnimplementedAuthServiceServer
+// for forward compatibility.
+type AuthServiceServer interface {
+	ValidateSession(context.Context, *ValidateSessionRequest) (*ValidateSessionResponse, error)
+	mustEmbedUnimplementedAuthServiceServer()
+}
+
+// UnimplementedAuthServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedAuthServiceServer struct{}
+
+func (UnimplementedAuthServiceServer) ValidateSession(context.Context, *ValidateSessionRequest) (*ValidateSessionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ValidateSession not implemented")
+}
+func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
+func (UnimplementedAuthServiceServer) testEmbeddedByValue()                     {}
+
+// UnsafeAuthServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AuthServiceServer will
+// result in compilation errors.
+type UnsafeAuthServiceServer interface {
+	mustEmbedUnimplementedAuthServiceServer()
+}
+
+func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
+	// If the following call panics, it indicates UnimplementedAuthServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&AuthService_ServiceDesc, srv)
+}
+
+func _AuthService_ValidateSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ValidateSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).ValidateSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_ValidateSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).ValidateSession(ctx, req.(*ValidateSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var AuthService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "auth.AuthService",
+	HandlerType: (*AuthServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "ValidateSession",
+			Handler:    _AuthService_ValidateSession_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "auth/auth.proto",
+}
+
+```
+
+---
+
+## File: todo-proto\task\task.pb.go
+
+```
+// Code generated by protoc-gen-go. DO NOT EDIT.
+// versions:
+// 	protoc-gen-go v1.36.11
+// 	protoc        v7.35.1
+// source: task/task.proto
+
+package task
+
+import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
+)
+
+const (
+	// Verify that this generated code is sufficiently up-to-date.
+	_ = protoimpl.EnforceVersion(20 - protoimpl.MinVersion)
+	// Verify that runtime/protoimpl is sufficiently up-to-date.
+	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
+)
+
+type CreateTaskRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateTaskRequest) Reset() {
+	*x = CreateTaskRequest{}
+	mi := &file_task_task_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateTaskRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateTaskRequest) ProtoMessage() {}
+
+func (x *CreateTaskRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_task_task_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateTaskRequest.ProtoReflect.Descriptor instead.
+func (*CreateTaskRequest) Descriptor() ([]byte, []int) {
+	return file_task_task_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *CreateTaskRequest) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *CreateTaskRequest) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *CreateTaskRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type GetTasksByUserIDRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTasksByUserIDRequest) Reset() {
+	*x = GetTasksByUserIDRequest{}
+	mi := &file_task_task_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTasksByUserIDRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTasksByUserIDRequest) ProtoMessage() {}
+
+func (x *GetTasksByUserIDRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_task_task_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTasksByUserIDRequest.ProtoReflect.Descriptor instead.
+func (*GetTasksByUserIDRequest) Descriptor() ([]byte, []int) {
+	return file_task_task_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *GetTasksByUserIDRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type GetTaskRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TaskId        int64                  `protobuf:"varint,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetTaskRequest) Reset() {
+	*x = GetTaskRequest{}
+	mi := &file_task_task_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetTaskRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetTaskRequest) ProtoMessage() {}
+
+func (x *GetTaskRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_task_task_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetTaskRequest.ProtoReflect.Descriptor instead.
+func (*GetTaskRequest) Descriptor() ([]byte, []int) {
+	return file_task_task_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetTaskRequest) GetTaskId() int64 {
+	if x != nil {
+		return x.TaskId
+	}
+	return 0
+}
+
+type TaskIDRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TaskIDRequest) Reset() {
+	*x = TaskIDRequest{}
+	mi := &file_task_task_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaskIDRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaskIDRequest) ProtoMessage() {}
+
+func (x *TaskIDRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_task_task_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaskIDRequest.ProtoReflect.Descriptor instead.
+func (*TaskIDRequest) Descriptor() ([]byte, []int) {
+	return file_task_task_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *TaskIDRequest) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type UpdateDescriptionRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	TaskId         int64                  `protobuf:"varint,1,opt,name=task_id,json=taskId,proto3" json:"task_id,omitempty"`
+	NewDescription string                 `protobuf:"bytes,2,opt,name=new_description,json=newDescription,proto3" json:"new_description,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *UpdateDescriptionRequest) Reset() {
+	*x = UpdateDescriptionRequest{}
+	mi := &file_task_task_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateDescriptionRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateDescriptionRequest) ProtoMessage() {}
+
+func (x *UpdateDescriptionRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_task_task_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateDescriptionRequest.ProtoReflect.Descriptor instead.
+func (*UpdateDescriptionRequest) Descriptor() ([]byte, []int) {
+	return file_task_task_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *UpdateDescriptionRequest) GetTaskId() int64 {
+	if x != nil {
+		return x.TaskId
+	}
+	return 0
+}
+
+func (x *UpdateDescriptionRequest) GetNewDescription() string {
+	if x != nil {
+		return x.NewDescription
+	}
+	return ""
+}
+
+type MarkAsDoneRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Status        bool                   `protobuf:"varint,2,opt,name=status,proto3" json:"status,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MarkAsDoneRequest) Reset() {
+	*x = MarkAsDoneRequest{}
+	mi := &file_task_task_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MarkAsDoneRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MarkAsDoneRequest) ProtoMessage() {}
+
+func (x *MarkAsDoneRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_task_task_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MarkAsDoneRequest.ProtoReflect.Descriptor instead.
+func (*MarkAsDoneRequest) Descriptor() ([]byte, []int) {
+	return file_task_task_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *MarkAsDoneRequest) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *MarkAsDoneRequest) GetStatus() bool {
+	if x != nil {
+		return x.Status
+	}
+	return false
+}
+
+type Task struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Done          bool                   `protobuf:"varint,3,opt,name=done,proto3" json:"done,omitempty"`
+	UserId        int64                  `protobuf:"varint,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserTaskId    int64                  `protobuf:"varint,5,opt,name=user_task_id,json=userTaskId,proto3" json:"user_task_id,omitempty"`
+	Description   string                 `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	DeletedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=deleted_at,json=deletedAt,proto3" json:"deleted_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Task) Reset() {
+	*x = Task{}
+	mi := &file_task_task_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Task) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Task) ProtoMessage() {}
+
+func (x *Task) ProtoReflect() protoreflect.Message {
+	mi := &file_task_task_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Task.ProtoReflect.Descriptor instead.
+func (*Task) Descriptor() ([]byte, []int) {
+	return file_task_task_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *Task) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *Task) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *Task) GetDone() bool {
+	if x != nil {
+		return x.Done
+	}
+	return false
+}
+
+func (x *Task) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *Task) GetUserTaskId() int64 {
+	if x != nil {
+		return x.UserTaskId
+	}
+	return 0
+}
+
+func (x *Task) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *Task) GetDeletedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DeletedAt
+	}
+	return nil
+}
+
+type TaskList struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Tasks         []*Task                `protobuf:"bytes,1,rep,name=tasks,proto3" json:"tasks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *TaskList) Reset() {
+	*x = TaskList{}
+	mi := &file_task_task_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *TaskList) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*TaskList) ProtoMessage() {}
+
+func (x *TaskList) ProtoReflect() protoreflect.Message {
+	mi := &file_task_task_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use TaskList.ProtoReflect.Descriptor instead.
+func (*TaskList) Descriptor() ([]byte, []int) {
+	return file_task_task_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *TaskList) GetTasks() []*Task {
+	if x != nil {
+		return x.Tasks
+	}
+	return nil
+}
+
+type Empty struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Empty) Reset() {
+	*x = Empty{}
+	mi := &file_task_task_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Empty) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Empty) ProtoMessage() {}
+
+func (x *Empty) ProtoReflect() protoreflect.Message {
+	mi := &file_task_task_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Empty.ProtoReflect.Descriptor instead.
+func (*Empty) Descriptor() ([]byte, []int) {
+	return file_task_task_proto_rawDescGZIP(), []int{8}
+}
+
+var File_task_task_proto protoreflect.FileDescriptor
+
+const file_task_task_proto_rawDesc = "" +
+	"\n" +
+	"\x0ftask/task.proto\x12\x04task\x1a\x1fgoogle/protobuf/timestamp.proto\"d\n" +
+	"\x11CreateTaskRequest\x12\x14\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\x03R\x06userId\"2\n" +
+	"\x17GetTasksByUserIDRequest\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\")\n" +
+	"\x0eGetTaskRequest\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\x03R\x06taskId\"\x1f\n" +
+	"\rTaskIDRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\\\n" +
+	"\x18UpdateDescriptionRequest\x12\x17\n" +
+	"\atask_id\x18\x01 \x01(\x03R\x06taskId\x12'\n" +
+	"\x0fnew_description\x18\x02 \x01(\tR\x0enewDescription\";\n" +
+	"\x11MarkAsDoneRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x16\n" +
+	"\x06status\x18\x02 \x01(\bR\x06status\"\xd8\x01\n" +
+	"\x04Task\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
+	"\x04done\x18\x03 \x01(\bR\x04done\x12\x17\n" +
+	"\auser_id\x18\x04 \x01(\x03R\x06userId\x12 \n" +
+	"\fuser_task_id\x18\x05 \x01(\x03R\n" +
+	"userTaskId\x12 \n" +
+	"\vdescription\x18\x06 \x01(\tR\vdescription\x129\n" +
+	"\n" +
+	"deleted_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tdeletedAt\",\n" +
+	"\bTaskList\x12 \n" +
+	"\x05tasks\x18\x01 \x03(\v2\n" +
+	".task.TaskR\x05tasks\"\a\n" +
+	"\x05Empty2\xd1\x03\n" +
+	"\vTaskService\x121\n" +
+	"\n" +
+	"CreateTask\x12\x17.task.CreateTaskRequest\x1a\n" +
+	".task.Task\x12A\n" +
+	"\x10GetTasksByUserID\x12\x1d.task.GetTasksByUserIDRequest\x1a\x0e.task.TaskList\x12H\n" +
+	"\x17GetRemovedTasksByUserID\x12\x1d.task.GetTasksByUserIDRequest\x1a\x0e.task.TaskList\x12+\n" +
+	"\aGetTask\x12\x14.task.GetTaskRequest\x1a\n" +
+	".task.Task\x12.\n" +
+	"\n" +
+	"DeleteTask\x12\x13.task.TaskIDRequest\x1a\v.task.Empty\x12/\n" +
+	"\vRecoverTask\x12\x13.task.TaskIDRequest\x1a\v.task.Empty\x12@\n" +
+	"\x11UpdateDescription\x12\x1e.task.UpdateDescriptionRequest\x1a\v.task.Empty\x122\n" +
+	"\n" +
+	"MarkAsDone\x12\x17.task.MarkAsDoneRequest\x1a\v.task.EmptyB\x11Z\x0ftodo-proto/taskb\x06proto3"
+
+var (
+	file_task_task_proto_rawDescOnce sync.Once
+	file_task_task_proto_rawDescData []byte
+)
+
+func file_task_task_proto_rawDescGZIP() []byte {
+	file_task_task_proto_rawDescOnce.Do(func() {
+		file_task_task_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_task_task_proto_rawDesc), len(file_task_task_proto_rawDesc)))
+	})
+	return file_task_task_proto_rawDescData
+}
+
+var file_task_task_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_task_task_proto_goTypes = []any{
+	(*CreateTaskRequest)(nil),        // 0: task.CreateTaskRequest
+	(*GetTasksByUserIDRequest)(nil),  // 1: task.GetTasksByUserIDRequest
+	(*GetTaskRequest)(nil),           // 2: task.GetTaskRequest
+	(*TaskIDRequest)(nil),            // 3: task.TaskIDRequest
+	(*UpdateDescriptionRequest)(nil), // 4: task.UpdateDescriptionRequest
+	(*MarkAsDoneRequest)(nil),        // 5: task.MarkAsDoneRequest
+	(*Task)(nil),                     // 6: task.Task
+	(*TaskList)(nil),                 // 7: task.TaskList
+	(*Empty)(nil),                    // 8: task.Empty
+	(*timestamppb.Timestamp)(nil),    // 9: google.protobuf.Timestamp
+}
+var file_task_task_proto_depIdxs = []int32{
+	9,  // 0: task.Task.deleted_at:type_name -> google.protobuf.Timestamp
+	6,  // 1: task.TaskList.tasks:type_name -> task.Task
+	0,  // 2: task.TaskService.CreateTask:input_type -> task.CreateTaskRequest
+	1,  // 3: task.TaskService.GetTasksByUserID:input_type -> task.GetTasksByUserIDRequest
+	1,  // 4: task.TaskService.GetRemovedTasksByUserID:input_type -> task.GetTasksByUserIDRequest
+	2,  // 5: task.TaskService.GetTask:input_type -> task.GetTaskRequest
+	3,  // 6: task.TaskService.DeleteTask:input_type -> task.TaskIDRequest
+	3,  // 7: task.TaskService.RecoverTask:input_type -> task.TaskIDRequest
+	4,  // 8: task.TaskService.UpdateDescription:input_type -> task.UpdateDescriptionRequest
+	5,  // 9: task.TaskService.MarkAsDone:input_type -> task.MarkAsDoneRequest
+	6,  // 10: task.TaskService.CreateTask:output_type -> task.Task
+	7,  // 11: task.TaskService.GetTasksByUserID:output_type -> task.TaskList
+	7,  // 12: task.TaskService.GetRemovedTasksByUserID:output_type -> task.TaskList
+	6,  // 13: task.TaskService.GetTask:output_type -> task.Task
+	8,  // 14: task.TaskService.DeleteTask:output_type -> task.Empty
+	8,  // 15: task.TaskService.RecoverTask:output_type -> task.Empty
+	8,  // 16: task.TaskService.UpdateDescription:output_type -> task.Empty
+	8,  // 17: task.TaskService.MarkAsDone:output_type -> task.Empty
+	10, // [10:18] is the sub-list for method output_type
+	2,  // [2:10] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
+}
+
+func init() { file_task_task_proto_init() }
+func file_task_task_proto_init() {
+	if File_task_task_proto != nil {
+		return
+	}
+	type x struct{}
+	out := protoimpl.TypeBuilder{
+		File: protoimpl.DescBuilder{
+			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_task_task_proto_rawDesc), len(file_task_task_proto_rawDesc)),
+			NumEnums:      0,
+			NumMessages:   9,
+			NumExtensions: 0,
+			NumServices:   1,
+		},
+		GoTypes:           file_task_task_proto_goTypes,
+		DependencyIndexes: file_task_task_proto_depIdxs,
+		MessageInfos:      file_task_task_proto_msgTypes,
+	}.Build()
+	File_task_task_proto = out.File
+	file_task_task_proto_goTypes = nil
+	file_task_task_proto_depIdxs = nil
+}
+
+```
+
+---
+
+## File: todo-proto\task\task_grpc.pb.go
+
+```
+// Code generated by protoc-gen-go-grpc. DO NOT EDIT.
+// versions:
+// - protoc-gen-go-grpc v1.6.2
+// - protoc             v7.35.1
+// source: task/task.proto
+
+package task
+
+import (
+	context "context"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+)
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.64.0 or later.
+const _ = grpc.SupportPackageIsVersion9
+
+const (
+	TaskService_CreateTask_FullMethodName              = "/task.TaskService/CreateTask"
+	TaskService_GetTasksByUserID_FullMethodName        = "/task.TaskService/GetTasksByUserID"
+	TaskService_GetRemovedTasksByUserID_FullMethodName = "/task.TaskService/GetRemovedTasksByUserID"
+	TaskService_GetTask_FullMethodName                 = "/task.TaskService/GetTask"
+	TaskService_DeleteTask_FullMethodName              = "/task.TaskService/DeleteTask"
+	TaskService_RecoverTask_FullMethodName             = "/task.TaskService/RecoverTask"
+	TaskService_UpdateDescription_FullMethodName       = "/task.TaskService/UpdateDescription"
+	TaskService_MarkAsDone_FullMethodName              = "/task.TaskService/MarkAsDone"
+)
+
+// TaskServiceClient is the client API for TaskService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type TaskServiceClient interface {
+	CreateTask(ctx context.Context, in *CreateTaskRequest, opts ...grpc.CallOption) (*Task, error)
+	GetTasksByUserID(ctx context.Context, in *GetTasksByUserIDRequest, opts ...grpc.CallOption) (*TaskList, error)
+	GetRemovedTasksByUserID(ctx context.Context, in *GetTasksByUserIDRequest, opts ...grpc.CallOption) (*TaskList, error)
+	GetTask(ctx context.Context, in *GetTaskRequest, opts ...grpc.CallOption) (*Task, error)
+	DeleteTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error)
+	RecoverTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error)
+	UpdateDescription(ctx context.Context, in *UpdateDescriptionRequest, opts ...grpc.CallOption) (*Empty, error)
+	MarkAsDone(ctx context.Context, in *MarkAsDoneRequest, opts ...grpc.CallOption) (*Empty, error)
+}
+
+type taskServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewTaskServiceClient(cc grpc.ClientConnInterface) TaskServiceClient {
+	return &taskServiceClient{cc}
+}
+
+func (c *taskServiceClient) CreateTask(ctx context.Context, in *CreateTaskRequest, opts ...grpc.CallOption) (*Task, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Task)
+	err := c.cc.Invoke(ctx, TaskService_CreateTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskServiceClient) GetTasksByUserID(ctx context.Context, in *GetTasksByUserIDRequest, opts ...grpc.CallOption) (*TaskList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TaskList)
+	err := c.cc.Invoke(ctx, TaskService_GetTasksByUserID_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskServiceClient) GetRemovedTasksByUserID(ctx context.Context, in *GetTasksByUserIDRequest, opts ...grpc.CallOption) (*TaskList, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TaskList)
+	err := c.cc.Invoke(ctx, TaskService_GetRemovedTasksByUserID_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskServiceClient) GetTask(ctx context.Context, in *GetTaskRequest, opts ...grpc.CallOption) (*Task, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Task)
+	err := c.cc.Invoke(ctx, TaskService_GetTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskServiceClient) DeleteTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, TaskService_DeleteTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskServiceClient) RecoverTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, TaskService_RecoverTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskServiceClient) UpdateDescription(ctx context.Context, in *UpdateDescriptionRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, TaskService_UpdateDescription_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *taskServiceClient) MarkAsDone(ctx context.Context, in *MarkAsDoneRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, TaskService_MarkAsDone_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// TaskServiceServer is the server API for TaskService service.
+// All implementations must embed UnimplementedTaskServiceServer
+// for forward compatibility.
+type TaskServiceServer interface {
+	CreateTask(context.Context, *CreateTaskRequest) (*Task, error)
+	GetTasksByUserID(context.Context, *GetTasksByUserIDRequest) (*TaskList, error)
+	GetRemovedTasksByUserID(context.Context, *GetTasksByUserIDRequest) (*TaskList, error)
+	GetTask(context.Context, *GetTaskRequest) (*Task, error)
+	DeleteTask(context.Context, *TaskIDRequest) (*Empty, error)
+	RecoverTask(context.Context, *TaskIDRequest) (*Empty, error)
+	UpdateDescription(context.Context, *UpdateDescriptionRequest) (*Empty, error)
+	MarkAsDone(context.Context, *MarkAsDoneRequest) (*Empty, error)
+	mustEmbedUnimplementedTaskServiceServer()
+}
+
+// UnimplementedTaskServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedTaskServiceServer struct{}
+
+func (UnimplementedTaskServiceServer) CreateTask(context.Context, *CreateTaskRequest) (*Task, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateTask not implemented")
+}
+func (UnimplementedTaskServiceServer) GetTasksByUserID(context.Context, *GetTasksByUserIDRequest) (*TaskList, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTasksByUserID not implemented")
+}
+func (UnimplementedTaskServiceServer) GetRemovedTasksByUserID(context.Context, *GetTasksByUserIDRequest) (*TaskList, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetRemovedTasksByUserID not implemented")
+}
+func (UnimplementedTaskServiceServer) GetTask(context.Context, *GetTaskRequest) (*Task, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTask not implemented")
+}
+func (UnimplementedTaskServiceServer) DeleteTask(context.Context, *TaskIDRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteTask not implemented")
+}
+func (UnimplementedTaskServiceServer) RecoverTask(context.Context, *TaskIDRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method RecoverTask not implemented")
+}
+func (UnimplementedTaskServiceServer) UpdateDescription(context.Context, *UpdateDescriptionRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateDescription not implemented")
+}
+func (UnimplementedTaskServiceServer) MarkAsDone(context.Context, *MarkAsDoneRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method MarkAsDone not implemented")
+}
+func (UnimplementedTaskServiceServer) mustEmbedUnimplementedTaskServiceServer() {}
+func (UnimplementedTaskServiceServer) testEmbeddedByValue()                     {}
+
+// UnsafeTaskServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to TaskServiceServer will
+// result in compilation errors.
+type UnsafeTaskServiceServer interface {
+	mustEmbedUnimplementedTaskServiceServer()
+}
+
+func RegisterTaskServiceServer(s grpc.ServiceRegistrar, srv TaskServiceServer) {
+	// If the following call panics, it indicates UnimplementedTaskServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&TaskService_ServiceDesc, srv)
+}
+
+func _TaskService_CreateTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).CreateTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_CreateTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).CreateTask(ctx, req.(*CreateTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaskService_GetTasksByUserID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTasksByUserIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).GetTasksByUserID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_GetTasksByUserID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).GetTasksByUserID(ctx, req.(*GetTasksByUserIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaskService_GetRemovedTasksByUserID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTasksByUserIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).GetRemovedTasksByUserID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_GetRemovedTasksByUserID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).GetRemovedTasksByUserID(ctx, req.(*GetTasksByUserIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaskService_GetTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTaskRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).GetTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_GetTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).GetTask(ctx, req.(*GetTaskRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaskService_DeleteTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TaskIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).DeleteTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_DeleteTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).DeleteTask(ctx, req.(*TaskIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaskService_RecoverTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TaskIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).RecoverTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_RecoverTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).RecoverTask(ctx, req.(*TaskIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaskService_UpdateDescription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateDescriptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).UpdateDescription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_UpdateDescription_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).UpdateDescription(ctx, req.(*UpdateDescriptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TaskService_MarkAsDone_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MarkAsDoneRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).MarkAsDone(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_MarkAsDone_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).MarkAsDone(ctx, req.(*MarkAsDoneRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// TaskService_ServiceDesc is the grpc.ServiceDesc for TaskService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var TaskService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "task.TaskService",
+	HandlerType: (*TaskServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateTask",
+			Handler:    _TaskService_CreateTask_Handler,
+		},
+		{
+			MethodName: "GetTasksByUserID",
+			Handler:    _TaskService_GetTasksByUserID_Handler,
+		},
+		{
+			MethodName: "GetRemovedTasksByUserID",
+			Handler:    _TaskService_GetRemovedTasksByUserID_Handler,
+		},
+		{
+			MethodName: "GetTask",
+			Handler:    _TaskService_GetTask_Handler,
+		},
+		{
+			MethodName: "DeleteTask",
+			Handler:    _TaskService_DeleteTask_Handler,
+		},
+		{
+			MethodName: "RecoverTask",
+			Handler:    _TaskService_RecoverTask_Handler,
+		},
+		{
+			MethodName: "UpdateDescription",
+			Handler:    _TaskService_UpdateDescription_Handler,
+		},
+		{
+			MethodName: "MarkAsDone",
+			Handler:    _TaskService_MarkAsDone_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "task/task.proto",
+}
+
+```
+
+---
+
+## File: todo-proto\usertg\usertg.pb.go
+
+```
+// Code generated by protoc-gen-go. DO NOT EDIT.
+// versions:
+// 	protoc-gen-go v1.36.11
+// 	protoc        v7.35.1
+// source: usertg/usertg.proto
+
+package usertg
+
+import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	reflect "reflect"
+	sync "sync"
+	unsafe "unsafe"
+)
+
+const (
+	// Verify that this generated code is sufficiently up-to-date.
+	_ = protoimpl.EnforceVersion(20 - protoimpl.MinVersion)
+	// Verify that runtime/protoimpl is sufficiently up-to-date.
+	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
+)
+
+type RegisterUserTgRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TgId          int64                  `protobuf:"varint,1,opt,name=tg_id,json=tgId,proto3" json:"tg_id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterUserTgRequest) Reset() {
+	*x = RegisterUserTgRequest{}
+	mi := &file_usertg_usertg_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterUserTgRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterUserTgRequest) ProtoMessage() {}
+
+func (x *RegisterUserTgRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_usertg_usertg_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterUserTgRequest.ProtoReflect.Descriptor instead.
+func (*RegisterUserTgRequest) Descriptor() ([]byte, []int) {
+	return file_usertg_usertg_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *RegisterUserTgRequest) GetTgId() int64 {
+	if x != nil {
+		return x.TgId
+	}
+	return 0
+}
+
+func (x *RegisterUserTgRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+type RegisterUserTgResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterUserTgResponse) Reset() {
+	*x = RegisterUserTgResponse{}
+	mi := &file_usertg_usertg_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterUserTgResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterUserTgResponse) ProtoMessage() {}
+
+func (x *RegisterUserTgResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_usertg_usertg_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterUserTgResponse.ProtoReflect.Descriptor instead.
+func (*RegisterUserTgResponse) Descriptor() ([]byte, []int) {
+	return file_usertg_usertg_proto_rawDescGZIP(), []int{1}
+}
+
+type GetUserByTgIDRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TgId          int64                  `protobuf:"varint,1,opt,name=tg_id,json=tgId,proto3" json:"tg_id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetUserByTgIDRequest) Reset() {
+	*x = GetUserByTgIDRequest{}
+	mi := &file_usertg_usertg_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetUserByTgIDRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetUserByTgIDRequest) ProtoMessage() {}
+
+func (x *GetUserByTgIDRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_usertg_usertg_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetUserByTgIDRequest.ProtoReflect.Descriptor instead.
+func (*GetUserByTgIDRequest) Descriptor() ([]byte, []int) {
+	return file_usertg_usertg_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetUserByTgIDRequest) GetTgId() int64 {
+	if x != nil {
+		return x.TgId
+	}
+	return 0
+}
+
+func (x *GetUserByTgIDRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+type UserTg struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	UserId        int64                  `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UserTg) Reset() {
+	*x = UserTg{}
+	mi := &file_usertg_usertg_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UserTg) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UserTg) ProtoMessage() {}
+
+func (x *UserTg) ProtoReflect() protoreflect.Message {
+	mi := &file_usertg_usertg_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UserTg.ProtoReflect.Descriptor instead.
+func (*UserTg) Descriptor() ([]byte, []int) {
+	return file_usertg_usertg_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *UserTg) GetId() int64 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *UserTg) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *UserTg) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+var File_usertg_usertg_proto protoreflect.FileDescriptor
+
+const file_usertg_usertg_proto_rawDesc = "" +
+	"\n" +
+	"\x13usertg/usertg.proto\x12\x06usertg\"H\n" +
+	"\x15RegisterUserTgRequest\x12\x13\n" +
+	"\x05tg_id\x18\x01 \x01(\x03R\x04tgId\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\"\x18\n" +
+	"\x16RegisterUserTgResponse\"G\n" +
+	"\x14GetUserByTgIDRequest\x12\x13\n" +
+	"\x05tg_id\x18\x01 \x01(\x03R\x04tgId\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\"M\n" +
+	"\x06UserTg\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\x03R\x06userId2\x9f\x01\n" +
+	"\rUserTgService\x12O\n" +
+	"\x0eRegisterUserTg\x12\x1d.usertg.RegisterUserTgRequest\x1a\x1e.usertg.RegisterUserTgResponse\x12=\n" +
+	"\rGetUserByTgID\x12\x1c.usertg.GetUserByTgIDRequest\x1a\x0e.usertg.UserTgB\x13Z\x11todo-proto/usertgb\x06proto3"
+
+var (
+	file_usertg_usertg_proto_rawDescOnce sync.Once
+	file_usertg_usertg_proto_rawDescData []byte
+)
+
+func file_usertg_usertg_proto_rawDescGZIP() []byte {
+	file_usertg_usertg_proto_rawDescOnce.Do(func() {
+		file_usertg_usertg_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_usertg_usertg_proto_rawDesc), len(file_usertg_usertg_proto_rawDesc)))
+	})
+	return file_usertg_usertg_proto_rawDescData
+}
+
+var file_usertg_usertg_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_usertg_usertg_proto_goTypes = []any{
+	(*RegisterUserTgRequest)(nil),  // 0: usertg.RegisterUserTgRequest
+	(*RegisterUserTgResponse)(nil), // 1: usertg.RegisterUserTgResponse
+	(*GetUserByTgIDRequest)(nil),   // 2: usertg.GetUserByTgIDRequest
+	(*UserTg)(nil),                 // 3: usertg.UserTg
+}
+var file_usertg_usertg_proto_depIdxs = []int32{
+	0, // 0: usertg.UserTgService.RegisterUserTg:input_type -> usertg.RegisterUserTgRequest
+	2, // 1: usertg.UserTgService.GetUserByTgID:input_type -> usertg.GetUserByTgIDRequest
+	1, // 2: usertg.UserTgService.RegisterUserTg:output_type -> usertg.RegisterUserTgResponse
+	3, // 3: usertg.UserTgService.GetUserByTgID:output_type -> usertg.UserTg
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
+}
+
+func init() { file_usertg_usertg_proto_init() }
+func file_usertg_usertg_proto_init() {
+	if File_usertg_usertg_proto != nil {
+		return
+	}
+	type x struct{}
+	out := protoimpl.TypeBuilder{
+		File: protoimpl.DescBuilder{
+			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_usertg_usertg_proto_rawDesc), len(file_usertg_usertg_proto_rawDesc)),
+			NumEnums:      0,
+			NumMessages:   4,
+			NumExtensions: 0,
+			NumServices:   1,
+		},
+		GoTypes:           file_usertg_usertg_proto_goTypes,
+		DependencyIndexes: file_usertg_usertg_proto_depIdxs,
+		MessageInfos:      file_usertg_usertg_proto_msgTypes,
+	}.Build()
+	File_usertg_usertg_proto = out.File
+	file_usertg_usertg_proto_goTypes = nil
+	file_usertg_usertg_proto_depIdxs = nil
+}
+
+```
+
+---
+
+## File: todo-proto\usertg\usertg_grpc.pb.go
+
+```
+// Code generated by protoc-gen-go-grpc. DO NOT EDIT.
+// versions:
+// - protoc-gen-go-grpc v1.6.2
+// - protoc             v7.35.1
+// source: usertg/usertg.proto
+
+package usertg
+
+import (
+	context "context"
+	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+)
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.64.0 or later.
+const _ = grpc.SupportPackageIsVersion9
+
+const (
+	UserTgService_RegisterUserTg_FullMethodName = "/usertg.UserTgService/RegisterUserTg"
+	UserTgService_GetUserByTgID_FullMethodName  = "/usertg.UserTgService/GetUserByTgID"
+)
+
+// UserTgServiceClient is the client API for UserTgService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type UserTgServiceClient interface {
+	RegisterUserTg(ctx context.Context, in *RegisterUserTgRequest, opts ...grpc.CallOption) (*RegisterUserTgResponse, error)
+	GetUserByTgID(ctx context.Context, in *GetUserByTgIDRequest, opts ...grpc.CallOption) (*UserTg, error)
+}
+
+type userTgServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewUserTgServiceClient(cc grpc.ClientConnInterface) UserTgServiceClient {
+	return &userTgServiceClient{cc}
+}
+
+func (c *userTgServiceClient) RegisterUserTg(ctx context.Context, in *RegisterUserTgRequest, opts ...grpc.CallOption) (*RegisterUserTgResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RegisterUserTgResponse)
+	err := c.cc.Invoke(ctx, UserTgService_RegisterUserTg_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *userTgServiceClient) GetUserByTgID(ctx context.Context, in *GetUserByTgIDRequest, opts ...grpc.CallOption) (*UserTg, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UserTg)
+	err := c.cc.Invoke(ctx, UserTgService_GetUserByTgID_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// UserTgServiceServer is the server API for UserTgService service.
+// All implementations must embed UnimplementedUserTgServiceServer
+// for forward compatibility.
+type UserTgServiceServer interface {
+	RegisterUserTg(context.Context, *RegisterUserTgRequest) (*RegisterUserTgResponse, error)
+	GetUserByTgID(context.Context, *GetUserByTgIDRequest) (*UserTg, error)
+	mustEmbedUnimplementedUserTgServiceServer()
+}
+
+// UnimplementedUserTgServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedUserTgServiceServer struct{}
+
+func (UnimplementedUserTgServiceServer) RegisterUserTg(context.Context, *RegisterUserTgRequest) (*RegisterUserTgResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RegisterUserTg not implemented")
+}
+func (UnimplementedUserTgServiceServer) GetUserByTgID(context.Context, *GetUserByTgIDRequest) (*UserTg, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetUserByTgID not implemented")
+}
+func (UnimplementedUserTgServiceServer) mustEmbedUnimplementedUserTgServiceServer() {}
+func (UnimplementedUserTgServiceServer) testEmbeddedByValue()                       {}
+
+// UnsafeUserTgServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UserTgServiceServer will
+// result in compilation errors.
+type UnsafeUserTgServiceServer interface {
+	mustEmbedUnimplementedUserTgServiceServer()
+}
+
+func RegisterUserTgServiceServer(s grpc.ServiceRegistrar, srv UserTgServiceServer) {
+	// If the following call panics, it indicates UnimplementedUserTgServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&UserTgService_ServiceDesc, srv)
+}
+
+func _UserTgService_RegisterUserTg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterUserTgRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserTgServiceServer).RegisterUserTg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserTgService_RegisterUserTg_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserTgServiceServer).RegisterUserTg(ctx, req.(*RegisterUserTgRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _UserTgService_GetUserByTgID_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserByTgIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserTgServiceServer).GetUserByTgID(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserTgService_GetUserByTgID_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserTgServiceServer).GetUserByTgID(ctx, req.(*GetUserByTgIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// UserTgService_ServiceDesc is the grpc.ServiceDesc for UserTgService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var UserTgService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "usertg.UserTgService",
+	HandlerType: (*UserTgServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RegisterUserTg",
+			Handler:    _UserTgService_RegisterUserTg_Handler,
+		},
+		{
+			MethodName: "GetUserByTgID",
+			Handler:    _UserTgService_GetUserByTgID_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "usertg/usertg.proto",
+}
+
+```
+
+---
+
 ## File: todo-tasks\Dockerfile
 
 ```
 # === ЭТАП 1: Сборка бинарника ===
 FROM golang:1.26-alpine AS builder
 
-# Устанавливаем рабочую папку внутри контейнера
 WORKDIR /build
 
-# Копируем файлы зависимостей и скачиваем их
-COPY go.mod go.sum ./
+# Копируем оба нужных модуля — todo-proto как зависимость, todo-tasks как сам сервис
+COPY todo-proto/ ./todo-proto/
+COPY todo-tasks/ ./todo-tasks/
+
+WORKDIR /build/todo-tasks
 RUN go mod download
 
-# Копируем весь остальной код проекта
-COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -o app ./cmd/app
 
-# Компилируем приложение в один бинарный файл под названием "app"
-# CGO_ENABLED=0 отключает зависимости от системных C-библиотек (сделать бинарник полностью автономным)
-# Замени финальную команду сборки на правильный путь к main.go:
-RUN CGO_ENABLED=0 GOOS=linux go build -o app ./cmd/app/main.go
-
-# === ЭТАП 2: Финальный легковесный образ ===
+# === ЭТАП 2: Финальный образ ===
 FROM alpine:latest
-
 WORKDIR /root/
-
-# Копируем скомпилированный бинарник из предыдущего этапа (builder)
-COPY --from=builder /build/app .
-
-# Открываем порт 8080 наружу
-EXPOSE 8080
-
-# Команда для запуска приложения при старте контейнера
+COPY --from=builder /build/todo-tasks/app .
+EXPOSE 8081
+EXPOSE 9091
 CMD ["./app"]
 ```
 
@@ -2439,6 +4556,10 @@ module proj
 
 go 1.26.4
 
+require (
+	google.golang.org/grpc v1.82.1
+	todo-proto v0.0.0-00010101000000-000000000000
+)
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
@@ -2448,8 +4569,12 @@ require (
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/rogpeppe/go-internal v1.15.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.38.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
+	google.golang.org/protobuf v1.36.11 // direct
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
 
@@ -2459,6 +4584,8 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace todo-proto => ../todo-proto
 
 ```
 
@@ -2477,10 +4604,18 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/go-logr/logr v1.4.3 h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=
+github.com/go-logr/logr v1.4.3/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
+github.com/go-logr/stdr v1.2.2 h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=
+github.com/go-logr/stdr v1.2.2/go.mod h1:mMo/vtBO5dYbehREoey6XUKy/eSumjCCveDpRre4VKE=
 github.com/go-sql-driver/mysql v1.8.1 h1:LedoTUt/eveggdHS9qUFC1EFSa8bU2+1pZjSRpvNJ1Y=
 github.com/go-sql-driver/mysql v1.8.1/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqwuVSjsCm7DZg=
-github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 h1:wG8n/XJQ07TmjbITcGiUaOtXxdrINDz1b0J1w0SzqDc=
-github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1/go.mod h1:A2S0CWkNylc2phvKXWBBdD3K0iGnDBGbzRpISP2zBl8=
+github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
+github.com/golang/protobuf v1.5.4/go.mod h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6rSs7xps=
+github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
+github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/ilyakaznacheev/cleanenv v1.5.0 h1:0VNZXggJE2OYdXE87bfSSwGxeiGt9moSR2lOrsHHvr4=
 github.com/ilyakaznacheev/cleanenv v1.5.0/go.mod h1:a5aDzaJrLCQZsazHol1w8InnDcOX0OColm64SlIi6gk=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
@@ -2505,8 +4640,6 @@ github.com/mattn/go-sqlite3 v1.14.22 h1:2gZY6PC6kBnID23Tichd1K+Z0oS6nE/XwU+Vz/5o
 github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/redis/go-redis/v9 v9.21.0 h1:FPBE4hhbAke+TLmcY3WkpbDffJEomdqPn3HYiqAtL9E=
-github.com/redis/go-redis/v9 v9.21.0/go.mod h1:v/M13XI1PVCDcm01VtPFOADfZtHf8YW3baQf57KlIkA=
 github.com/rogpeppe/go-internal v1.15.0 h1:D0RCU5rMAp+SpgkiNdrjfJ+LX4J1M32V2NeCY7EJ6hc=
 github.com/rogpeppe/go-internal v1.15.0/go.mod h1:DrUVZyrJU+txYW5/1kwtXQSMFio52ZOxX7yM1VHvnxs=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
@@ -2514,14 +4647,34 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-go.uber.org/atomic v1.11.0 h1:ZvwS0R+56ePWxUNi+Atn9dWONBPp/AUETXlHW0DxSjE=
-go.uber.org/atomic v1.11.0/go.mod h1:LUxbIzbOniOlMKjJjyPfpl4v+PKK2cNJn91OQbhoJI0=
-golang.org/x/crypto v0.53.0 h1:QZ4Muo8THX6CizN2vPPd5fBGHyogrdK9fG4wLPFUsto=
-golang.org/x/crypto v0.53.0/go.mod h1:DNLU434OwVakk9PzuwV8w62mAJpRJL3vsgcfp4Qnsio=
+go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
+go.opentelemetry.io/auto/sdk v1.2.1/go.mod h1:KRTj+aOaElaLi+wW1kO/DZRXwkF4C5xPbEe3ZiIhN7Y=
+go.opentelemetry.io/otel v1.43.0 h1:mYIM03dnh5zfN7HautFE4ieIig9amkNANT+xcVxAj9I=
+go.opentelemetry.io/otel v1.43.0/go.mod h1:JuG+u74mvjvcm8vj8pI5XiHy1zDeoCS2LB1spIq7Ay0=
+go.opentelemetry.io/otel/metric v1.43.0 h1:d7638QeInOnuwOONPp4JAOGfbCEpYb+K6DVWvdxGzgM=
+go.opentelemetry.io/otel/metric v1.43.0/go.mod h1:RDnPtIxvqlgO8GRW18W6Z/4P462ldprJtfxHxyKd2PY=
+go.opentelemetry.io/otel/sdk v1.43.0 h1:pi5mE86i5rTeLXqoF/hhiBtUNcrAGHLKQdhg4h4V9Dg=
+go.opentelemetry.io/otel/sdk v1.43.0/go.mod h1:P+IkVU3iWukmiit/Yf9AWvpyRDlUeBaRg6Y+C58QHzg=
+go.opentelemetry.io/otel/sdk/metric v1.43.0 h1:S88dyqXjJkuBNLeMcVPRFXpRw2fuwdvfCGLEo89fDkw=
+go.opentelemetry.io/otel/sdk/metric v1.43.0/go.mod h1:C/RJtwSEJ5hzTiUz5pXF1kILHStzb9zFlIEe85bhj6A=
+go.opentelemetry.io/otel/trace v1.43.0 h1:BkNrHpup+4k4w+ZZ86CZoHHEkohws8AY+WTX09nk+3A=
+go.opentelemetry.io/otel/trace v1.43.0/go.mod h1:/QJhyVBUUswCphDVxq+8mld+AvhXZLhe+8WVFxiFff0=
+golang.org/x/net v0.53.0 h1:d+qAbo5L0orcWAr0a9JweQpjXF19LMXJE8Ey7hwOdUA=
+golang.org/x/net v0.53.0/go.mod h1:JvMuJH7rrdiCfbeHoo3fCQU24Lf5JJwT9W3sJFulfgs=
 golang.org/x/sync v0.21.0 h1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=
 golang.org/x/sync v0.21.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
+golang.org/x/sys v0.43.0 h1:Rlag2XtaFTxp19wS8MXlJwTvoh8ArU6ezoyFsMyCTNI=
+golang.org/x/sys v0.43.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
 golang.org/x/text v0.38.0 h1:sXmwo9DwP3OK9EZ7PqAdaooSGozfl/3a6/xJcbzPRhE=
 golang.org/x/text v0.38.0/go.mod h1:YXZt3QhHUKYT53r2lLKFIVi6Ao1jdzrTR/KQ09qyxF4=
+gonum.org/v1/gonum v0.17.0 h1:VbpOemQlsSMrYmn7T2OUvQ4dqxQXU+ouZFQsZOx50z4=
+gonum.org/v1/gonum v0.17.0/go.mod h1:El3tOrEuMpv2UdMrbNlKEh9vd86bmQ6vqIcDwxEOc1E=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 h1:RmoJA1ujG+/lRGNfUnOMfhCy5EipVMyvUE+KNbPbTlw=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
+google.golang.org/grpc v1.82.1 h1:NnAxzGRA0677vCa4BUkOAnO5+FfQqVl9iUXeD0IqcGE=
+google.golang.org/grpc v1.82.1/go.mod h1:yzTZ1TB1Z3SG+LIYaI+WiE8D5+PZ3ArnrSp8zF3+/ZA=
+google.golang.org/protobuf v1.36.11 h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
+google.golang.org/protobuf v1.36.11/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=
@@ -2543,19 +4696,25 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"proj/internal/client/authclient"
 	"proj/internal/config"
+	grpcDelivery "proj/internal/delivery/grpc"
 	httpHandler "proj/internal/delivery/http"
 	"proj/internal/delivery/http/middleware"
 	repository "proj/internal/repository/postgres"
 	"proj/internal/usecase"
+	"sync"
 	"syscall"
 	"time"
+	"todo-proto/task"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -2574,8 +4733,18 @@ func main() {
 	storage := repository.NewPostgressStorage(db)
 	taskUsecase := usecase.NewTaskUsecase(storage)
 	taskHandler := httpHandler.NewTaskHandler(taskUsecase, logger)
+	taskGRPCServer := grpcDelivery.NewTaskServer(taskUsecase)
+	grpcServer := grpc.NewServer()
+	task.RegisterTaskServiceServer(grpcServer, taskGRPCServer)
 
-	authMiddleware := middleware.Auth(userUsecase)
+	authClient, err := authclient.New(cfg.UserServiceGRPCAddr)
+	if err != nil {
+		logger.Error("failed to connect to user service", slog.String("error", err.Error()))
+		panic(err)
+	}
+	defer authClient.Close()
+
+	authMiddleware := middleware.Auth(authClient)
 	mux := http.NewServeMux()
 
 	mux.Handle("POST /tasks", authMiddleware(http.HandlerFunc(taskHandler.CreateTaskHandler)))
@@ -2590,19 +4759,32 @@ func main() {
 		Addr:    ":" + cfg.ServerPort,
 		Handler: wrappedMux,
 	}
-
+	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
+	if err != nil {
+		logger.Error("grpc listen failed", slog.String("error", err.Error()))
+		panic(err)
+	}
 	// Канал для аварийных ошибок — буфер 2, чтобы обе горутины могли записать не блокируясь
 	fatalErr := make(chan error, 2)
-
+	var wg sync.WaitGroup
+	wg.Add(2)
 	// Запускаем HTTP-сервер
 	go func() {
+		defer wg.Done()
 		logger.Info("starting HTTP server", slog.String("port", cfg.ServerPort))
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("HTTP server failed", slog.String("err", err.Error()))
 			fatalErr <- err // сообщаем об аварии
 		}
 	}()
-
+	go func() {
+		defer wg.Done()
+		logger.Info("starting gRPC server", slog.String("port", cfg.GRPCPort))
+		if err := grpcServer.Serve(lis); err != nil {
+			logger.Error("gRPC server failed", slog.String("err", err.Error()))
+			fatalErr <- err
+		}
+	}()
 	// Ждём сигнала остановки (Ctrl+C или docker stop)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -2623,7 +4805,58 @@ func main() {
 	if err := server.Shutdown(ctx); err != nil {
 		logger.Error("HTTP server forced shutdown", slog.String("err", err.Error()))
 	}
+	grpcServer.GracefulStop()
+	wg.Wait()
 	logger.Info("all services stopped")
+}
+
+```
+
+---
+
+## File: todo-tasks\internal\client\authclient\client.go
+
+```
+package authclient
+
+import (
+	"context"
+
+	"todo-proto/auth"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+// Client реализует тот же интерфейс, что middleware.AuthUsecase ожидает —
+// GetUserIDBySession(ctx, sessionID) (int, error). Middleware даже не узнает,
+// что теперь это уходит по сети, а не в локальную БД.
+type Client struct {
+	authClient auth.AuthServiceClient
+	conn       *grpc.ClientConn
+}
+
+func New(addr string) (*Client, error) {
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+	return &Client{
+		authClient: auth.NewAuthServiceClient(conn),
+		conn:       conn,
+	}, nil
+}
+
+func (c *Client) GetUserIDBySession(ctx context.Context, sessionID string) (int, error) {
+	resp, err := c.authClient.ValidateSession(ctx, &auth.ValidateSessionRequest{SessionToken: sessionID})
+	if err != nil {
+		return 0, err
+	}
+	return int(resp.UserId), nil
+}
+
+func (c *Client) Close() error {
+	return c.conn.Close()
 }
 
 ```
@@ -2636,41 +4869,162 @@ func main() {
 package config
 
 import (
-	"fmt"
 	"log/slog"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	Env         string      `env:"ENV" env-default:"development"`
-	ServerPort  string      `env:"SERVER_PORT" env-default:"8080"`
-	DatabaseURL string      `env:"DATABASE_URL" env-required:"true"`
-	BotToken    string      `env:"TELEGRAM_BOT_TOKEN"`
-	Redis       RedisConfig // без указателя: cleanenv раскладывает вложенные структуры по тегам сам
-}
-
-type RedisConfig struct {
-	Host     string `env:"REDIS_HOST" env-default:"localhost"`
-	Port     string `env:"REDIS_PORT" env-default:"6379"`
-	Password string `env:"REDIS_PASSWORD"`
-	DB       int    `env:"REDIS_DB" env-default:"0"`
-}
-
-// Addr собирает host:port для redis.Options — так проще, чем городить URL
-func (r RedisConfig) Addr() string {
-	return fmt.Sprintf("%s:%s", r.Host, r.Port)
+	Env                 string `env:"ENV" env-default:"development"`
+	ServerPort          string `env:"SERVER_PORT" env-default:"8080"`
+	GRPCPort            string `env:"GRPC_PORT" env-default:"9090"`
+	DatabaseURL         string `env:"DATABASE_URL" env-required:"true"`
+	UserServiceGRPCAddr string `env:"USER_SERVICE_GRPC_ADDR" env-required:"true"`
 }
 
 func MustLoad() *Config {
 	var cfg Config
-	if err := cleanenv.ReadConfig(".env", &cfg); err != nil {
-		if err := cleanenv.ReadEnv(&cfg); err != nil {
-			slog.Error("failed to load env config", slog.String("error", err.Error()))
-			panic(err)
-		}
+
+	// 1. Сначала читаем .env (если он есть)
+	_ = cleanenv.ReadConfig(".env", &cfg)
+
+	// 2. Поверх перезаписываем реальными переменными окружения из Docker/OS
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		slog.Error("failed to load env config", slog.String("error", err.Error()))
+		panic(err)
 	}
+
 	return &cfg
+}
+
+```
+
+---
+
+## File: todo-tasks\internal\delivery\grpc\task_server.go
+
+```
+package grpc
+
+import (
+	"context"
+	"proj/internal/entity"
+
+	"todo-proto/task"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
+)
+
+func toProtoTask(t *entity.Task) *task.Task {
+	var deletedAt *timestamppb.Timestamp
+	if t.DeletedAt != nil {
+		deletedAt = timestamppb.New(*t.DeletedAt)
+	}
+	return &task.Task{
+		Id:          int64(t.ID),
+		Title:       t.Title,
+		Done:        t.Done,
+		UserId:      int64(t.UserID),
+		UserTaskId:  int64(t.UserTaskId),
+		Description: t.Description,
+		DeletedAt:   deletedAt,
+	}
+}
+
+type TaskUsecase interface {
+	CreateTask(ctx context.Context, title string, description string, userID int) (*entity.Task, error)
+	GetTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
+	GetRemovedTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
+	GetTask(ctx context.Context, taskID int) (*entity.Task, error)
+	DeleteTask(ctx context.Context, id int) error
+	RecoverTask(ctx context.Context, id int) error
+	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
+	MarkAsDone(ctx context.Context, id int, status bool) error
+}
+
+type TaskServer struct {
+	task.UnimplementedTaskServiceServer
+	TaskUC TaskUsecase
+}
+
+func NewTaskServer(taskUC TaskUsecase) *TaskServer {
+	return &TaskServer{TaskUC: taskUC}
+}
+
+func (s *TaskServer) CreateTask(ctx context.Context, req *task.CreateTaskRequest) (*task.Task, error) {
+	t, err := s.TaskUC.CreateTask(ctx, req.Title, req.Description, int(req.UserId))
+	if err != nil {
+		return nil, err
+	}
+	return toProtoTask(t), nil
+}
+
+func (s *TaskServer) GetTasksByUserID(ctx context.Context, req *task.GetTasksByUserIDRequest) (*task.TaskList, error) {
+	tasks, err := s.TaskUC.GetTasksByUserID(ctx, int(req.UserId))
+	if err != nil {
+		return nil, err
+	}
+	protoTasks := make([]*task.Task, 0, len(tasks))
+	for _, t := range tasks {
+		protoTasks = append(protoTasks, toProtoTask(&t))
+	}
+	return &task.TaskList{
+		Tasks: protoTasks,
+	}, nil
+}
+
+func (s *TaskServer) GetRemovedTasksByUserID(ctx context.Context, req *task.GetTasksByUserIDRequest) (*task.TaskList, error) {
+	tasks, err := s.TaskUC.GetRemovedTasksByUserID(ctx, int(req.UserId))
+	if err != nil {
+		return nil, err
+	}
+	protoTasks := make([]*task.Task, 0, len(tasks))
+	for _, t := range tasks {
+		protoTasks = append(protoTasks, toProtoTask(&t))
+	}
+	return &task.TaskList{
+		Tasks: protoTasks,
+	}, nil
+}
+
+func (s *TaskServer) GetTask(ctx context.Context, req *task.GetTaskRequest) (*task.Task, error) {
+	t, err := s.TaskUC.GetTask(ctx, int(req.TaskId))
+	if err != nil {
+		return nil, err
+	}
+	return toProtoTask(t), nil
+}
+
+func (s *TaskServer) DeleteTask(ctx context.Context, req *task.TaskIDRequest) (*task.Empty, error) {
+	err := s.TaskUC.DeleteTask(ctx, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	return &task.Empty{}, nil
+}
+
+func (s *TaskServer) RecoverTask(ctx context.Context, req *task.TaskIDRequest) (*task.Empty, error) {
+	err := s.TaskUC.RecoverTask(ctx, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	return &task.Empty{}, nil
+}
+
+func (s *TaskServer) UpdateDescription(ctx context.Context, req *task.UpdateDescriptionRequest) (*task.Empty, error) {
+	err := s.TaskUC.UpdateDescription(ctx, int(req.TaskId), req.NewDescription)
+	if err != nil {
+		return nil, err
+	}
+	return &task.Empty{}, nil
+}
+
+func (s *TaskServer) MarkAsDone(ctx context.Context, req *task.MarkAsDoneRequest) (*task.Empty, error) {
+	err := s.TaskUC.MarkAsDone(ctx, int(req.Id), req.Status)
+	if err != nil {
+		return nil, err
+	}
+	return &task.Empty{}, nil
 }
 
 ```
@@ -3245,22 +5599,20 @@ package repository
 
 import "context"
 
-func (s *PostgresStorage) Save(ctx context.Context, title string, userID int, done bool, description string) (int, error) {
+func (s *PostgresStorage) Save(ctx context.Context, title string, userID int, done bool, description string) (id int, userTaskID int, err error) {
 	query := `INSERT INTO tasks (user_id, user_task_id, title, done, description) 
 VALUES (
     $1, 
     COALESCE((SELECT MAX(user_task_id) FROM tasks WHERE user_id = $1), 0) + 1, 
-    $2,
-	$3,
-	$4
+    $2, $3, $4
 ) 
-RETURNING user_task_id`
-	var id int
-	err := s.DB.GetContext(ctx, &id, query, userID, title, done, description)
+RETURNING id, user_task_id`
+
+	err = s.DB.QueryRowContext(ctx, query, userID, title, done, description).Scan(&id, &userTaskID)
 	if err != nil {
-		return 0, err
+		return 0, 0, err
 	}
-	return id, nil
+	return id, userTaskID, nil
 }
 
 ```
@@ -3474,7 +5826,7 @@ import (
 type Task = entity.Task
 
 type TaskRepository interface {
-	Save(ctx context.Context, title string, userID int, done bool, description string) (int, error)
+	Save(ctx context.Context, title string, userID int, done bool, description string) (id int, userTaskID int, err error)
 	GetAllTasksByUserID(ctx context.Context, userID int) ([]Task, error)
 	GetDeleteTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
 	GetTask(ctx context.Context, taskID int) (*Task, error)
@@ -3519,11 +5871,12 @@ func (uc *TaskUsecaseImpl) CreateTask(ctx context.Context, title string, descrip
 		UserID:      userID,
 		Description: description,
 	}
-	id, err := uc.TaskRepo.Save(ctx, t.Title, t.UserID, t.Done, t.Description)
+	id, userTaskID, err := uc.TaskRepo.Save(ctx, t.Title, t.UserID, t.Done, t.Description)
 	if err != nil {
 		return nil, err
 	}
-	t.UserTaskId = id
+	t.ID = id
+	t.UserTaskId = userTaskID
 	return t, nil
 }
 
@@ -3734,196 +6087,40 @@ DROP TABLE IF EXISTS tasks;
 CREATE TABLE tasks (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
-    done BOOLEAN DEFAULT false
+    done BOOLEAN DEFAULT false,
+    deleted_at TIMESTAMPTZ DEFAULT NULL,
+    user_id INT,
+    user_task_id INT,
+    description TEXT
 );
 ```
 
 ---
 
-## File: todo-tasks\migrations\000002_add_deleted_at.down.sql
+## File: todo-telegram\Dockerfile
 
 ```
-ALTER TABLE tasks DROP COLUMN deleted_at;
-```
+# === ЭТАП 1: Сборка бинарника ===
+FROM golang:1.26-alpine AS builder
 
----
+WORKDIR /build
 
-## File: todo-tasks\migrations\000002_add_deleted_at.up.sql
+# Копируем оба нужных модуля — todo-proto как зависимость, todo-telegram как сам сервис
+COPY todo-proto/ ./todo-proto/
+COPY todo-telegram/ ./todo-telegram/
 
-```
-ALTER TABLE tasks ADD COLUMN deleted_at TIMESTAMPTZ DEFAULT NULL;
-```
+WORKDIR /build/todo-telegram
+RUN go mod download
 
----
+RUN CGO_ENABLED=0 GOOS=linux go build -o app ./cmd/app
 
-## File: todo-tasks\migrations\000003_add_users.down.sql
-
-```
-DROP TABLE IF EXISTS users CASCADE;
-ALTER TABLE tasks DROP COLUMN IF EXISTS user_id;
-```
-
----
-
-## File: todo-tasks\migrations\000003_add_users.up.sql
-
-```
--- 1. Создаем таблицу пользователей
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT PRIMARY KEY, -- Сюда будем писать Telegram ID (он большой, поэтому BIGINT)
-    username VARCHAR(255) DEFAULT '',
-    first_name VARCHAR(255) DEFAULT '',
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
--- 2. Добавляем колонку user_id в существующую таблицу tasks
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id BIGINT;
-
--- 3. Накатываем CONSTRAINT (внешний ключ), который связывает tasks и users
-ALTER TABLE tasks 
-ADD CONSTRAINT fk_tasks_user 
-FOREIGN KEY (user_id) 
-REFERENCES users(id) 
-ON DELETE CASCADE;
-```
-
----
-
-## File: todo-tasks\migrations\000004_add_user_task_id.down.sql
-
-```
-ALTER TABLE tasks DROP COLUMN IF EXISTS user_task_id;
-```
-
----
-
-## File: todo-tasks\migrations\000004_add_user_task_id.up.sql
-
-```
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_task_id INT;
-```
-
----
-
-## File: todo-tasks\migrations\000005_add_user_migration.down.sql
-
-```
-DROP TABLE IF EXISTS user_telegram CASCADE;
-DROP TABLE IF EXISTS user_passwords CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-ALTER TABLE tasks DROP COLUMN IF EXISTS user_id;
-
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT PRIMARY KEY, -- Сюда будем писать Telegram ID (он большой, поэтому BIGINT)
-    username VARCHAR(255) DEFAULT '',
-    first_name VARCHAR(255) DEFAULT '',
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id BIGINT;
-
--- 3. Накатываем CONSTRAINT (внешний ключ), который связывает tasks и users
-ALTER TABLE tasks 
-ADD CONSTRAINT fk_tasks_user 
-FOREIGN KEY (user_id) 
-REFERENCES users(id) 
-ON DELETE CASCADE;
-```
-
----
-
-## File: todo-tasks\migrations\000005_add_user_migration.up.sql
-
-```
--- 1. Удаляем старые таблицы каскадно (связи в tasks отвалятся сами)
-DROP TABLE IF EXISTS users CASCADE;
-
--- 2. На всякий случай подчищаем колонку в tasks, если она осталась
-ALTER TABLE tasks DROP COLUMN IF EXISTS user_id;
-
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    username TEXT,          -- Отображаемое имя в твоем приложении
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id INT;
-
--- 3. Накатываем CONSTRAINT (внешний ключ), который связывает tasks и users
-ALTER TABLE tasks 
-ADD CONSTRAINT fk_tasks_user 
-FOREIGN KEY (user_id) 
-REFERENCES users(id) 
-ON DELETE CASCADE;
-
-CREATE TABLE user_passwords (
-    user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL -- Хэш пароля (никогда не храним в чистом виде!)
-);
-
-CREATE TABLE user_telegram (
-    tg_id BIGINT PRIMARY KEY, -- ID пользователя внутри Telegram
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    username TEXT             -- TG-юзернейм для удобства
-);
-```
-
----
-
-## File: todo-tasks\migrations\000006_add_task_description.down.sql
-
-```
-ALTER TABLE tasks DROP COLUMN IF EXISTS description ;
-```
-
----
-
-## File: todo-tasks\migrations\000006_add_task_description.up.sql
-
-```
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
-```
-
----
-
-## File: todo-tasks\migrations\000007_add_sessions.down.sql
-
-```
-DROP INDEX IF EXISTS idx_sessions_expires_at;
-DROP TABLE IF EXISTS user_sessions;
-
-```
-
----
-
-## File: todo-tasks\migrations\000007_add_sessions.up.sql
-
-```
-CREATE TABLE user_sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Уникальный токен сессии
-    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    expires_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
--- Индекс для быстрого поиска сессии при каждом запросе
-CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON user_sessions(expires_at);
-```
-
----
-
-## File: todo-tasks\migrations\000008_add_user_telegram_unique.down.sql
-
-```
-ALTER TABLE user_telegram DROP CONSTRAINT IF EXISTS uq_user_telegram_user_id;
-```
-
----
-
-## File: todo-tasks\migrations\000008_add_user_telegram_unique.up.sql
-
-```
-ALTER TABLE user_telegram ADD CONSTRAINT uq_user_telegram_user_id UNIQUE (user_id);
+# === ЭТАП 2: Финальный образ ===
+FROM alpine:latest
+WORKDIR /root/
+COPY --from=builder /build/todo-telegram/app .
+EXPOSE 8082
+EXPOSE 9092
+CMD ["./app"]
 ```
 
 ---
@@ -3935,31 +6132,36 @@ module proj
 
 go 1.26.4
 
-require github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+require (
+	github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1
+	google.golang.org/grpc v1.82.1
+	todo-proto v0.0.0-00010101000000-000000000000
+)
 
 require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
-	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/rogpeppe/go-internal v1.15.0 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
+	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/text v0.38.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
 	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
 )
 
 require (
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/jackc/pgx/v5 v5.10.0
-	github.com/jmoiron/sqlx v1.4.0
-	github.com/redis/go-redis/v9 v9.21.0
-	golang.org/x/crypto v0.53.0
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace todo-proto => ../todo-proto
 
 ```
 
@@ -3968,8 +6170,6 @@ require (
 ## File: todo-telegram\go.sum
 
 ```
-filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
-filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
 github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak=
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
@@ -3978,10 +6178,18 @@ github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ3
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/go-sql-driver/mysql v1.8.1 h1:LedoTUt/eveggdHS9qUFC1EFSa8bU2+1pZjSRpvNJ1Y=
-github.com/go-sql-driver/mysql v1.8.1/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqwuVSjsCm7DZg=
+github.com/go-logr/logr v1.4.3 h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=
+github.com/go-logr/logr v1.4.3/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
+github.com/go-logr/stdr v1.2.2 h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=
+github.com/go-logr/stdr v1.2.2/go.mod h1:mMo/vtBO5dYbehREoey6XUKy/eSumjCCveDpRre4VKE=
 github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1 h1:wG8n/XJQ07TmjbITcGiUaOtXxdrINDz1b0J1w0SzqDc=
 github.com/go-telegram-bot-api/telegram-bot-api/v5 v5.5.1/go.mod h1:A2S0CWkNylc2phvKXWBBdD3K0iGnDBGbzRpISP2zBl8=
+github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
+github.com/golang/protobuf v1.5.4/go.mod h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6rSs7xps=
+github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
+github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/ilyakaznacheev/cleanenv v1.5.0 h1:0VNZXggJE2OYdXE87bfSSwGxeiGt9moSR2lOrsHHvr4=
 github.com/ilyakaznacheev/cleanenv v1.5.0/go.mod h1:a5aDzaJrLCQZsazHol1w8InnDcOX0OColm64SlIi6gk=
 github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
@@ -3992,22 +6200,14 @@ github.com/jackc/pgx/v5 v5.10.0 h1:VhSvgU2jSli8o3AqIEOTJr7rZwAEUVo4E4XhR94Zfr0=
 github.com/jackc/pgx/v5 v5.10.0/go.mod h1:mal1tBGAFfLHvZzaYh77YS/eC6IX9OWbRV1QIIM0Jn4=
 github.com/jackc/puddle/v2 v2.2.2 h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo=
 github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
-github.com/jmoiron/sqlx v1.4.0 h1:1PLqN7S1UYp5t4SrVVnt4nUVNemrDAtxlulVe+Qgm3o=
-github.com/jmoiron/sqlx v1.4.0/go.mod h1:ZrZ7UsYB/weZdl2Bxg6jCRO9c3YHl8r3ahlKmRT4JLY=
 github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
 github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
 github.com/kr/pretty v0.3.0 h1:WgNl7dwNpEZ6jJ9k1snq4pZsg7DOEN8hP9Xw0Tsjwk0=
 github.com/kr/pretty v0.3.0/go.mod h1:640gp4NfQd8pI5XOwp5fnNeVWj67G7CFk/SaSQn7NBk=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
 github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
-github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
-github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
-github.com/mattn/go-sqlite3 v1.14.22 h1:2gZY6PC6kBnID23Tichd1K+Z0oS6nE/XwU+Vz/5o4kU=
-github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/redis/go-redis/v9 v9.21.0 h1:FPBE4hhbAke+TLmcY3WkpbDffJEomdqPn3HYiqAtL9E=
-github.com/redis/go-redis/v9 v9.21.0/go.mod h1:v/M13XI1PVCDcm01VtPFOADfZtHf8YW3baQf57KlIkA=
 github.com/rogpeppe/go-internal v1.15.0 h1:D0RCU5rMAp+SpgkiNdrjfJ+LX4J1M32V2NeCY7EJ6hc=
 github.com/rogpeppe/go-internal v1.15.0/go.mod h1:DrUVZyrJU+txYW5/1kwtXQSMFio52ZOxX7yM1VHvnxs=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
@@ -4015,14 +6215,34 @@ github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UV
 github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-go.uber.org/atomic v1.11.0 h1:ZvwS0R+56ePWxUNi+Atn9dWONBPp/AUETXlHW0DxSjE=
-go.uber.org/atomic v1.11.0/go.mod h1:LUxbIzbOniOlMKjJjyPfpl4v+PKK2cNJn91OQbhoJI0=
-golang.org/x/crypto v0.53.0 h1:QZ4Muo8THX6CizN2vPPd5fBGHyogrdK9fG4wLPFUsto=
-golang.org/x/crypto v0.53.0/go.mod h1:DNLU434OwVakk9PzuwV8w62mAJpRJL3vsgcfp4Qnsio=
+go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
+go.opentelemetry.io/auto/sdk v1.2.1/go.mod h1:KRTj+aOaElaLi+wW1kO/DZRXwkF4C5xPbEe3ZiIhN7Y=
+go.opentelemetry.io/otel v1.43.0 h1:mYIM03dnh5zfN7HautFE4ieIig9amkNANT+xcVxAj9I=
+go.opentelemetry.io/otel v1.43.0/go.mod h1:JuG+u74mvjvcm8vj8pI5XiHy1zDeoCS2LB1spIq7Ay0=
+go.opentelemetry.io/otel/metric v1.43.0 h1:d7638QeInOnuwOONPp4JAOGfbCEpYb+K6DVWvdxGzgM=
+go.opentelemetry.io/otel/metric v1.43.0/go.mod h1:RDnPtIxvqlgO8GRW18W6Z/4P462ldprJtfxHxyKd2PY=
+go.opentelemetry.io/otel/sdk v1.43.0 h1:pi5mE86i5rTeLXqoF/hhiBtUNcrAGHLKQdhg4h4V9Dg=
+go.opentelemetry.io/otel/sdk v1.43.0/go.mod h1:P+IkVU3iWukmiit/Yf9AWvpyRDlUeBaRg6Y+C58QHzg=
+go.opentelemetry.io/otel/sdk/metric v1.43.0 h1:S88dyqXjJkuBNLeMcVPRFXpRw2fuwdvfCGLEo89fDkw=
+go.opentelemetry.io/otel/sdk/metric v1.43.0/go.mod h1:C/RJtwSEJ5hzTiUz5pXF1kILHStzb9zFlIEe85bhj6A=
+go.opentelemetry.io/otel/trace v1.43.0 h1:BkNrHpup+4k4w+ZZ86CZoHHEkohws8AY+WTX09nk+3A=
+go.opentelemetry.io/otel/trace v1.43.0/go.mod h1:/QJhyVBUUswCphDVxq+8mld+AvhXZLhe+8WVFxiFff0=
+golang.org/x/net v0.53.0 h1:d+qAbo5L0orcWAr0a9JweQpjXF19LMXJE8Ey7hwOdUA=
+golang.org/x/net v0.53.0/go.mod h1:JvMuJH7rrdiCfbeHoo3fCQU24Lf5JJwT9W3sJFulfgs=
 golang.org/x/sync v0.21.0 h1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=
 golang.org/x/sync v0.21.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
+golang.org/x/sys v0.43.0 h1:Rlag2XtaFTxp19wS8MXlJwTvoh8ArU6ezoyFsMyCTNI=
+golang.org/x/sys v0.43.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
 golang.org/x/text v0.38.0 h1:sXmwo9DwP3OK9EZ7PqAdaooSGozfl/3a6/xJcbzPRhE=
 golang.org/x/text v0.38.0/go.mod h1:YXZt3QhHUKYT53r2lLKFIVi6Ao1jdzrTR/KQ09qyxF4=
+gonum.org/v1/gonum v0.17.0 h1:VbpOemQlsSMrYmn7T2OUvQ4dqxQXU+ouZFQsZOx50z4=
+gonum.org/v1/gonum v0.17.0/go.mod h1:El3tOrEuMpv2UdMrbNlKEh9vd86bmQ6vqIcDwxEOc1E=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 h1:RmoJA1ujG+/lRGNfUnOMfhCy5EipVMyvUE+KNbPbTlw=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
+google.golang.org/grpc v1.82.1 h1:NnAxzGRA0677vCa4BUkOAnO5+FfQqVl9iUXeD0IqcGE=
+google.golang.org/grpc v1.82.1/go.mod h1:yzTZ1TB1Z3SG+LIYaI+WiE8D5+PZ3ArnrSp8zF3+/ZA=
+google.golang.org/protobuf v1.36.11 h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
+google.golang.org/protobuf v1.36.11/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
 gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=
@@ -4045,11 +6265,10 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"proj/internal/client/taskclient"
+	"proj/internal/client/usertgclient"
 	"proj/internal/config"
-	httpHandler "proj/internal/delivery/http"
 	"proj/internal/delivery/tgbot"
-	"proj/internal/usecase"
-	"sync"
 	"syscall"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -4061,23 +6280,24 @@ func main() {
 
 	cfg := config.MustLoad()
 
-	taskUsecase := usecase.NewTaskUsecase(storage)
-	userUsecase := usecase.NewUserUsecase(storage, cache)
-	taskHandler := httpHandler.NewTaskHandler(taskUsecase, logger)
-	userHandler := httpHandler.NewUserHandler(userUsecase, logger, cfg.BotToken)
-
-	botServer, err := tgbot.NewBotServer(cfg.BotToken, taskUsecase, userUsecase, logger)
+	taskClient, err := taskclient.New(cfg.TaskServiceGRPCAddr)
+	if err != nil {
+		logger.Error("failed to connect to task service", slog.String("error", err.Error()))
+		panic(err)
+	}
+	defer taskClient.Close()
+	userTgClient, err := usertgclient.New(cfg.UserServiceGRPCAddr)
+	if err != nil {
+		logger.Error("failed to connect to usertg service", slog.String("error", err.Error()))
+		panic(err)
+	}
+	defer userTgClient.Close()
+	botServer, err := tgbot.NewBotServer(cfg.BotToken, taskClient, userTgClient, logger)
 	if err != nil {
 		logger.Error("failed to initialize bot", slog.String("err", err.Error()))
 		os.Exit(1)
 	}
 
-	var wg sync.WaitGroup
-
-	wg.Add(2)
-
-	// Канал для аварийных ошибок — буфер 2, чтобы обе горутины могли записать не блокируясь
-	fatalErr := make(chan error, 2)
 	// Запускаем бота
 	go func() {
 		logger.Info("starting TG bot")
@@ -4088,18 +6308,203 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
-	// Ждём: либо сигнал от ОС, либо авария одного из сервисов
-	select {
-	case sig := <-quit:
-		logger.Info("shutdown signal received", slog.String("signal", sig.String()))
-	case err := <-fatalErr:
-		logger.Error("fatal error, initiating shutdown", slog.String("err", err.Error()))
-	}
+	sig := <-quit
+	logger.Info("shutdown signal received", slog.String("signal", sig.String()))
 
 	// Дальше — тот же код остановки
 	logger.Info("stopping services...")
 	botServer.Stop()
 	logger.Info("all services stopped")
+}
+
+```
+
+---
+
+## File: todo-telegram\internal\client\taskclient\client.go
+
+```
+package taskclient
+
+import (
+	"context"
+	"proj/internal/entity"
+	"time"
+
+	"todo-proto/task"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+)
+
+func toEntityTask(t *task.Task) *entity.Task {
+	var deletedAtPointer *time.Time
+	if t.DeletedAt != nil {
+		deletedAt := t.DeletedAt.AsTime()
+		deletedAtPointer = &deletedAt
+	}
+	return &entity.Task{
+		ID:          int(t.Id),
+		Title:       t.Title,
+		Done:        t.Done,
+		UserID:      int(t.UserId),
+		UserTaskId:  int(t.UserTaskId),
+		Description: t.Description,
+		DeletedAt:   deletedAtPointer,
+	}
+}
+
+type Client struct {
+	taskClient task.TaskServiceClient
+	conn       *grpc.ClientConn
+}
+
+func New(addr string) (*Client, error) {
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+	return &Client{
+		taskClient: task.NewTaskServiceClient(conn),
+		conn:       conn,
+	}, nil
+}
+
+func (c *Client) CreateTask(ctx context.Context, title string, description string, userID int) (*entity.Task, error) {
+	t, err := c.taskClient.CreateTask(ctx, &task.CreateTaskRequest{Title: title, Description: description, UserId: int64(userID)})
+	if err != nil {
+		return nil, err
+	}
+	return toEntityTask(t), nil
+}
+
+func (c *Client) GetTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error) {
+	tasks, err := c.taskClient.GetTasksByUserID(ctx, &task.GetTasksByUserIDRequest{UserId: int64(userID)})
+	if err != nil {
+		return nil, err
+	}
+	entityTasks := make([]entity.Task, 0, len(tasks.Tasks))
+	for _, t := range tasks.Tasks {
+		entityTasks = append(entityTasks, *toEntityTask(t))
+	}
+	return entityTasks, nil
+}
+
+func (c *Client) GetRemovedTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error) {
+	tasks, err := c.taskClient.GetRemovedTasksByUserID(ctx, &task.GetTasksByUserIDRequest{UserId: int64(userID)})
+	if err != nil {
+		return nil, err
+	}
+	entityTasks := make([]entity.Task, 0, len(tasks.Tasks))
+	for _, t := range tasks.Tasks {
+		entityTasks = append(entityTasks, *toEntityTask(t))
+	}
+	return entityTasks, nil
+}
+
+func (c *Client) GetTask(ctx context.Context, taskID int) (*entity.Task, error) {
+	t, err := c.taskClient.GetTask(ctx, &task.GetTaskRequest{TaskId: int64(taskID)})
+	if err != nil {
+		return nil, err
+	}
+	return toEntityTask(t), nil
+}
+
+func (c *Client) DeleteTask(ctx context.Context, id int) error {
+	_, err := c.taskClient.DeleteTask(ctx, &task.TaskIDRequest{Id: int64(id)})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) RecoverTask(ctx context.Context, id int) error {
+	_, err := c.taskClient.RecoverTask(ctx, &task.TaskIDRequest{Id: int64(id)})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) UpdateDescription(ctx context.Context, taskID int, newDesc string) error {
+	_, err := c.taskClient.UpdateDescription(ctx, &task.UpdateDescriptionRequest{TaskId: int64(taskID), NewDescription: newDesc})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) MarkAsDone(ctx context.Context, id int, status bool) error {
+	_, err := c.taskClient.MarkAsDone(ctx, &task.MarkAsDoneRequest{Id: int64(id), Status: status})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+
+```
+
+---
+
+## File: todo-telegram\internal\client\usertgclient\client.go
+
+```
+package usertgclient
+
+import (
+	"context"
+	"proj/internal/entity"
+	customErrors "proj/internal/errors"
+
+	"todo-proto/usertg"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
+)
+
+type Client struct {
+	userTgClient usertg.UserTgServiceClient
+	conn         *grpc.ClientConn
+}
+
+func New(addr string) (*Client, error) {
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, err
+	}
+	return &Client{
+		userTgClient: usertg.NewUserTgServiceClient(conn),
+		conn:         conn,
+	}, nil
+}
+
+func (c *Client) Close() error {
+	return c.conn.Close()
+}
+
+func (c *Client) RegisterUserTg(ctx context.Context, ID int64, username string) error {
+	_, err := c.userTgClient.RegisterUserTg(ctx, &usertg.RegisterUserTgRequest{TgId: ID, Username: username})
+	if err != nil {
+		if status.Code(err) == codes.AlreadyExists {
+			return customErrors.ErrUserAlreadyExists
+		}
+		return err
+	}
+	return nil
+}
+
+func (c *Client) GetUserByTgID(ctx context.Context, userID int64, username string) (*entity.UserTg, error) {
+	user, err := c.userTgClient.GetUserByTgID(ctx, &usertg.GetUserByTgIDRequest{TgId: userID, Username: username})
+	if err != nil {
+		return nil, err
+	}
+	return &entity.UserTg{ID: user.Id, Username: user.Username, UserID: int(user.UserId)}, nil
 }
 
 ```
@@ -4112,40 +6517,30 @@ func main() {
 package config
 
 import (
-	"fmt"
 	"log/slog"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 type Config struct {
-	Env         string      `env:"ENV" env-default:"development"`
-	ServerPort  string      `env:"SERVER_PORT" env-default:"8080"`
-	DatabaseURL string      `env:"DATABASE_URL" env-required:"true"`
-	BotToken    string      `env:"TELEGRAM_BOT_TOKEN"`
-	Redis       RedisConfig // без указателя: cleanenv раскладывает вложенные структуры по тегам сам
-}
-
-type RedisConfig struct {
-	Host     string `env:"REDIS_HOST" env-default:"localhost"`
-	Port     string `env:"REDIS_PORT" env-default:"6379"`
-	Password string `env:"REDIS_PASSWORD"`
-	DB       int    `env:"REDIS_DB" env-default:"0"`
-}
-
-// Addr собирает host:port для redis.Options — так проще, чем городить URL
-func (r RedisConfig) Addr() string {
-	return fmt.Sprintf("%s:%s", r.Host, r.Port)
+	Env                 string `env:"ENV" env-default:"development"`
+	BotToken            string `env:"TELEGRAM_BOT_TOKEN"`
+	TaskServiceGRPCAddr string `env:"TASK_SERVICE_GRPC_ADDR" env-required:"true"`
+	UserServiceGRPCAddr string `env:"USER_SERVICE_GRPC_ADDR" env-required:"true"`
 }
 
 func MustLoad() *Config {
 	var cfg Config
-	if err := cleanenv.ReadConfig(".env", &cfg); err != nil {
-		if err := cleanenv.ReadEnv(&cfg); err != nil {
-			slog.Error("failed to load env config", slog.String("error", err.Error()))
-			panic(err)
-		}
+
+	// 1. Сначала читаем .env (если он есть)
+	_ = cleanenv.ReadConfig(".env", &cfg)
+
+	// 2. Поверх перезаписываем реальными переменными окружения из Docker/OS
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		slog.Error("failed to load env config", slog.String("error", err.Error()))
+		panic(err)
 	}
+
 	return &cfg
 }
 
@@ -4806,7 +7201,7 @@ func (b *BotServer) handleTrashList(ctx context.Context, query *tgbotapi.Callbac
 
 ---
 
-## File: todo-telegram\internal\delivery\tgbot\hanlde_update_task.go
+## File: todo-telegram\internal\delivery\tgbot\handle_update_task.go
 
 ```
 package tgbot
@@ -5025,6 +7420,192 @@ var ErrUserAlreadyExists error = errors.New("user already exists")
 
 ---
 
+## File: todo-users\Dockerfile
+
+```
+# === ЭТАП 1: Сборка бинарника ===
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /build
+
+# Копируем оба нужных модуля — todo-proto как зависимость, todo-users как сам сервис
+COPY todo-proto/ ./todo-proto/
+COPY todo-users/ ./todo-users/
+
+WORKDIR /build/todo-users
+RUN go mod download
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o app ./cmd/app
+
+# === ЭТАП 2: Финальный образ ===
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates tzdata
+WORKDIR /root/
+COPY --from=builder /build/todo-users/app .
+EXPOSE 8080
+EXPOSE 9090
+CMD ["./app"]
+```
+
+---
+
+## File: todo-users\go.mod
+
+```
+module proj
+
+go 1.26.4
+
+require (
+	github.com/BurntSushi/toml v1.2.1 // indirect
+	github.com/cespare/xxhash/v2 v2.3.0 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
+	github.com/jackc/puddle/v2 v2.2.2 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/kr/text v0.2.0 // indirect
+	github.com/rogpeppe/go-internal v1.15.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/text v0.38.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 // indirect
+	google.golang.org/protobuf v1.36.11 // indirect
+	olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 // indirect
+)
+
+require (
+	github.com/ilyakaznacheev/cleanenv v1.5.0
+	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/redis/go-redis/v9 v9.21.0
+	golang.org/x/crypto v0.53.0
+	gopkg.in/yaml.v3 v3.0.1 // indirect
+)
+
+require (
+	google.golang.org/grpc v1.82.1
+	todo-proto v0.0.0
+)
+
+replace todo-proto => ../todo-proto
+
+```
+
+---
+
+## File: todo-users\go.sum
+
+```
+filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
+filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
+github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak=
+github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
+github.com/bsm/ginkgo/v2 v2.12.0 h1:Ny8MWAHyOepLGlLKYmXG4IEkioBysk6GpaRTLC8zwWs=
+github.com/bsm/ginkgo/v2 v2.12.0/go.mod h1:SwYbGRRDovPVboqFv0tPTcG1sN61LM1Z4ARdbAV9g4c=
+github.com/bsm/gomega v1.27.10 h1:yeMWxP2pV2fG3FgAODIY8EiRE3dy0aeFYt4l7wh6yKA=
+github.com/bsm/gomega v1.27.10/go.mod h1:JyEr/xRbxbtgWNi8tIEVPUYZ5Dzef52k01W3YH0H+O0=
+github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
+github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
+github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
+github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/go-logr/logr v1.4.3 h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=
+github.com/go-logr/logr v1.4.3/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
+github.com/go-logr/stdr v1.2.2 h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=
+github.com/go-logr/stdr v1.2.2/go.mod h1:mMo/vtBO5dYbehREoey6XUKy/eSumjCCveDpRre4VKE=
+github.com/go-sql-driver/mysql v1.8.1 h1:LedoTUt/eveggdHS9qUFC1EFSa8bU2+1pZjSRpvNJ1Y=
+github.com/go-sql-driver/mysql v1.8.1/go.mod h1:wEBSXgmK//2ZFJyE+qWnIsVGmvmEKlqwuVSjsCm7DZg=
+github.com/golang/protobuf v1.5.4 h1:i7eJL8qZTpSEXOPTxNKhASYpMn+8e5Q6AdndVa1dWek=
+github.com/golang/protobuf v1.5.4/go.mod h1:lnTiLA8Wa4RWRcIUkrtSVa5nRhsEGBg48fD6rSs7xps=
+github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
+github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
+github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
+github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
+github.com/ilyakaznacheev/cleanenv v1.5.0 h1:0VNZXggJE2OYdXE87bfSSwGxeiGt9moSR2lOrsHHvr4=
+github.com/ilyakaznacheev/cleanenv v1.5.0/go.mod h1:a5aDzaJrLCQZsazHol1w8InnDcOX0OColm64SlIi6gk=
+github.com/jackc/pgpassfile v1.0.0 h1:/6Hmqy13Ss2zCq62VdNG8tM1wchn8zjSGOBJ6icpsIM=
+github.com/jackc/pgpassfile v1.0.0/go.mod h1:CEx0iS5ambNFdcRtxPj5JhEz+xB6uRky5eyVu/W2HEg=
+github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 h1:iCEnooe7UlwOQYpKFhBabPMi4aNAfoODPEFNiAnClxo=
+github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761/go.mod h1:5TJZWKEWniPve33vlWYSoGYefn3gLQRzjfDlhSJ9ZKM=
+github.com/jackc/pgx/v5 v5.10.0 h1:VhSvgU2jSli8o3AqIEOTJr7rZwAEUVo4E4XhR94Zfr0=
+github.com/jackc/pgx/v5 v5.10.0/go.mod h1:mal1tBGAFfLHvZzaYh77YS/eC6IX9OWbRV1QIIM0Jn4=
+github.com/jackc/puddle/v2 v2.2.2 h1:PR8nw+E/1w0GLuRFSmiioY6UooMp6KJv0/61nB7icHo=
+github.com/jackc/puddle/v2 v2.2.2/go.mod h1:vriiEXHvEE654aYKXXjOvZM39qJ0q+azkZFrfEOc3H4=
+github.com/jmoiron/sqlx v1.4.0 h1:1PLqN7S1UYp5t4SrVVnt4nUVNemrDAtxlulVe+Qgm3o=
+github.com/jmoiron/sqlx v1.4.0/go.mod h1:ZrZ7UsYB/weZdl2Bxg6jCRO9c3YHl8r3ahlKmRT4JLY=
+github.com/joho/godotenv v1.5.1 h1:7eLL/+HRGLY0ldzfGMeQkb7vMd0as4CfYvUVzLqw0N0=
+github.com/joho/godotenv v1.5.1/go.mod h1:f4LDr5Voq0i2e/R5DDNOoa2zzDfwtkZa6DnEwAbqwq4=
+github.com/klauspost/cpuid/v2 v2.2.10 h1:tBs3QSyvjDyFTq3uoc/9xFpCuOsJQFNPiAhYdw2skhE=
+github.com/klauspost/cpuid/v2 v2.2.10/go.mod h1:hqwkgyIinND0mEev00jJYCxPNVRVXFQeu1XKlok6oO0=
+github.com/kr/pretty v0.3.0 h1:WgNl7dwNpEZ6jJ9k1snq4pZsg7DOEN8hP9Xw0Tsjwk0=
+github.com/kr/pretty v0.3.0/go.mod h1:640gp4NfQd8pI5XOwp5fnNeVWj67G7CFk/SaSQn7NBk=
+github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
+github.com/kr/text v0.2.0/go.mod h1:eLer722TekiGuMkidMxC/pM04lWEeraHUUmBw8l2grE=
+github.com/lib/pq v1.10.9 h1:YXG7RB+JIjhP29X+OtkiDnYaXQwpS4JEWq7dtCCRUEw=
+github.com/lib/pq v1.10.9/go.mod h1:AlVN5x4E4T544tWzH6hKfbfQvm3HdbOxrmggDNAPY9o=
+github.com/mattn/go-sqlite3 v1.14.22 h1:2gZY6PC6kBnID23Tichd1K+Z0oS6nE/XwU+Vz/5o4kU=
+github.com/mattn/go-sqlite3 v1.14.22/go.mod h1:Uh1q+B4BYcTPb+yiD3kU8Ct7aC0hY9fxUwlHK0RXw+Y=
+github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
+github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/redis/go-redis/v9 v9.21.0 h1:FPBE4hhbAke+TLmcY3WkpbDffJEomdqPn3HYiqAtL9E=
+github.com/redis/go-redis/v9 v9.21.0/go.mod h1:v/M13XI1PVCDcm01VtPFOADfZtHf8YW3baQf57KlIkA=
+github.com/rogpeppe/go-internal v1.15.0 h1:D0RCU5rMAp+SpgkiNdrjfJ+LX4J1M32V2NeCY7EJ6hc=
+github.com/rogpeppe/go-internal v1.15.0/go.mod h1:DrUVZyrJU+txYW5/1kwtXQSMFio52ZOxX7yM1VHvnxs=
+github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
+github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
+github.com/stretchr/testify v1.7.0/go.mod h1:6Fq8oRcR53rry900zMqJjRRixrwX3KX962/h/Wwjteg=
+github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
+github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
+github.com/zeebo/xxh3 v1.1.0 h1:s7DLGDK45Dyfg7++yxI0khrfwq9661w9EN78eP/UZVs=
+github.com/zeebo/xxh3 v1.1.0/go.mod h1:IisAie1LELR4xhVinxWS5+zf1lA4p0MW4T+w+W07F5s=
+go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
+go.opentelemetry.io/auto/sdk v1.2.1/go.mod h1:KRTj+aOaElaLi+wW1kO/DZRXwkF4C5xPbEe3ZiIhN7Y=
+go.opentelemetry.io/otel v1.43.0 h1:mYIM03dnh5zfN7HautFE4ieIig9amkNANT+xcVxAj9I=
+go.opentelemetry.io/otel v1.43.0/go.mod h1:JuG+u74mvjvcm8vj8pI5XiHy1zDeoCS2LB1spIq7Ay0=
+go.opentelemetry.io/otel/metric v1.43.0 h1:d7638QeInOnuwOONPp4JAOGfbCEpYb+K6DVWvdxGzgM=
+go.opentelemetry.io/otel/metric v1.43.0/go.mod h1:RDnPtIxvqlgO8GRW18W6Z/4P462ldprJtfxHxyKd2PY=
+go.opentelemetry.io/otel/sdk v1.43.0 h1:pi5mE86i5rTeLXqoF/hhiBtUNcrAGHLKQdhg4h4V9Dg=
+go.opentelemetry.io/otel/sdk v1.43.0/go.mod h1:P+IkVU3iWukmiit/Yf9AWvpyRDlUeBaRg6Y+C58QHzg=
+go.opentelemetry.io/otel/sdk/metric v1.43.0 h1:S88dyqXjJkuBNLeMcVPRFXpRw2fuwdvfCGLEo89fDkw=
+go.opentelemetry.io/otel/sdk/metric v1.43.0/go.mod h1:C/RJtwSEJ5hzTiUz5pXF1kILHStzb9zFlIEe85bhj6A=
+go.opentelemetry.io/otel/trace v1.43.0 h1:BkNrHpup+4k4w+ZZ86CZoHHEkohws8AY+WTX09nk+3A=
+go.opentelemetry.io/otel/trace v1.43.0/go.mod h1:/QJhyVBUUswCphDVxq+8mld+AvhXZLhe+8WVFxiFff0=
+go.uber.org/atomic v1.11.0 h1:ZvwS0R+56ePWxUNi+Atn9dWONBPp/AUETXlHW0DxSjE=
+go.uber.org/atomic v1.11.0/go.mod h1:LUxbIzbOniOlMKjJjyPfpl4v+PKK2cNJn91OQbhoJI0=
+golang.org/x/crypto v0.53.0 h1:QZ4Muo8THX6CizN2vPPd5fBGHyogrdK9fG4wLPFUsto=
+golang.org/x/crypto v0.53.0/go.mod h1:DNLU434OwVakk9PzuwV8w62mAJpRJL3vsgcfp4Qnsio=
+golang.org/x/net v0.55.0 h1:bcvxaJn3e1U6InsFWt1JUq1aSjnRxLzT2rtD2KfkDF8=
+golang.org/x/net v0.55.0/go.mod h1:L5U2KuzuOe1lY7Z+aWVIKK6qEeJXnXV9yzGA+WCHJww=
+golang.org/x/sync v0.21.0 h1:HLII4xRRTtCRkxYp4HNFF0Js/Og6q2i++KXbg0gHCwM=
+golang.org/x/sync v0.21.0/go.mod h1:9xrNwdLfx4jkKbNva9FpL6vEN7evnE43NNNJQ2LF3+0=
+golang.org/x/sys v0.46.0 h1:noSf2Fq6F8DBgS+LysIkx7rIExoNHJsxOAtPp4rthXw=
+golang.org/x/sys v0.46.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
+golang.org/x/text v0.38.0 h1:sXmwo9DwP3OK9EZ7PqAdaooSGozfl/3a6/xJcbzPRhE=
+golang.org/x/text v0.38.0/go.mod h1:YXZt3QhHUKYT53r2lLKFIVi6Ao1jdzrTR/KQ09qyxF4=
+gonum.org/v1/gonum v0.17.0 h1:VbpOemQlsSMrYmn7T2OUvQ4dqxQXU+ouZFQsZOx50z4=
+gonum.org/v1/gonum v0.17.0/go.mod h1:El3tOrEuMpv2UdMrbNlKEh9vd86bmQ6vqIcDwxEOc1E=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478 h1:RmoJA1ujG+/lRGNfUnOMfhCy5EipVMyvUE+KNbPbTlw=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478/go.mod h1:4Hqkh8ycfw05ld/3BWL7rJOSfebL2Q+DVDeRgYgxUU8=
+google.golang.org/grpc v1.82.1 h1:NnAxzGRA0677vCa4BUkOAnO5+FfQqVl9iUXeD0IqcGE=
+google.golang.org/grpc v1.82.1/go.mod h1:yzTZ1TB1Z3SG+LIYaI+WiE8D5+PZ3ArnrSp8zF3+/ZA=
+google.golang.org/protobuf v1.36.11 h1:fV6ZwhNocDyBLK0dj+fg8ektcVegBBuEolpbTQyBNVE=
+google.golang.org/protobuf v1.36.11/go.mod h1:HTf+CrKn2C3g5S8VImy6tdcUvCska2kB7j23XfzDpco=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c h1:Hei/4ADfdWqJk1ZMxUNpqntNwaWcugrBjAiHlqqRiVk=
+gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c/go.mod h1:JHkPIbrfpd72SG/EVd6muEfDQjcINNoR0C8j2r3qZ4Q=
+gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
+gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
+olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3 h1:slmdOY3vp8a7KQbHkL+FLbvbkgMqmXojpFUO/jENuqQ=
+olympos.io/encoding/edn v0.0.0-20201019073823-d3554ca0b0a3/go.mod h1:oVgVk4OWVDi43qWBEyGhXgYxt7+ED4iYNpTngSLX2Iw=
+
+```
+
+---
+
 ## File: todo-users\cmd\app\main.go
 
 ```
@@ -5033,21 +7614,28 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"proj/internal/config"
+	grpcDelivery "proj/internal/delivery/grpc"
 	httpHandler "proj/internal/delivery/http"
 	"proj/internal/delivery/http/middleware"
+	"proj/internal/mailer"
 	repository "proj/internal/repository/postgres"
 	cache "proj/internal/repository/redis"
 	"proj/internal/usecase"
+	"sync"
 	"syscall"
 	"time"
+	"todo-proto/auth"
+	"todo-proto/usertg"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -5076,11 +7664,28 @@ func main() {
 		logger.Error("redis connection failed", slog.String("error", err.Error()))
 		panic(err)
 	}
-
+	mailer := mailer.New(mailer.Config{
+		Host:     cfg.SMTPHost,
+		Port:     cfg.SMTPPort,
+		Username: cfg.SMTPUsername,
+		Password: cfg.SMTPPassword,
+		From:     cfg.SMTPFrom,
+	})
 	// Инициализируем слои
 	cache := cache.NewRedisRepository(client)
 	storage := repository.NewPostgressStorage(db)
-	userUsecase := usecase.NewUserUsecase(storage, cache)
+	userUsecase := usecase.NewUserUsecase(storage, cache, mailer)
+	authGRPCServer := grpcDelivery.NewAuthServer(userUsecase)
+	grpcServer := grpc.NewServer()
+	userTgServer := grpcDelivery.NewUserTgServer(userUsecase) // новый файл, по образцу AuthServer
+	usertg.RegisterUserTgServiceServer(grpcServer, userTgServer)
+	auth.RegisterAuthServiceServer(grpcServer, authGRPCServer)
+
+	lis, err := net.Listen("tcp", ":"+cfg.GRPCPort)
+	if err != nil {
+		logger.Error("grpc listen failed", slog.String("error", err.Error()))
+		panic(err)
+	}
 	userHandler := httpHandler.NewUserHandler(userUsecase, logger, cfg.BotToken)
 
 	authMiddleware := middleware.Auth(userUsecase)
@@ -5089,15 +7694,21 @@ func main() {
 	mux.Handle("GET /auth/me", authMiddleware(http.HandlerFunc(userHandler.GetUserHandler)))
 
 	mux.HandleFunc("POST /auth/register", userHandler.RegisterHandler)
+	mux.HandleFunc("POST /auth/register/verify", userHandler.RegisterVerify2FAHandler)
 	mux.HandleFunc("POST /auth/login", userHandler.LoginHandler)
 	mux.HandleFunc("POST /auth/verify2fa", userHandler.Verify2FA)
 	mux.HandleFunc("POST /auth/logout", userHandler.LogoutHandler)
 
 	mux.Handle("PUT /auth/me", authMiddleware(http.HandlerFunc(userHandler.UpdateProfileHandler)))
+	mux.Handle("PUT /auth/me/email/verify", authMiddleware(http.HandlerFunc(userHandler.UpdateEmailVerifyHandler)))
 	mux.Handle("PUT /auth/me/password", authMiddleware(http.HandlerFunc(userHandler.ChangePasswordHandler)))
 	mux.Handle("GET /auth/telegram/link", authMiddleware(http.HandlerFunc(userHandler.GetTelegramLinkHandler)))
 	mux.Handle("POST /auth/telegram/link", authMiddleware(http.HandlerFunc(userHandler.LinkTelegramHandler)))
 	mux.HandleFunc("POST /auth/telegram/login", userHandler.TelegramLoginHandler)
+
+	mux.Handle("POST /auth/me/link/email", authMiddleware(http.HandlerFunc(userHandler.SetEmailHandler)))
+	mux.Handle("POST /auth/me/link/verify2fa", authMiddleware(http.HandlerFunc(userHandler.EmailSetVerify2FAHandler)))
+	mux.Handle("POST /auth/me/link/password", authMiddleware(http.HandlerFunc(userHandler.SetEmailPasswordHandler)))
 
 	wrappedMux := middleware.Logger(mux)
 	server := &http.Server{
@@ -5107,16 +7718,25 @@ func main() {
 
 	// Канал для аварийных ошибок — буфер 2, чтобы обе горутины могли записать не блокируясь
 	fatalErr := make(chan error, 2)
-
+	var wg sync.WaitGroup
+	wg.Add(2)
 	// Запускаем HTTP-сервер
 	go func() {
+		defer wg.Done()
 		logger.Info("starting HTTP server", slog.String("port", cfg.ServerPort))
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("HTTP server failed", slog.String("err", err.Error()))
 			fatalErr <- err // сообщаем об аварии
 		}
 	}()
-
+	go func() {
+		defer wg.Done()
+		logger.Info("starting gRPC server", slog.String("port", cfg.GRPCPort))
+		if err := grpcServer.Serve(lis); err != nil {
+			logger.Error("gRPC server failed", slog.String("err", err.Error()))
+			fatalErr <- err
+		}
+	}()
 	// Ждём сигнала остановки (Ctrl+C или docker stop)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -5137,7 +7757,8 @@ func main() {
 	if err := server.Shutdown(ctx); err != nil {
 		logger.Error("HTTP server forced shutdown", slog.String("err", err.Error()))
 	}
-
+	grpcServer.GracefulStop()
+	wg.Wait()
 	logger.Info("all services stopped")
 }
 
@@ -5158,11 +7779,17 @@ import (
 )
 
 type Config struct {
-	Env         string      `env:"ENV" env-default:"development"`
-	ServerPort  string      `env:"SERVER_PORT" env-default:"8080"`
-	DatabaseURL string      `env:"DATABASE_URL" env-required:"true"`
-	BotToken    string      `env:"TELEGRAM_BOT_TOKEN"`
-	Redis       RedisConfig // без указателя: cleanenv раскладывает вложенные структуры по тегам сам
+	Env          string `env:"ENV" env-default:"development"`
+	ServerPort   string `env:"SERVER_PORT" env-default:"8080"`
+	GRPCPort     string `env:"GRPC_PORT" env-default:"9090"`
+	DatabaseURL  string `env:"DATABASE_URL" env-required:"true"`
+	BotToken     string `env:"TELEGRAM_BOT_TOKEN"`
+	Redis        RedisConfig
+	SMTPHost     string `env:"SMTP_HOST" env-default:"smtp.gmail.com"`
+	SMTPPort     string `env:"SMTP_PORT" env-default:"587"`
+	SMTPUsername string `env:"SMTP_USERNAME" env-required:"true"`
+	SMTPPassword string `env:"SMTP_PASSWORD" env-required:"true"`
+	SMTPFrom     string `env:"SMTP_FROM" env-required:"true"`
 }
 
 type RedisConfig struct {
@@ -5179,13 +7806,115 @@ func (r RedisConfig) Addr() string {
 
 func MustLoad() *Config {
 	var cfg Config
-	if err := cleanenv.ReadConfig(".env", &cfg); err != nil {
-		if err := cleanenv.ReadEnv(&cfg); err != nil {
-			slog.Error("failed to load env config", slog.String("error", err.Error()))
-			panic(err)
-		}
+
+	// 1. Сначала читаем .env (если он есть)
+	_ = cleanenv.ReadConfig(".env", &cfg)
+
+	// 2. Поверх перезаписываем реальными переменными окружения из Docker/OS
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		slog.Error("failed to load env config", slog.String("error", err.Error()))
+		panic(err)
 	}
+
 	return &cfg
+}
+
+```
+
+---
+
+## File: todo-users\internal\delivery\grpc\auth_server.go
+
+```
+package grpc
+
+import (
+	"context"
+
+	"todo-proto/auth"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+type AuthUsecase interface {
+	GetUserIDBySession(ctx context.Context, sessionID string) (int, error)
+}
+
+// AuthServer реализует интерфейс auth.AuthServiceServer, сгенерированный из .proto
+type AuthServer struct {
+	auth.UnimplementedAuthServiceServer
+	UserUC AuthUsecase
+}
+
+func NewAuthServer(userUC AuthUsecase) *AuthServer {
+	return &AuthServer{UserUC: userUC}
+}
+
+func (s *AuthServer) ValidateSession(ctx context.Context, req *auth.ValidateSessionRequest) (*auth.ValidateSessionResponse, error) {
+	userID, err := s.UserUC.GetUserIDBySession(ctx, req.SessionToken)
+	if err != nil {
+		return nil, status.Error(codes.Unauthenticated, "invalid or expired session")
+	}
+	return &auth.ValidateSessionResponse{UserId: int64(userID)}, nil
+}
+
+```
+
+---
+
+## File: todo-users\internal\delivery\grpc\usertg_server.go
+
+```
+package grpc
+
+import (
+	"context"
+	"errors"
+	"proj/internal/entity"
+	customErrors "proj/internal/errors"
+
+	"todo-proto/usertg"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+)
+
+type UserTgUsecase interface {
+	RegisterUserTg(ctx context.Context, ID int64, username string) error
+	GetUserByTgID(ctx context.Context, userID int64, username string) (*entity.UserTg, error)
+}
+
+type UserTgServer struct {
+	usertg.UnimplementedUserTgServiceServer
+	UserUC UserTgUsecase
+}
+
+func NewUserTgServer(userUC UserTgUsecase) *UserTgServer {
+	return &UserTgServer{UserUC: userUC}
+}
+
+func (s *UserTgServer) RegisterUserTg(ctx context.Context, req *usertg.RegisterUserTgRequest) (*usertg.RegisterUserTgResponse, error) {
+	err := s.UserUC.RegisterUserTg(ctx, req.TgId, req.Username)
+	if err != nil {
+		if errors.Is(err, customErrors.ErrUserAlreadyExists) {
+			return nil, status.Error(codes.AlreadyExists, "user already exists")
+		}
+		return nil, status.Error(codes.Internal, "internal error")
+	}
+	return &usertg.RegisterUserTgResponse{}, nil
+}
+
+func (s *UserTgServer) GetUserByTgID(ctx context.Context, req *usertg.GetUserByTgIDRequest) (*usertg.UserTg, error) {
+	user, err := s.UserUC.GetUserByTgID(ctx, req.TgId, req.Username)
+	if err != nil {
+		return nil, err
+	}
+	return &usertg.UserTg{
+		Id:       int64(user.ID),
+		Username: user.Username,
+		UserId:   int64(user.UserID),
+	}, nil
 }
 
 ```
@@ -5273,10 +8002,10 @@ func (h *UserHandler) Verify2FA(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	loginRequest, err := h.UserUC.Verify2FA(r.Context(), entity.VerificationEmail(req.Email), req.InputCode)
+	loginResult, err := h.UserUC.Verify2FA(r.Context(), entity.VerificationEmail(req.Email), req.InputCode)
 	if err != nil {
 		if errors.Is(err, customErrors.ErrInvalid2FACode) {
-			w.WriteHeader(http.StatusBadRequest) // Выставляем HTTP статус 400
+			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(dto.ErrorResponse{
 				Error: "Неверный или истекший код подтверждения",
 			})
@@ -5287,25 +8016,24 @@ func (h *UserHandler) Verify2FA(w http.ResponseWriter, r *http.Request) {
 	}
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_token",
-		Value:    loginRequest.SessionToken,
+		Value:    loginResult.SessionToken,
 		Path:     "/",
-		MaxAge:   86400, // Говорит браузеру немедленно удалить куку
+		MaxAge:   86400,
 		HttpOnly: true,
-		Secure:   false, // Выставь false, если локально тестируешь без HTTPS
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})
 	w.WriteHeader(http.StatusOK)
 
 }
 func (h *UserHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	// Имя куки должно быть ровно таким же, какое ты задаешь при Login/Register
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session_token",
 		Value:    "",
 		Path:     "/",
-		MaxAge:   -1, // Говорит браузеру немедленно удалить куку
+		MaxAge:   -1,
 		HttpOnly: true,
-		Secure:   false, // Выставь false, если локально тестируешь без HTTPS
+		Secure:   false,
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -5328,6 +8056,7 @@ import (
 	"log/slog"
 	"net/http"
 	dto "proj/internal/delivery/http/entityRequest"
+	"proj/internal/entity"
 	customErrors "proj/internal/errors"
 )
 
@@ -5338,7 +8067,7 @@ func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	err := h.UserUC.RegisterUserWeb(r.Context(), req.Email, req.Username, req.Password)
+	registerResult, err := h.UserUC.RegisterUserWebSend2FA(r.Context(), entity.VerificationEmail(req.Email))
 	if err != nil {
 		if errors.Is(err, customErrors.ErrUserAlreadyExists) {
 			w.WriteHeader(http.StatusConflict) // 409 — ресурс уже существует
@@ -5349,6 +8078,122 @@ func (h *UserHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(dto.Responce2FA{Status: registerResult.Requires2FA})
+}
+func (h *UserHandler) RegisterVerify2FAHandler(w http.ResponseWriter, r *http.Request) {
+	var req dto.Request2FARegister
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	registerResult, err := h.UserUC.RegisterUserWeb(r.Context(), entity.VerificationEmail(req.Email), req.Username, req.Password, req.InputCode)
+	if err != nil {
+		if errors.Is(err, customErrors.ErrUserAlreadyExists) {
+			w.WriteHeader(http.StatusConflict) // 409 — ресурс уже существует
+			return
+		}
+		h.Logger.Error("failed register user", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     "session_token",
+		Value:    registerResult.SessionToken,
+		Path:     "/",
+		MaxAge:   86400,
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	})
+	w.WriteHeader(http.StatusCreated)
+}
+
+```
+
+---
+
+## File: todo-users\internal\delivery\http\handle_set_email.go
+
+```
+package httpHandler
+
+import (
+	"encoding/json"
+	"errors"
+	"log/slog"
+	"net/http"
+	dto "proj/internal/delivery/http/entityRequest"
+	"proj/internal/delivery/http/middleware"
+	"proj/internal/entity"
+	customErrors "proj/internal/errors"
+)
+
+func (h *UserHandler) SetEmailHandler(w http.ResponseWriter, r *http.Request) {
+	var req dto.RequestSetEmail
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err := h.UserUC.SetEmail(r.Context(), entity.VerificationEmail(req.Email))
+	if err != nil {
+		if errors.Is(err, customErrors.ErrUserAlreadyExists) {
+			h.Logger.Debug("user already exists", slog.String("error", err.Error()))
+			json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Почта уже занята"})
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		h.Logger.Error("failed to set email", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	h.Logger.Info("success")
+	w.WriteHeader(http.StatusOK)
+}
+func (h *UserHandler) EmailSetVerify2FAHandler(w http.ResponseWriter, r *http.Request) {
+	var req dto.Request2FA
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err := h.UserUC.Verify2FACode(r.Context(), entity.VerificationEmail(req.Email), req.InputCode)
+	if err != nil {
+		if errors.Is(err, customErrors.ErrInvalid2FACode) {
+			w.WriteHeader(http.StatusBadRequest) // Выставляем HTTP статус 400
+			json.NewEncoder(w).Encode(dto.ErrorResponse{
+				Error: "Неверный или истекший код подтверждения",
+			})
+			return
+		}
+		h.Logger.Error("failed to verify code", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+
+}
+func (h *UserHandler) SetEmailPasswordHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	var req dto.SetEmailPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	err := h.UserUC.SetEmailPassword(r.Context(), entity.VerificationEmail(req.Email), req.Password, userID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 ```
@@ -5378,7 +8223,7 @@ func (h *UserHandler) GetTelegramLinkHandler(w http.ResponseWriter, r *http.Requ
 	link, err := h.UserUC.GetTelegramLink(r.Context(), userID)
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
-		h.Logger.Error("something wrond", slog.String("error:", err.Error()))
+		h.Logger.Debug("telegram not linked for user", slog.String("error", err.Error()))
 		json.NewEncoder(w).Encode(dto.TelegramLinkResponse{Linked: false})
 		return
 	}
@@ -5451,10 +8296,13 @@ package httpHandler
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	dto "proj/internal/delivery/http/entityRequest"
 	"proj/internal/delivery/http/middleware"
+	"proj/internal/entity"
+	customErrors "proj/internal/errors"
 )
 
 func (h *UserHandler) UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
@@ -5464,12 +8312,53 @@ func (h *UserHandler) UpdateProfileHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	var req dto.UpdateProfileRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if err := h.UserUC.UpdateProfile(r.Context(), userID, req.Username, req.Email); err != nil {
+	if req.Email != nil {
+		err = h.UserUC.UpdateEmail(r.Context(), entity.VerificationEmail(*req.Email))
+		if err != nil {
+			if errors.Is(err, customErrors.ErrUserAlreadyExists) {
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+		}
+	}
+	if req.Username != nil {
+		err = h.UserUC.UpdateUsername(r.Context(), userID, *req.Username)
+	}
+	if err != nil {
 		h.Logger.Error("failed to update profile", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+func (h *UserHandler) UpdateEmailVerifyHandler(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(middleware.UserIDKey).(int)
+	if !ok {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	var req dto.Request2FA
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Logger.Warn("failed to decode request body", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	err := h.UserUC.UpdateEmailVerify(r.Context(), userID, entity.VerificationEmail(req.Email), req.InputCode)
+	if err != nil {
+		if errors.Is(err, customErrors.ErrInvalid2FACode) {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(dto.ErrorResponse{
+				Error: "Неверный или истекший код подтверждения",
+			})
+			return
+		}
+		h.Logger.Error("failed to verify code", slog.String("error", err.Error()))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -5512,16 +8401,22 @@ import (
 )
 
 type UserUsecase interface {
-	RegisterUserWeb(ctx context.Context, email, username, password string) error
-	LoginUserWeb(ctx context.Context, email entity.VerificationEmail, password string) (*entity.LoginResult, error)
-	Verify2FA(ctx context.Context, email entity.VerificationEmail, inputCode string) (*entity.LoginResult, error)
+	RegisterUserWeb(ctx context.Context, email entity.VerificationEmail, username, password, inputCode string) (*entity.AuthResult, error)
+	RegisterUserWebSend2FA(ctx context.Context, email entity.VerificationEmail) (*entity.AuthResult, error)
+	LoginUserWeb(ctx context.Context, email entity.VerificationEmail, password string) (*entity.AuthResult, error)
+	Verify2FA(ctx context.Context, email entity.VerificationEmail, inputCode string) (*entity.AuthResult, error)
 	GetUserIDBySession(ctx context.Context, sessionID string) (int, error)
 	GetUserByWebID(ctx context.Context, userID int) (*entity.UserWeb, error)
-	UpdateProfile(ctx context.Context, userID int, username, email string) error
+	UpdateUsername(ctx context.Context, userID int, username string) error
+	UpdateEmail(ctx context.Context, email entity.VerificationEmail) error
+	UpdateEmailVerify(ctx context.Context, userID int, email entity.VerificationEmail, inputCode string) error
 	ChangePassword(ctx context.Context, userID int, oldPassword, newPassword string) error
 	GetTelegramLink(ctx context.Context, userID int) (*entity.TelegramLink, error)
 	LinkTelegram(ctx context.Context, userID int, tgID int64, tgUsername string) error
-	LoginByTelegram(ctx context.Context, tgID int64, tgUsername string) (*entity.LoginResult, error)
+	LoginByTelegram(ctx context.Context, tgID int64, tgUsername string) (*entity.AuthResult, error)
+	SetEmail(ctx context.Context, email entity.VerificationEmail) error
+	SetEmailPassword(ctx context.Context, email entity.VerificationEmail, password string, userID int) error
+	Verify2FACode(ctx context.Context, email entity.VerificationEmail, inputCode string) error
 }
 
 type UserHandler struct {
@@ -5544,13 +8439,11 @@ func NewUserHandler(userUC UserUsecase, logger *slog.Logger, botToken string) *U
 package dto
 
 type RegisterRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Password string `json:"password"` // сырой пароль, только для входа
+	Email string `json:"email"`
 }
 type LoginRequest struct {
 	Email    string `json:"email"`
-	Password string `json:"password"` // сырой пароль, только для входа
+	Password string `json:"password"`
 }
 type Responce2FA struct {
 	Status bool `json:"status"`
@@ -5558,6 +8451,16 @@ type Responce2FA struct {
 type Request2FA struct {
 	InputCode string `json:"input_code"`
 	Email     string `json:"email"`
+}
+type Request2FARegister struct {
+	Username  string `json:"username"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
+	InputCode string `json:"input_code"`
+}
+
+type RequestSetEmail struct {
+	Email string `json:"email"`
 }
 
 ```
@@ -5641,10 +8544,12 @@ type User struct {
 	CreatedAt time.Time `json:"-"`
 }
 type UserRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	UserID   int    `json:"user_id"`
+	Username    string `json:"username"`
+	Email       string `json:"email"`
+	UserID      int    `json:"user_id"`
+	HasPassword bool   `json:"has_password"`
 }
+
 type UserWeb struct {
 	UserID   int    `json:"user_id"`
 	Email    string `json:"email"`
@@ -5655,11 +8560,12 @@ func (u *UserRequest) ToRequest(e *entity.UserWeb) {
 	u.Email = e.Email
 	u.UserID = e.UserID
 	u.Username = e.Username
+	u.HasPassword = e.HasPassword
 }
 
 type UpdateProfileRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	Username *string `json:"username"`
+	Email    *string `json:"email"`
 }
 type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password"`
@@ -5668,6 +8574,10 @@ type ChangePasswordRequest struct {
 type TelegramLinkResponse struct {
 	Linked   bool   `json:"linked"`
 	Username string `json:"username,omitempty"`
+}
+type SetEmailPasswordRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 ```
@@ -5782,9 +8692,13 @@ package entity
 
 type VerificationEmail string
 
-type LoginResult struct {
+type AuthResult struct {
 	SessionToken string
 	Requires2FA  bool
+}
+
+type EmailResult struct {
+	Requires2FA bool
 }
 
 ```
@@ -5809,6 +8723,7 @@ type UserWeb struct {
 	Email        string
 	Username     string
 	PasswordHash string
+	HasPassword  bool
 }
 
 type UserTg struct {
@@ -5849,6 +8764,56 @@ package customErrors
 import "errors"
 
 var ErrUserAlreadyExists error = errors.New("user already exists")
+
+```
+
+---
+
+## File: todo-users\internal\mailer\mailer.go
+
+```
+package mailer
+
+import (
+	"fmt"
+	"mime"
+	"net/smtp"
+)
+
+type Config struct {
+	Host     string
+	Port     string
+	Username string
+	Password string
+	From     string
+}
+
+type SMTPMailer struct {
+	cfg Config
+}
+
+func New(cfg Config) *SMTPMailer {
+	return &SMTPMailer{cfg: cfg}
+}
+
+func (m *SMTPMailer) Send2FACode(to string, code string) error {
+	subject := mime.BEncoding.Encode("UTF-8", "Код подтверждения")
+	body := fmt.Sprintf(
+		"Ваш код подтверждения: %s\r\n\r\nКод действителен 5 минут. Если вы не запрашивали вход — просто игнорируйте это письмо.",
+		code,
+	)
+
+	msg := []byte(fmt.Sprintf(
+		"From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s\r\n",
+		m.cfg.From, to, subject, body,
+	))
+
+	addr := fmt.Sprintf("%s:%s", m.cfg.Host, m.cfg.Port)
+
+	// Для порта 587 (STARTTLS)
+	auth := smtp.PlainAuth("", m.cfg.Username, m.cfg.Password, m.cfg.Host)
+	return smtp.SendMail(addr, auth, m.cfg.From, []string{to}, msg)
+}
 
 ```
 
@@ -5932,13 +8897,14 @@ package repository
 
 import (
 	"context"
+	"proj/internal/entity"
 )
 
-func (s *PostgresStorage) CreateUserWeb(ctx context.Context, email string, passwordHash string, username string) error {
+func (s *PostgresStorage) CreateUserWeb(ctx context.Context, email entity.VerificationEmail, passwordHash string, username string) (int, error) {
 	// 1. Открываем транзакцию
 	tx, err := s.DB.BeginTxx(ctx, nil)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	// Если что-то пойдет не так, defer автоматически откатит изменения
 	defer tx.Rollback()
@@ -5949,20 +8915,20 @@ func (s *PostgresStorage) CreateUserWeb(ctx context.Context, email string, passw
 
 	err = tx.GetContext(ctx, &lastInsertID, queryUsers, username)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// 3. Вставляем в таблицу user_passwords (БЕЗ username, его там нет!)
 	queryCreds := `INSERT INTO user_passwords (user_id, email, password_hash) VALUES ($1, $2, $3)`
 	_, err = tx.ExecContext(ctx, queryCreds, lastInsertID, email, passwordHash)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Записываем полученный ID обратно в структуру, чтобы usecase знал его
 
 	// 4. Применяем изменения, если всё прошло гладко
-	return tx.Commit()
+	return lastInsertID, tx.Commit()
 }
 
 func (s *PostgresStorage) CreateUserTg(ctx context.Context, ID int64, username string) error {
@@ -6003,9 +8969,10 @@ package repository
 
 import (
 	"context"
+	"proj/internal/entity"
 )
 
-func (s *PostgresStorage) ExistsWeb(ctx context.Context, email string) (bool, error) {
+func (s *PostgresStorage) ExistsWeb(ctx context.Context, email entity.VerificationEmail) (bool, error) {
 	var exists bool
 
 	query := `SELECT EXISTS(SELECT 1 FROM user_passwords WHERE email = $1)`
@@ -6080,8 +9047,7 @@ func (s *PostgresStorage) FindByEmail(ctx context.Context, email entity.Verifica
 	if err != nil {
 		return nil, err
 	}
-	entityUser := user.ToEntitiy()
-	return &entityUser, nil
+	return user.ToEntitiy(), nil
 }
 
 ```
@@ -6095,6 +9061,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"proj/internal/entity"
 )
 
@@ -6106,18 +9073,27 @@ func (s *PostgresStorage) FindByIdTg(ctx context.Context, tgID int64) (int, erro
 }
 
 func (s *PostgresStorage) FindByIdWeb(ctx context.Context, userID int) (*entity.UserWeb, error) {
+	var row struct {
+		Username string         `db:"username"`
+		Email    sql.NullString `db:"email"`
+	}
+
 	query := `SELECT u.username, up.email 
 FROM users u 
-JOIN user_passwords up ON u.id = up.user_id 
+LEFT JOIN user_passwords up ON u.id = up.user_id 
 WHERE u.id = $1`
-	user := entity.UserWeb{
-		UserID: userID,
-	}
-	err := s.DB.GetContext(ctx, &user, query, userID)
+
+	err := s.DB.GetContext(ctx, &row, query, userID)
 	if err != nil {
 		return nil, err
 	}
 
+	user := entity.UserWeb{
+		UserID:      userID,
+		Username:    row.Username,
+		Email:       row.Email.String, // "" если NULL
+		HasPassword: row.Email.Valid,  // true только если есть строка в user_passwords
+	}
 	return &user, nil
 }
 
@@ -6153,6 +9129,12 @@ func (s *PostgresStorage) GetTelegramLinkByUserID(ctx context.Context, userID in
 	return &link_entity, nil
 }
 
+func (s *PostgresStorage) LinkWebAccount(ctx context.Context, userID int, email entity.VerificationEmail, passwordHash string) error {
+	queryCreds := `INSERT INTO user_passwords (user_id, email, password_hash) VALUES ($1, $2, $3)`
+	_, err := s.DB.ExecContext(ctx, queryCreds, userID, email, passwordHash)
+	return err
+}
+
 ```
 
 ---
@@ -6162,22 +9144,18 @@ func (s *PostgresStorage) GetTelegramLinkByUserID(ctx context.Context, userID in
 ```
 package repository
 
-import "context"
+import (
+	"context"
+	"proj/internal/entity"
+)
 
-func (s *PostgresStorage) UpdateProfile(ctx context.Context, userID int, username, email string) error {
-	tx, err := s.DB.BeginTxx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	if _, err := tx.ExecContext(ctx, `UPDATE users SET username = $1 WHERE id = $2`, username, userID); err != nil {
-		return err
-	}
-	if _, err := tx.ExecContext(ctx, `UPDATE user_passwords SET email = $1 WHERE user_id = $2`, email, userID); err != nil {
-		return err
-	}
-	return tx.Commit()
+func (s *PostgresStorage) UpdateUsername(ctx context.Context, userID int, username string) error {
+	_, err := s.DB.ExecContext(ctx, `UPDATE users SET username = $1 WHERE id = $2`, username, userID)
+	return err
+}
+func (s *PostgresStorage) UpdateEmail(ctx context.Context, userID int, email entity.VerificationEmail) error {
+	_, err := s.DB.ExecContext(ctx, `UPDATE user_passwords SET email = $1 WHERE user_id = $2`, email, userID)
+	return err
 }
 
 func (s *PostgresStorage) UpdatePasswordHash(ctx context.Context, userID int, passwordHash string) error {
@@ -6221,8 +9199,8 @@ type UserTg struct {
 	UserID   int    `db:"user_id"`
 }
 
-func (u UserWeb) ToEntitiy() entity.UserWeb {
-	return entity.UserWeb{
+func (u UserWeb) ToEntitiy() *entity.UserWeb {
+	return &entity.UserWeb{
 		UserID:       u.UserID,
 		Email:        u.Email,
 		Username:     u.Username,
@@ -6356,22 +9334,25 @@ import (
 type UserUsecaseImpl struct {
 	UserRepo UserRepository
 	AuthRepo VerificationRepository
+	Mailer   Mailer
 }
 
 type UserRepository interface {
-	CreateUserWeb(ctx context.Context, email string, passwordHash string, username string) error
+	CreateUserWeb(ctx context.Context, email entity.VerificationEmail, passwordHash string, username string) (int, error)
 	CreateUserTg(ctx context.Context, ID int64, username string) error
-	ExistsWeb(ctx context.Context, email string) (bool, error)
+	ExistsWeb(ctx context.Context, email entity.VerificationEmail) (bool, error)
 	ExistsTg(ctx context.Context, ID int64) (bool, error)
 	FindByIdTg(ctx context.Context, userID int64) (int, error)
 	FindByIdWeb(ctx context.Context, userID int) (*entity.UserWeb, error)
 	FindByEmail(ctx context.Context, email entity.VerificationEmail) (*entity.UserWeb, error)
 	CreateSession(ctx context.Context, userID int) (string, error)
 	FindUserIDBySession(ctx context.Context, sessionID string) (int, error)
-	UpdateProfile(ctx context.Context, userID int, username, email string) error
+	UpdateUsername(ctx context.Context, userID int, username string) error
+	UpdateEmail(ctx context.Context, userID int, email entity.VerificationEmail) error
 	UpdatePasswordHash(ctx context.Context, userID int, passwordHash string) error
 	LinkTelegramAccount(ctx context.Context, userID int, tgID int64, username string) error
 	GetTelegramLinkByUserID(ctx context.Context, userID int) (*entity.TelegramLink, error)
+	LinkWebAccount(ctx context.Context, userID int, email entity.VerificationEmail, passwordHash string) error
 }
 
 type VerificationRepository interface {
@@ -6379,9 +9360,12 @@ type VerificationRepository interface {
 	Get2FA(ctx context.Context, email entity.VerificationEmail) (string, error)
 	Delete2FA(ctx context.Context, email entity.VerificationEmail) error
 }
+type Mailer interface {
+	Send2FACode(to string, code string) error
+}
 
-func NewUserUsecase(userRepo UserRepository, authRepo VerificationRepository) *UserUsecaseImpl {
-	return &UserUsecaseImpl{UserRepo: userRepo, AuthRepo: authRepo}
+func NewUserUsecase(userRepo UserRepository, authRepo VerificationRepository, mailer Mailer) *UserUsecaseImpl {
+	return &UserUsecaseImpl{UserRepo: userRepo, AuthRepo: authRepo, Mailer: mailer}
 }
 
 ```
@@ -6445,18 +9429,12 @@ package usecase
 
 import (
 	"context"
-	"crypto/rand"
-	"fmt"
-	"log"
-	"math/big"
 	"proj/internal/entity"
-	customErrors "proj/internal/errors"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (uc *UserUsecaseImpl) LoginUserWeb(ctx context.Context, email entity.VerificationEmail, password string) (*entity.LoginResult, error) {
+func (uc *UserUsecaseImpl) LoginUserWeb(ctx context.Context, email entity.VerificationEmail, password string) (*entity.AuthResult, error) {
 	user, err := uc.UserRepo.FindByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -6465,34 +9443,15 @@ func (uc *UserUsecaseImpl) LoginUserWeb(ctx context.Context, email entity.Verifi
 	if err != nil {
 		return nil, err
 	}
-	unique_code, err := rand.Int(rand.Reader, big.NewInt(900000))
-	if err != nil {
-		return nil, err
-	}
-	unique_code_str := fmt.Sprintf("%d", unique_code.Int64()+100000)
-	go func() {
-		log.Printf("🔥 КОД ДЛЯ ПОЧТЫ %s: %s", email, unique_code_str)
-		//Горутина для будущего функционала отправки письма
-	}()
-	if err = uc.AuthRepo.Save2FA(ctx, email, unique_code_str, 5*time.Minute); err != nil {
-		return nil, err
-	}
-	return &entity.LoginResult{Requires2FA: true}, nil
+	err = uc.Send2FACode(ctx, email)
+	return &entity.AuthResult{Requires2FA: true}, err
 }
-func (uc *UserUsecaseImpl) Verify2FA(ctx context.Context, email entity.VerificationEmail, inputCode string) (*entity.LoginResult, error) {
+func (uc *UserUsecaseImpl) Verify2FA(ctx context.Context, email entity.VerificationEmail, inputCode string) (*entity.AuthResult, error) {
 	user, err := uc.UserRepo.FindByEmail(ctx, entity.VerificationEmail(email))
 	if err != nil {
 		return nil, err
 	}
-	savedCode, err := uc.AuthRepo.Get2FA(ctx, email)
-	if err != nil {
-		return nil, err
-	}
-	if savedCode != inputCode {
-		return nil, customErrors.ErrInvalid2FACode
-	}
-
-	err = uc.AuthRepo.Delete2FA(ctx, email)
+	err = uc.Verify2FACode(ctx, email, inputCode)
 	if err != nil {
 		return nil, err
 	}
@@ -6500,7 +9459,7 @@ func (uc *UserUsecaseImpl) Verify2FA(ctx context.Context, email entity.Verificat
 	if err != nil {
 		return nil, err
 	}
-	return &entity.LoginResult{
+	return &entity.AuthResult{
 		SessionToken: sessionID,
 		Requires2FA:  false,
 	}, nil
@@ -6517,29 +9476,48 @@ package usecase
 
 import (
 	"context"
+	"proj/internal/entity"
 	customErrors "proj/internal/errors"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (uc *UserUsecaseImpl) RegisterUserWeb(ctx context.Context, email, username, password string) error {
+func (uc *UserUsecaseImpl) RegisterUserWebSend2FA(ctx context.Context, email entity.VerificationEmail) (*entity.AuthResult, error) {
 	exists, err := uc.UserRepo.ExistsWeb(ctx, email)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !exists {
-		passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		err = uc.Send2FACode(ctx, email)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		err = uc.UserRepo.CreateUserWeb(ctx, email, string(passwordHash), username)
-		if err != nil {
-			return err
-		}
-		return nil
-	} else {
-		return customErrors.ErrUserAlreadyExists
+		return &entity.AuthResult{Requires2FA: true}, nil
 	}
+	return nil, customErrors.ErrUserAlreadyExists
+
+}
+func (uc *UserUsecaseImpl) RegisterUserWeb(ctx context.Context, email entity.VerificationEmail, username, password, inputCode string) (*entity.AuthResult, error) {
+	err := uc.Verify2FACode(ctx, email, inputCode)
+	if err != nil {
+		return nil, err
+	}
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	userID, err := uc.UserRepo.CreateUserWeb(ctx, email, string(passwordHash), username)
+	if err != nil {
+		return nil, err
+	}
+	sessionID, err := uc.UserRepo.CreateSession(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return &entity.AuthResult{
+		SessionToken: sessionID,
+		Requires2FA:  false,
+	}, nil
 }
 
 func (uc *UserUsecaseImpl) RegisterUserTg(ctx context.Context, ID int64, username string) error {
@@ -6556,6 +9534,95 @@ func (uc *UserUsecaseImpl) RegisterUserTg(ctx context.Context, ID int64, usernam
 	} else {
 		return customErrors.ErrUserAlreadyExists
 	}
+}
+
+```
+
+---
+
+## File: todo-users\internal\usecase\usecase_send_and_verify.go
+
+```
+package usecase
+
+import (
+	"context"
+	"crypto/rand"
+	"fmt"
+	"log"
+	"math/big"
+	"proj/internal/entity"
+	customErrors "proj/internal/errors"
+	"time"
+)
+
+func (uc UserUsecaseImpl) Send2FACode(ctx context.Context, email entity.VerificationEmail) error {
+	unique_code, err := rand.Int(rand.Reader, big.NewInt(900000))
+	if err != nil {
+		return err
+	}
+	unique_code_str := fmt.Sprintf("%d", unique_code.Int64()+100000)
+	log.Printf("Code %s", unique_code_str)
+	go func() {
+		if err := uc.Mailer.Send2FACode(string(email), unique_code_str); err != nil {
+			log.Printf("failed to send 2FA email to %s: %v", email, err)
+		}
+	}()
+	if err = uc.AuthRepo.Save2FA(ctx, email, unique_code_str, 5*time.Minute); err != nil {
+		return err
+	}
+	return nil
+}
+func (uc UserUsecaseImpl) Verify2FACode(ctx context.Context, email entity.VerificationEmail, inputCode string) error {
+	savedCode, err := uc.AuthRepo.Get2FA(ctx, email)
+	if err != nil {
+		return err
+	}
+	if savedCode != inputCode {
+		return customErrors.ErrInvalid2FACode
+	}
+
+	err = uc.AuthRepo.Delete2FA(ctx, email)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+```
+
+---
+
+## File: todo-users\internal\usecase\usecase_set_email.go
+
+```
+package usecase
+
+import (
+	"context"
+	"proj/internal/entity"
+	customErrors "proj/internal/errors"
+
+	"golang.org/x/crypto/bcrypt"
+)
+
+func (uc *UserUsecaseImpl) SetEmail(ctx context.Context, email entity.VerificationEmail) error {
+	exists, err := uc.UserRepo.ExistsWeb(ctx, email)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return customErrors.ErrUserAlreadyExists
+	}
+	return uc.Send2FACode(ctx, email)
+}
+func (uc *UserUsecaseImpl) SetEmailPassword(ctx context.Context, email entity.VerificationEmail, password string, userID int) error {
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	err = uc.UserRepo.LinkWebAccount(ctx, userID, email, string(passwordHash))
+	return err
 }
 
 ```
@@ -6653,12 +9720,38 @@ package usecase
 import (
 	"context"
 	"errors"
+	"proj/internal/entity"
+	customErrors "proj/internal/errors"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (uc *UserUsecaseImpl) UpdateProfile(ctx context.Context, userID int, username, email string) error {
-	return uc.UserRepo.UpdateProfile(ctx, userID, username, email)
+func (uc *UserUsecaseImpl) UpdateUsername(ctx context.Context, userID int, username string) error {
+	return uc.UserRepo.UpdateUsername(ctx, userID, username)
+}
+func (uc *UserUsecaseImpl) UpdateEmail(ctx context.Context, email entity.VerificationEmail) error {
+	exists, err := uc.UserRepo.ExistsWeb(ctx, email)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return customErrors.ErrUserAlreadyExists
+	} else {
+		err = uc.Send2FACode(ctx, email)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (uc *UserUsecaseImpl) UpdateEmailVerify(ctx context.Context, userID int, email entity.VerificationEmail, inputCode string) error {
+	err := uc.Verify2FACode(ctx, email, inputCode)
+	if err != nil {
+		return err
+	}
+	err = uc.UserRepo.UpdateEmail(ctx, userID, email)
+	return err
 }
 
 func (uc *UserUsecaseImpl) ChangePassword(ctx context.Context, userID int, oldPassword, newPassword string) error {
@@ -6734,7 +9827,7 @@ func (uc *UserUsecaseImpl) LinkTelegram(ctx context.Context, userID int, tgID in
 	return uc.UserRepo.LinkTelegramAccount(ctx, userID, tgID, tgUsername)
 }
 
-func (uc *UserUsecaseImpl) LoginByTelegram(ctx context.Context, tgID int64, tgUsername string) (*entity.LoginResult, error) {
+func (uc *UserUsecaseImpl) LoginByTelegram(ctx context.Context, tgID int64, tgUsername string) (*entity.AuthResult, error) {
 	userID, err := uc.UserRepo.FindByIdTg(ctx, tgID)
 	if err != nil {
 		if err := uc.UserRepo.CreateUserTg(ctx, tgID, tgUsername); err != nil {
@@ -6751,7 +9844,7 @@ func (uc *UserUsecaseImpl) LoginByTelegram(ctx context.Context, tgID int64, tgUs
 	if err != nil {
 		return nil, err
 	}
-	return &entity.LoginResult{SessionToken: sessionID, Requires2FA: false}, nil
+	return &entity.AuthResult{SessionToken: sessionID, Requires2FA: false}, nil
 }
 
 func (uc *UserUsecaseImpl) GetTelegramLink(ctx context.Context, userID int) (*entity.TelegramLink, error) {
@@ -6765,7 +9858,7 @@ func (uc *UserUsecaseImpl) GetTelegramLink(ctx context.Context, userID int) (*en
 ## File: todo-users\migrations\000001_init.down.sql
 
 ```
-DROP TABLE IF EXISTS tasks;
+DROP TABLE IF EXISTS user_sessions, user_telegram, user_passwords, users CASCADE;
 ```
 
 ---
@@ -6773,197 +9866,30 @@ DROP TABLE IF EXISTS tasks;
 ## File: todo-users\migrations\000001_init.up.sql
 
 ```
-CREATE TABLE tasks (
-    id SERIAL PRIMARY KEY,
-    title TEXT NOT NULL,
-    done BOOLEAN DEFAULT false
-);
-```
-
----
-
-## File: todo-users\migrations\000002_add_deleted_at.down.sql
-
-```
-ALTER TABLE tasks DROP COLUMN deleted_at;
-```
-
----
-
-## File: todo-users\migrations\000002_add_deleted_at.up.sql
-
-```
-ALTER TABLE tasks ADD COLUMN deleted_at TIMESTAMPTZ DEFAULT NULL;
-```
-
----
-
-## File: todo-users\migrations\000003_add_users.down.sql
-
-```
-DROP TABLE IF EXISTS users CASCADE;
-ALTER TABLE tasks DROP COLUMN IF EXISTS user_id;
-```
-
----
-
-## File: todo-users\migrations\000003_add_users.up.sql
-
-```
--- 1. Создаем таблицу пользователей
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT PRIMARY KEY, -- Сюда будем писать Telegram ID (он большой, поэтому BIGINT)
-    username VARCHAR(255) DEFAULT '',
-    first_name VARCHAR(255) DEFAULT '',
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
--- 2. Добавляем колонку user_id в существующую таблицу tasks
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id BIGINT;
-
--- 3. Накатываем CONSTRAINT (внешний ключ), который связывает tasks и users
-ALTER TABLE tasks 
-ADD CONSTRAINT fk_tasks_user 
-FOREIGN KEY (user_id) 
-REFERENCES users(id) 
-ON DELETE CASCADE;
-```
-
----
-
-## File: todo-users\migrations\000004_add_user_task_id.down.sql
-
-```
-ALTER TABLE tasks DROP COLUMN IF EXISTS user_task_id;
-```
-
----
-
-## File: todo-users\migrations\000004_add_user_task_id.up.sql
-
-```
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_task_id INT;
-```
-
----
-
-## File: todo-users\migrations\000005_add_user_migration.down.sql
-
-```
-DROP TABLE IF EXISTS user_telegram CASCADE;
-DROP TABLE IF EXISTS user_passwords CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-ALTER TABLE tasks DROP COLUMN IF EXISTS user_id;
-
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT PRIMARY KEY, -- Сюда будем писать Telegram ID (он большой, поэтому BIGINT)
-    username VARCHAR(255) DEFAULT '',
-    first_name VARCHAR(255) DEFAULT '',
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id BIGINT;
-
--- 3. Накатываем CONSTRAINT (внешний ключ), который связывает tasks и users
-ALTER TABLE tasks 
-ADD CONSTRAINT fk_tasks_user 
-FOREIGN KEY (user_id) 
-REFERENCES users(id) 
-ON DELETE CASCADE;
-```
-
----
-
-## File: todo-users\migrations\000005_add_user_migration.up.sql
-
-```
--- 1. Удаляем старые таблицы каскадно (связи в tasks отвалятся сами)
-DROP TABLE IF EXISTS users CASCADE;
-
--- 2. На всякий случай подчищаем колонку в tasks, если она осталась
-ALTER TABLE tasks DROP COLUMN IF EXISTS user_id;
-
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    username TEXT,          -- Отображаемое имя в твоем приложении
+    username TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
-
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS user_id INT;
-
--- 3. Накатываем CONSTRAINT (внешний ключ), который связывает tasks и users
-ALTER TABLE tasks 
-ADD CONSTRAINT fk_tasks_user 
-FOREIGN KEY (user_id) 
-REFERENCES users(id) 
-ON DELETE CASCADE;
 
 CREATE TABLE user_passwords (
     user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL -- Хэш пароля (никогда не храним в чистом виде!)
+    password_hash TEXT NOT NULL
 );
 
 CREATE TABLE user_telegram (
-    tg_id BIGINT PRIMARY KEY, -- ID пользователя внутри Telegram
+    tg_id BIGINT PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    username TEXT             -- TG-юзернейм для удобства
+    username TEXT,
+    CONSTRAINT uq_user_telegram_user_id UNIQUE (user_id)
 );
-```
 
----
-
-## File: todo-users\migrations\000006_add_task_description.down.sql
-
-```
-ALTER TABLE tasks DROP COLUMN IF EXISTS description ;
-```
-
----
-
-## File: todo-users\migrations\000006_add_task_description.up.sql
-
-```
-ALTER TABLE tasks ADD COLUMN IF NOT EXISTS description TEXT;
-```
-
----
-
-## File: todo-users\migrations\000007_add_sessions.down.sql
-
-```
-DROP INDEX IF EXISTS idx_sessions_expires_at;
-DROP TABLE IF EXISTS user_sessions;
-
-```
-
----
-
-## File: todo-users\migrations\000007_add_sessions.up.sql
-
-```
 CREATE TABLE user_sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(), -- Уникальный токен сессии
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
--- Индекс для быстрого поиска сессии при каждом запросе
-CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON user_sessions(expires_at);
-```
-
----
-
-## File: todo-users\migrations\000008_add_user_telegram_unique.down.sql
-
-```
-ALTER TABLE user_telegram DROP CONSTRAINT IF EXISTS uq_user_telegram_user_id;
-```
-
----
-
-## File: todo-users\migrations\000008_add_user_telegram_unique.up.sql
-
-```
-ALTER TABLE user_telegram ADD CONSTRAINT uq_user_telegram_user_id UNIQUE (user_id);
+CREATE INDEX idx_sessions_expires_at ON user_sessions(expires_at);
 ```

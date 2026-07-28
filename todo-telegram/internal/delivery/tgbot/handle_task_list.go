@@ -79,6 +79,7 @@ func (b *BotServer) handleTaskView(ctx context.Context, taskID int) (string, tgb
 	var status_text string
 	var status_delete string
 	var status_delete_query string
+	button_switch_delete_status := tgbotapi.NewInlineKeyboardButtonData(status_text, fmt.Sprintf("mark_as_done:%d", taskID))
 	switch task.Done {
 	case true:
 		status = "✅"
@@ -88,16 +89,21 @@ func (b *BotServer) handleTaskView(ctx context.Context, taskID int) (string, tgb
 		status_text = "Отметить выполненным✅"
 	}
 	if task.DeletedAt == nil {
+		button_switch_delete_status.Text = status_text
 		status_delete = "Удалить задачу⛔"
 		status_delete_query = "delete_task"
 	} else {
+		status_text = fmt.Sprintf("del_perm_confirm:%d", taskID)
+		button_switch_delete_status.Text = "Удалить навсегда🗑️"
+		button_switch_delete_status.CallbackData = &status_text
 		status_delete = "Восстановить задачу🔄"
 		status_delete_query = "recover_task"
 	}
+
 	text := fmt.Sprintf("Заголовок: %s\nСтатус выполнения: %s\nОписание: %s", task.Title, status, task.Description)
 	keyboardMarkup := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData(status_text, fmt.Sprintf("mark_as_done:%d", taskID)),
+			button_switch_delete_status,
 			tgbotapi.NewInlineKeyboardButtonData(status_delete, fmt.Sprintf("%s:%d", status_delete_query, taskID)),
 		),
 		tgbotapi.NewInlineKeyboardRow(

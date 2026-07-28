@@ -24,6 +24,7 @@ const (
 	TaskService_GetRemovedTasksByUserID_FullMethodName = "/task.TaskService/GetRemovedTasksByUserID"
 	TaskService_GetTask_FullMethodName                 = "/task.TaskService/GetTask"
 	TaskService_DeleteTask_FullMethodName              = "/task.TaskService/DeleteTask"
+	TaskService_DeleteForeverTask_FullMethodName       = "/task.TaskService/DeleteForeverTask"
 	TaskService_RecoverTask_FullMethodName             = "/task.TaskService/RecoverTask"
 	TaskService_UpdateDescription_FullMethodName       = "/task.TaskService/UpdateDescription"
 	TaskService_MarkAsDone_FullMethodName              = "/task.TaskService/MarkAsDone"
@@ -38,6 +39,7 @@ type TaskServiceClient interface {
 	GetRemovedTasksByUserID(ctx context.Context, in *GetTasksByUserIDRequest, opts ...grpc.CallOption) (*TaskList, error)
 	GetTask(ctx context.Context, in *GetTaskRequest, opts ...grpc.CallOption) (*Task, error)
 	DeleteTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error)
+	DeleteForeverTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error)
 	RecoverTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error)
 	UpdateDescription(ctx context.Context, in *UpdateDescriptionRequest, opts ...grpc.CallOption) (*Empty, error)
 	MarkAsDone(ctx context.Context, in *MarkAsDoneRequest, opts ...grpc.CallOption) (*Empty, error)
@@ -101,6 +103,16 @@ func (c *taskServiceClient) DeleteTask(ctx context.Context, in *TaskIDRequest, o
 	return out, nil
 }
 
+func (c *taskServiceClient) DeleteForeverTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, TaskService_DeleteForeverTask_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *taskServiceClient) RecoverTask(ctx context.Context, in *TaskIDRequest, opts ...grpc.CallOption) (*Empty, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(Empty)
@@ -140,6 +152,7 @@ type TaskServiceServer interface {
 	GetRemovedTasksByUserID(context.Context, *GetTasksByUserIDRequest) (*TaskList, error)
 	GetTask(context.Context, *GetTaskRequest) (*Task, error)
 	DeleteTask(context.Context, *TaskIDRequest) (*Empty, error)
+	DeleteForeverTask(context.Context, *TaskIDRequest) (*Empty, error)
 	RecoverTask(context.Context, *TaskIDRequest) (*Empty, error)
 	UpdateDescription(context.Context, *UpdateDescriptionRequest) (*Empty, error)
 	MarkAsDone(context.Context, *MarkAsDoneRequest) (*Empty, error)
@@ -167,6 +180,9 @@ func (UnimplementedTaskServiceServer) GetTask(context.Context, *GetTaskRequest) 
 }
 func (UnimplementedTaskServiceServer) DeleteTask(context.Context, *TaskIDRequest) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteTask not implemented")
+}
+func (UnimplementedTaskServiceServer) DeleteForeverTask(context.Context, *TaskIDRequest) (*Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteForeverTask not implemented")
 }
 func (UnimplementedTaskServiceServer) RecoverTask(context.Context, *TaskIDRequest) (*Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method RecoverTask not implemented")
@@ -288,6 +304,24 @@ func _TaskService_DeleteTask_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TaskService_DeleteForeverTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TaskIDRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TaskServiceServer).DeleteForeverTask(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TaskService_DeleteForeverTask_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TaskServiceServer).DeleteForeverTask(ctx, req.(*TaskIDRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _TaskService_RecoverTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TaskIDRequest)
 	if err := dec(in); err != nil {
@@ -368,6 +402,10 @@ var TaskService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteTask",
 			Handler:    _TaskService_DeleteTask_Handler,
+		},
+		{
+			MethodName: "DeleteForeverTask",
+			Handler:    _TaskService_DeleteForeverTask_Handler,
 		},
 		{
 			MethodName: "RecoverTask",

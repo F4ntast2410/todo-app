@@ -12,6 +12,7 @@ service TaskService {
   rpc GetRemovedTasksByUserID(GetTasksByUserIDRequest) returns (TaskList);
   rpc GetTask(GetTaskRequest) returns (Task);
   rpc DeleteTask(TaskIDRequest) returns (Empty);
+  rpc DeleteForeverTask(TaskIDRequest) returns (Empty);
   rpc RecoverTask(TaskIDRequest) returns (Empty);
   rpc UpdateDescription(UpdateDescriptionRequest) returns (Empty);
   rpc MarkAsDone(MarkAsDoneRequest) returns (Empty);

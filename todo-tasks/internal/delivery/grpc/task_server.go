@@ -31,6 +31,7 @@ type TaskUsecase interface {
 	GetRemovedTasksByUserID(ctx context.Context, userID int) ([]entity.Task, error)
 	GetTask(ctx context.Context, taskID int) (*entity.Task, error)
 	DeleteTask(ctx context.Context, id int) error
+	DeleteForeverTask(ctx context.Context, id int) error
 	RecoverTask(ctx context.Context, id int) error
 	UpdateDescription(ctx context.Context, taskID int, newDesc string) error
 	MarkAsDone(ctx context.Context, id int, status bool) error
@@ -91,6 +92,13 @@ func (s *TaskServer) GetTask(ctx context.Context, req *task.GetTaskRequest) (*ta
 
 func (s *TaskServer) DeleteTask(ctx context.Context, req *task.TaskIDRequest) (*task.Empty, error) {
 	err := s.TaskUC.DeleteTask(ctx, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	return &task.Empty{}, nil
+}
+func (s *TaskServer) DeleteForeverTask(ctx context.Context, req *task.TaskIDRequest) (*task.Empty, error) {
+	err := s.TaskUC.DeleteForeverTask(ctx, int(req.Id))
 	if err != nil {
 		return nil, err
 	}

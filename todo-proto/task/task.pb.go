@@ -524,7 +524,7 @@ const file_task_task_proto_rawDesc = "" +
 	"\bTaskList\x12 \n" +
 	"\x05tasks\x18\x01 \x03(\v2\n" +
 	".task.TaskR\x05tasks\"\a\n" +
-	"\x05Empty2\xd1\x03\n" +
+	"\x05Empty2\x88\x04\n" +
 	"\vTaskService\x121\n" +
 	"\n" +
 	"CreateTask\x12\x17.task.CreateTaskRequest\x1a\n" +
@@ -534,7 +534,8 @@ const file_task_task_proto_rawDesc = "" +
 	"\aGetTask\x12\x14.task.GetTaskRequest\x1a\n" +
 	".task.Task\x12.\n" +
 	"\n" +
-	"DeleteTask\x12\x13.task.TaskIDRequest\x1a\v.task.Empty\x12/\n" +
+	"DeleteTask\x12\x13.task.TaskIDRequest\x1a\v.task.Empty\x125\n" +
+	"\x11DeleteForeverTask\x12\x13.task.TaskIDRequest\x1a\v.task.Empty\x12/\n" +
 	"\vRecoverTask\x12\x13.task.TaskIDRequest\x1a\v.task.Empty\x12@\n" +
 	"\x11UpdateDescription\x12\x1e.task.UpdateDescriptionRequest\x1a\v.task.Empty\x122\n" +
 	"\n" +
@@ -573,19 +574,21 @@ var file_task_task_proto_depIdxs = []int32{
 	1,  // 4: task.TaskService.GetRemovedTasksByUserID:input_type -> task.GetTasksByUserIDRequest
 	2,  // 5: task.TaskService.GetTask:input_type -> task.GetTaskRequest
 	3,  // 6: task.TaskService.DeleteTask:input_type -> task.TaskIDRequest
-	3,  // 7: task.TaskService.RecoverTask:input_type -> task.TaskIDRequest
-	4,  // 8: task.TaskService.UpdateDescription:input_type -> task.UpdateDescriptionRequest
-	5,  // 9: task.TaskService.MarkAsDone:input_type -> task.MarkAsDoneRequest
-	6,  // 10: task.TaskService.CreateTask:output_type -> task.Task
-	7,  // 11: task.TaskService.GetTasksByUserID:output_type -> task.TaskList
-	7,  // 12: task.TaskService.GetRemovedTasksByUserID:output_type -> task.TaskList
-	6,  // 13: task.TaskService.GetTask:output_type -> task.Task
-	8,  // 14: task.TaskService.DeleteTask:output_type -> task.Empty
-	8,  // 15: task.TaskService.RecoverTask:output_type -> task.Empty
-	8,  // 16: task.TaskService.UpdateDescription:output_type -> task.Empty
-	8,  // 17: task.TaskService.MarkAsDone:output_type -> task.Empty
-	10, // [10:18] is the sub-list for method output_type
-	2,  // [2:10] is the sub-list for method input_type
+	3,  // 7: task.TaskService.DeleteForeverTask:input_type -> task.TaskIDRequest
+	3,  // 8: task.TaskService.RecoverTask:input_type -> task.TaskIDRequest
+	4,  // 9: task.TaskService.UpdateDescription:input_type -> task.UpdateDescriptionRequest
+	5,  // 10: task.TaskService.MarkAsDone:input_type -> task.MarkAsDoneRequest
+	6,  // 11: task.TaskService.CreateTask:output_type -> task.Task
+	7,  // 12: task.TaskService.GetTasksByUserID:output_type -> task.TaskList
+	7,  // 13: task.TaskService.GetRemovedTasksByUserID:output_type -> task.TaskList
+	6,  // 14: task.TaskService.GetTask:output_type -> task.Task
+	8,  // 15: task.TaskService.DeleteTask:output_type -> task.Empty
+	8,  // 16: task.TaskService.DeleteForeverTask:output_type -> task.Empty
+	8,  // 17: task.TaskService.RecoverTask:output_type -> task.Empty
+	8,  // 18: task.TaskService.UpdateDescription:output_type -> task.Empty
+	8,  // 19: task.TaskService.MarkAsDone:output_type -> task.Empty
+	11, // [11:20] is the sub-list for method output_type
+	2,  // [2:11] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
 	2,  // [2:2] is the sub-list for extension extendee
 	0,  // [0:2] is the sub-list for field type_name

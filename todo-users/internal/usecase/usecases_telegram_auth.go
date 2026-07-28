@@ -49,7 +49,7 @@ func (uc *UserUsecaseImpl) LinkTelegram(ctx context.Context, userID int, tgID in
 	return uc.UserRepo.LinkTelegramAccount(ctx, userID, tgID, tgUsername)
 }
 
-func (uc *UserUsecaseImpl) LoginByTelegram(ctx context.Context, tgID int64, tgUsername string) (*entity.LoginResult, error) {
+func (uc *UserUsecaseImpl) LoginByTelegram(ctx context.Context, tgID int64, tgUsername string) (*entity.AuthResult, error) {
 	userID, err := uc.UserRepo.FindByIdTg(ctx, tgID)
 	if err != nil {
 		if err := uc.UserRepo.CreateUserTg(ctx, tgID, tgUsername); err != nil {
@@ -62,11 +62,11 @@ func (uc *UserUsecaseImpl) LoginByTelegram(ctx context.Context, tgID int64, tgUs
 			return nil, err
 		}
 	}
-	sessionID, err := uc.UserRepo.CreateSession(ctx, userID)
+	sessionID, err := uc.createSessionForUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	return &entity.LoginResult{SessionToken: sessionID, Requires2FA: false}, nil
+	return &entity.AuthResult{SessionToken: sessionID, Requires2FA: false}, nil
 }
 
 func (uc *UserUsecaseImpl) GetTelegramLink(ctx context.Context, userID int) (*entity.TelegramLink, error) {

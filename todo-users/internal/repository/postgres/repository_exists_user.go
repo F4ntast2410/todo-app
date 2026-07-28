@@ -2,9 +2,10 @@ package repository
 
 import (
 	"context"
+	"proj/internal/entity"
 )
 
-func (s *PostgresStorage) ExistsWeb(ctx context.Context, email string) (bool, error) {
+func (s *PostgresStorage) ExistsWeb(ctx context.Context, email entity.VerificationEmail) (bool, error) {
 	var exists bool
 
 	query := `SELECT EXISTS(SELECT 1 FROM user_passwords WHERE email = $1)`

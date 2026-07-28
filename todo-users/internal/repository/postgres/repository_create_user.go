@@ -2,13 +2,14 @@ package repository
 
 import (
 	"context"
+	"proj/internal/entity"
 )
 
-func (s *PostgresStorage) CreateUserWeb(ctx context.Context, email string, passwordHash string, username string) error {
+func (s *PostgresStorage) CreateUserWeb(ctx context.Context, email entity.VerificationEmail, passwordHash string, username string) (int, error) {
 	// 1. Открываем транзакцию
 	tx, err := s.DB.BeginTxx(ctx, nil)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	// Если что-то пойдет не так, defer автоматически откатит изменения
 	defer tx.Rollback()
@@ -19,20 +20,20 @@ func (s *PostgresStorage) CreateUserWeb(ctx context.Context, email string, passw
 
 	err = tx.GetContext(ctx, &lastInsertID, queryUsers, username)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// 3. Вставляем в таблицу user_passwords (БЕЗ username, его там нет!)
 	queryCreds := `INSERT INTO user_passwords (user_id, email, password_hash) VALUES ($1, $2, $3)`
 	_, err = tx.ExecContext(ctx, queryCreds, lastInsertID, email, passwordHash)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	// Записываем полученный ID обратно в структуру, чтобы usecase знал его
 
 	// 4. Применяем изменения, если всё прошло гладко
-	return tx.Commit()
+	return lastInsertID, tx.Commit()
 }
 
 func (s *PostgresStorage) CreateUserTg(ctx context.Context, ID int64, username string) error {

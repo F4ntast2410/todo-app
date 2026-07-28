@@ -57,5 +57,20 @@ func (b *BotServer) handleCallback(query *tgbotapi.CallbackQuery) {
 		b.handlerUpdateDecriptionCallback(query, taskID)
 	case "trash_list":
 		b.handleTrashList(ctx, query)
+	case "del_perm_confirm":
+		taskID, err := strconv.Atoi(data[1])
+		if err != nil {
+			b.logger.Error("error converting string to int", slog.String("error", err.Error()))
+			return
+		}
+		b.handlerDeleteTaskPermanentlyConfirmation(query, taskID)
+	case "delete_perm":
+		taskID, err := strconv.Atoi(data[1])
+		if err != nil {
+			b.logger.Error("error converting string to int", slog.String("error", err.Error()))
+			return
+		}
+		b.handlerDeleteTaskPermanently(ctx, query, taskID)
+
 	}
 }

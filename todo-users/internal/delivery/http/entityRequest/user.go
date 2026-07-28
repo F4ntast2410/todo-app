@@ -11,10 +11,12 @@ type User struct {
 	CreatedAt time.Time `json:"-"`
 }
 type UserRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	UserID   int    `json:"user_id"`
+	Username    string `json:"username"`
+	Email       string `json:"email"`
+	UserID      int    `json:"user_id"`
+	HasPassword bool   `json:"has_password"`
 }
+
 type UserWeb struct {
 	UserID   int    `json:"user_id"`
 	Email    string `json:"email"`
@@ -25,11 +27,13 @@ func (u *UserRequest) ToRequest(e *entity.UserWeb) {
 	u.Email = e.Email
 	u.UserID = e.UserID
 	u.Username = e.Username
+	u.HasPassword = e.HasPassword
 }
 
 type UpdateProfileRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
+	Username *string `json:"username"`
+	Email    *string `json:"email"`
+	NewEmail *string `json:"new_email,omitempty"`
 }
 type ChangePasswordRequest struct {
 	OldPassword string `json:"old_password"`
@@ -38,4 +42,8 @@ type ChangePasswordRequest struct {
 type TelegramLinkResponse struct {
 	Linked   bool   `json:"linked"`
 	Username string `json:"username,omitempty"`
+}
+type SetEmailPasswordRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }

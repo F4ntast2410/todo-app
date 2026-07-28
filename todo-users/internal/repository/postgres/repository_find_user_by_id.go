@@ -2,8 +2,8 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"proj/internal/entity"
-	pgmodel "proj/internal/repository/postgres/entityPostgres"
 )
 
 func (s *PostgresStorage) FindByIdTg(ctx context.Context, tgID int64) (int, error) {
@@ -14,17 +14,26 @@ func (s *PostgresStorage) FindByIdTg(ctx context.Context, tgID int64) (int, erro
 }
 
 func (s *PostgresStorage) FindByIdWeb(ctx context.Context, userID int) (*entity.UserWeb, error) {
-	query := `SELECT u.username, up.email, up.password_hash
-FROM users u 
-JOIN user_passwords up ON u.id = up.user_id 
-WHERE u.id = $1`
-	user := pgmodel.UserWeb{
-		UserID: userID,
+	var row struct {
+		Username string         `db:"username"`
+		Email    sql.NullString `db:"email"`
 	}
-	err := s.DB.GetContext(ctx, &user, query, userID)
+
+	query := `SELECT u.username, up.email 
+FROM users u 
+LEFT JOIN user_passwords up ON u.id = up.user_id 
+WHERE u.id = $1`
+
+	err := s.DB.GetContext(ctx, &row, query, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	return user.ToEntitiy(), nil
+	user := entity.UserWeb{
+		UserID:      userID,
+		Username:    row.Username,
+		Email:       row.Email.String, // "" если NULL
+		HasPassword: row.Email.Valid,  // true только если есть строка в user_passwords
+	}
+	return &user, nil
 }
