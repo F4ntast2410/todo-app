@@ -8,17 +8,16 @@ import (
 )
 
 type Config struct {
-	Env          string `env:"ENV" env-default:"development"`
-	ServerPort   string `env:"SERVER_PORT" env-default:"8080"`
-	GRPCPort     string `env:"GRPC_PORT" env-default:"9090"`
-	DatabaseURL  string `env:"DATABASE_URL" env-required:"true"`
-	BotToken     string `env:"TELEGRAM_BOT_TOKEN"`
-	Redis        RedisConfig
-	SMTPHost     string `env:"SMTP_HOST" env-default:"smtp.gmail.com"`
-	SMTPPort     string `env:"SMTP_PORT" env-default:"587"`
-	SMTPUsername string `env:"SMTP_USERNAME" env-required:"true"`
-	SMTPPassword string `env:"SMTP_PASSWORD" env-required:"true"`
-	SMTPFrom     string `env:"SMTP_FROM" env-required:"true"`
+	Env               string `env:"ENV" env-default:"development"`
+	ServerPort        string `env:"SERVER_PORT" env-default:"8080"`
+	GRPCPort          string `env:"GRPC_PORT" env-default:"9090"`
+	DatabaseURL       string `env:"DATABASE_URL" env-required:"true"`
+	BotToken          string `env:"TELEGRAM_BOT_TOKEN"`
+	Redis             RedisConfig
+	GmailClientID     string `env:"GMAIL_CLIENT_ID" env-required:"true"`
+	GmailClientSecret string `env:"GMAIL_CLIENT_SECRET" env-required:"true"`
+	GmailRefreshToken string `env:"GMAIL_REFRESH_TOKEN" env-required:"true"`
+	GmailFrom         string `env:"GMAIL_FROM" env-required:"true"`
 }
 
 type RedisConfig struct {

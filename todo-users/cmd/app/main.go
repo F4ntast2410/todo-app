@@ -54,11 +54,10 @@ func main() {
 		panic(err)
 	}
 	mailer := mailer.New(mailer.Config{
-		Host:     cfg.SMTPHost,
-		Port:     cfg.SMTPPort,
-		Username: cfg.SMTPUsername,
-		Password: cfg.SMTPPassword,
-		From:     cfg.SMTPFrom,
+		ClientID:     cfg.GmailClientID,
+		ClientSecret: cfg.GmailClientSecret,
+		RefreshToken: cfg.GmailRefreshToken,
+		From:         cfg.GmailFrom,
 	})
 	// Инициализируем слои
 	cache := cache.NewRedisRepository(client)

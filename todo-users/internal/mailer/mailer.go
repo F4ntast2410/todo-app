@@ -1,76 +1,74 @@
 package mailer
 
 import (
-	"crypto/tls"
+	"context"
+	"encoding/base64"
 	"fmt"
 	"mime"
-	"net/smtp"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/gmail/v1"
+	"google.golang.org/api/option"
 )
 
 type Config struct {
-	Host     string
-	Port     string
-	Username string
-	Password string
-	From     string
+	ClientID     string
+	ClientSecret string
+	RefreshToken string
+	From         string
 }
 
-type SMTPMailer struct {
+type GmailAPIMailer struct {
 	cfg Config
 }
 
-func New(cfg Config) *SMTPMailer {
-	return &SMTPMailer{cfg: cfg}
+func New(cfg Config) *GmailAPIMailer {
+	return &GmailAPIMailer{cfg: cfg}
 }
 
-func (m *SMTPMailer) Send2FACode(to string, code string) error {
+func (m *GmailAPIMailer) Send2FACode(to string, code string) error {
+	ctx := context.Background()
+
+	// Настройка OAuth2 конфига
+	oauthConfig := &oauth2.Config{
+		ClientID:     m.cfg.ClientID,
+		ClientSecret: m.cfg.ClientSecret,
+		Endpoint:     google.Endpoint,
+		Scopes:       []string{gmail.GmailSendScope},
+	}
+
+	token := &oauth2.Token{
+		RefreshToken: m.cfg.RefreshToken,
+	}
+
+	client := oauthConfig.Client(ctx, token)
+
+	srv, err := gmail.NewService(ctx, option.WithHTTPClient(client))
+	if err != nil {
+		return fmt.Errorf("unable to create gmail client: %w", err)
+	}
+
+	// Формирование письма в формате RFC 822
 	subject := mime.BEncoding.Encode("UTF-8", "Код подтверждения")
-	body := fmt.Sprintf(
-		"Ваш код подтверждения: %s\r\n\r\nКод действителен 5 минут.",
-		code,
+	body := fmt.Sprintf("Ваш код подтверждения: %s\n\nКод действителен 5 минут.", code)
+
+	rawMessage := fmt.Sprintf(
+		"From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s",
+		m.cfg.From, to, subject, body,
 	)
 
-	msg := []byte(fmt.Sprintf(
-		"From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n\r\n%s\r\n",
-		m.cfg.From, to, subject, body,
-	))
+	// Gmail API требует URL-safe Base64 кодирование сообщения
+	encodedMessage := base64.URLEncoding.EncodeToString([]byte(rawMessage))
 
-	addr := fmt.Sprintf("%s:%s", m.cfg.Host, m.cfg.Port)
+	message := &gmail.Message{
+		Raw: encodedMessage,
+	}
 
-	// Для порта 465 используем tls.Dial вместо smtp.SendMail
-	conn, err := tls.Dial("tcp", addr, &tls.Config{
-		ServerName: m.cfg.Host,
-	})
+	_, err = srv.Users.Messages.Send("me", message).Do()
 	if err != nil {
-		return fmt.Errorf("tls dial error: %w", err)
-	}
-	defer conn.Close()
-
-	client, err := smtp.NewClient(conn, m.cfg.Host)
-	if err != nil {
-		return fmt.Errorf("smtp client error: %w", err)
-	}
-	defer client.Quit()
-
-	auth := smtp.PlainAuth("", m.cfg.Username, m.cfg.Password, m.cfg.Host)
-	if err := client.Auth(auth); err != nil {
-		return fmt.Errorf("auth error: %w", err)
+		return fmt.Errorf("failed to send message via Gmail API: %w", err)
 	}
 
-	if err := client.Mail(m.cfg.From); err != nil {
-		return err
-	}
-	if err := client.Rcpt(to); err != nil {
-		return err
-	}
-
-	w, err := client.Data()
-	if err != nil {
-		return err
-	}
-	_, err = w.Write(msg)
-	if err != nil {
-		return err
-	}
-	return w.Close()
+	return nil
 }
