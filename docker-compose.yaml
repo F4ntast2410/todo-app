@@ -13,22 +13,32 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   tasks_db_migrations:
     image: migrate/migrate
+    restart: "no"
     volumes:
       - ./todo-tasks/migrations:/migrations
     command: -path=/migrations -database="${TASKS_DB_URL}" up
     depends_on:
-      - postgres_db
+      postgres_db:
+        condition: service_healthy
+      
 
   users_db_migrations:
     image: migrate/migrate
+    restart: "no"
     volumes:
       - ./todo-users/migrations:/migrations
     command: -path=/migrations -database="${USERS_DB_URL}" up
     depends_on:
-      - postgres_db
+      postgres_db:
+        condition: service_healthy
 
   redis_db:
     image: redis:7-alpine
