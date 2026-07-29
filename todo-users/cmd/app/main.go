@@ -33,9 +33,27 @@ func main() {
 
 	cfg := config.MustLoad()
 
-	db, err := sqlx.Connect("pgx", cfg.DatabaseURL)
+	var db *sqlx.DB
+	var err error
+
+	maxRetries := 10
+	for i := 1; i <= maxRetries; i++ {
+		db, err = sqlx.Connect("pgx", cfg.DatabaseURL)
+		if err == nil {
+			logger.Info("successfully connected to database")
+			break
+		}
+
+		logger.Warn("database connection failed, retrying...",
+			slog.Int("attempt", i),
+			slog.Int("max_attempts", maxRetries),
+			slog.String("error", err.Error()),
+		)
+		time.Sleep(2 * time.Second)
+	}
+
 	if err != nil {
-		logger.Error("database connection failed", slog.String("error", err.Error()))
+		logger.Error("failed to connect to database after max retries", slog.String("error", err.Error()))
 		panic(err)
 	}
 	defer db.Close()
