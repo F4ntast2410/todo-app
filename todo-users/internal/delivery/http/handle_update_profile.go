@@ -83,9 +83,15 @@ func (h *UserHandler) ChangePasswordHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if err := h.UserUC.ChangePassword(r.Context(), userID, req.OldPassword, req.NewPassword); err != nil {
-		h.Logger.Warn("failed to change password", slog.String("error", err.Error()))
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Неверный текущий пароль"})
+		if errors.Is(err, customErrors.ErrInccorectPassword) {
+			h.Logger.Debug("failed to change password", slog.String("error", err.Error()))
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Неверный текущий пароль"})
+			return
+		}
+		h.Logger.Error("failed to change password", slog.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: "Ошибка при смене пароля"})
 		return
 	}
 	w.WriteHeader(http.StatusOK)

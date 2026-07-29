@@ -3,6 +3,7 @@ services:
   postgres_db:
     image: postgres:15-alpine
     container_name: todo_postgres_compose
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -32,6 +33,7 @@ services:
   redis_db:
     image: redis:7-alpine
     container_name: todo_redis_compose
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
@@ -42,6 +44,7 @@ services:
       context: .
       dockerfile: todo-users/Dockerfile
     container_name: todo_users_compose
+    restart: unless-stopped
     ports:
       - "8080:8080"
       - "9090:9090"
@@ -67,6 +70,7 @@ services:
       context: .
       dockerfile: todo-tasks/Dockerfile
     container_name: todo_tasks_compose
+    restart: unless-stopped
     ports:
       - "8081:8081"
       - "9091:9091"
@@ -86,6 +90,7 @@ services:
       context: .
       dockerfile: todo-telegram/Dockerfile
     container_name: todo_telegram_compose
+    restart: unless-stopped
     depends_on:
       - todo-tasks
       - todo-users
@@ -97,6 +102,7 @@ services:
   nginx:
     image: nginx:alpine
     container_name: todo_nginx_compose
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"

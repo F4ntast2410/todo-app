@@ -10,7 +10,7 @@ repo.txt
 
 # Локальные конфиги, где могут лежать пароли от базы данных
 .env
-
+docker-compose.override.yaml
 # Кэш IDE и редакторов
 .idea/
 .vscode/

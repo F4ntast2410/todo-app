@@ -42,8 +42,11 @@ func (uc *UserUsecaseImpl) ChangePassword(ctx context.Context, userID int, oldPa
 	if err != nil {
 		return err
 	}
+	if !user.HasPassword {
+		return errors.New("user not exists")
+	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(oldPassword)); err != nil {
-		return errors.New("неверный текущий пароль")
+		return customErrors.ErrInccorectPassword
 	}
 	newHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {

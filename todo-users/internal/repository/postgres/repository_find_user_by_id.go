@@ -15,11 +15,12 @@ func (s *PostgresStorage) FindByIdTg(ctx context.Context, tgID int64) (int, erro
 
 func (s *PostgresStorage) FindByIdWeb(ctx context.Context, userID int) (*entity.UserWeb, error) {
 	var row struct {
-		Username string         `db:"username"`
-		Email    sql.NullString `db:"email"`
+		Username     string         `db:"username"`
+		Email        sql.NullString `db:"email"`
+		PasswordHash sql.NullString `db:"password_hash"`
 	}
 
-	query := `SELECT u.username, up.email 
+	query := `SELECT u.username, up.email, up.password_hash 
 FROM users u 
 LEFT JOIN user_passwords up ON u.id = up.user_id 
 WHERE u.id = $1`
@@ -30,10 +31,11 @@ WHERE u.id = $1`
 	}
 
 	user := entity.UserWeb{
-		UserID:      userID,
-		Username:    row.Username,
-		Email:       row.Email.String, // "" если NULL
-		HasPassword: row.Email.Valid,  // true только если есть строка в user_passwords
+		UserID:       userID,
+		Username:     row.Username,
+		Email:        row.Email.String,
+		PasswordHash: row.PasswordHash.String,
+		HasPassword:  row.Email.Valid,
 	}
 	return &user, nil
 }
