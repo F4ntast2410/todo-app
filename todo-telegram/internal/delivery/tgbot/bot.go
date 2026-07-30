@@ -3,7 +3,10 @@ package tgbot
 import (
 	"context"
 	"log/slog"
+	"net"
+	"net/http"
 	"strings"
+	"time"
 
 	"proj/internal/entity"
 
@@ -35,8 +38,25 @@ type BotServer struct {
 	sessionCache *SessionCache
 }
 
+// newIPv4OnlyHTTPClient возвращает http.Client, который всегда открывает
+// соединение по tcp4, независимо от того, что вернёт DNS-резолвер (A/AAAA)
+// и что запросит вызывающий код. Нужен, чтобы бот не пытался ходить
+// к api.telegram.org по IPv6 внутри Docker-сети, где IPv6-маршрута нет.
+func newIPv4OnlyHTTPClient() *http.Client {
+	dialer := &net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+	transport := &http.Transport{
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			return dialer.DialContext(ctx, "tcp4", addr)
+		},
+	}
+	return &http.Client{Transport: transport}
+}
+
 func NewBotServer(token string, taskUC TaskUsecase, userUC UserUsecase, logger *slog.Logger) (*BotServer, error) {
-	bot, err := tgbotapi.NewBotAPI(token)
+	bot, err := tgbotapi.NewBotAPIWithClient(token, tgbotapi.APIEndpoint, newIPv4OnlyHTTPClient())
 	if err != nil {
 		return nil, err
 	}
