@@ -101,6 +101,9 @@ services:
       dockerfile: todo-telegram/Dockerfile
     container_name: todo_telegram_compose
     restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     depends_on:
       - todo-tasks
       - todo-users
