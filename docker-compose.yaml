@@ -101,6 +101,8 @@ services:
       dockerfile: todo-telegram/Dockerfile
     container_name: todo_telegram_compose
     restart: unless-stopped
+    sysctls:
+    - net.ipv6.conf.all.disable_ipv6=1
     depends_on:
       - todo-tasks
       - todo-users
