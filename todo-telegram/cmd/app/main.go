@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"log/slog"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"proj/internal/client/taskclient"
@@ -17,6 +20,14 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
+	// 🟢 ПРИНУДИТЕЛЬНО ОТПРАВЛЯЕМ ВСЕ HTTP-ЗАПРОСЫ ПО IPv6 (tcp6)
+	http.DefaultTransport = &http.Transport{
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			var d net.Dialer
+			return d.DialContext(ctx, "tcp6", addr)
+		},
+	}
+
 	cfg := config.MustLoad()
 
 	taskClient, err := taskclient.New(cfg.TaskServiceGRPCAddr)
@@ -25,12 +36,14 @@ func main() {
 		panic(err)
 	}
 	defer taskClient.Close()
+
 	userTgClient, err := usertgclient.New(cfg.UserServiceGRPCAddr)
 	if err != nil {
 		logger.Error("failed to connect to usertg service", slog.String("error", err.Error()))
 		panic(err)
 	}
 	defer userTgClient.Close()
+
 	botServer, err := tgbot.NewBotServer(cfg.BotToken, taskClient, userTgClient, logger)
 	if err != nil {
 		logger.Error("failed to initialize bot", slog.String("err", err.Error()))
